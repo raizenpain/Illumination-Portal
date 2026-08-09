@@ -881,6 +881,14 @@ body.teacher-page {
   cursor: not-allowed;
 }
 
+#releaseButtons button.released {
+  background: #4CAF83;
+}
+
+#releaseButtons button.released:hover {
+  background: #3d9c6d;
+}
+
 .puzzle-tabs {
   display: flex;
   gap: 8px;

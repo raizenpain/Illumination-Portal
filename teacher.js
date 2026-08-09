@@ -62,8 +62,21 @@ if (user) {
       const btn = document.createElement('button');
 
       if (released.includes(i)) {
-        btn.textContent = `Piece ${i} Released`;
-        btn.disabled = true;
+        btn.textContent = `Piece ${i} Released — click to unrelease`;
+        btn.classList.add('released');
+        btn.onclick = async () => {
+          if (!confirm(`Unrelease Piece ${i}? Students will no longer be able to upload it, but anyone who already collected it keeps it.`)) {
+            return;
+          }
+
+          const updated = released.filter((n) => n !== i);
+
+          await setDoc(ref, {
+            released: updated
+          }, { merge: true });
+
+          loadReleasedPieces();
+        };
       } else {
         btn.textContent = `Release Piece ${i}`;
         btn.onclick = async () => {

@@ -15,11 +15,6 @@ import {
   setDoc,
   updateDoc
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
-
-import {
-  getFunctions,
-  httpsCallable
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-functions.js";
 // Your Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
@@ -37,7 +32,6 @@ const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 const auth = getAuth(app);
 const provider = new GoogleAuthProvider();
-const functions = getFunctions(app);
 
 export {
   auth,
@@ -50,7 +44,5 @@ export {
   getDoc,
   getDocs,
   setDoc,
-  updateDoc,
-  functions,
-  httpsCallable
+  updateDoc
 };

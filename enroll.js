@@ -1,4 +1,4 @@
-import { functions, httpsCallable } from './firebase.js';
+import { db, doc, getDoc, setDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 
 const { email, name } = requireLogin();
@@ -12,6 +12,12 @@ if (email === ADMIN_EMAIL) {
 const studentNameEl = document.getElementById('studentName');
 if (studentNameEl) {
   studentNameEl.textContent = name;
+}
+
+// Generate a unique HCDC Student ID
+function generateStudentId() {
+  const random = Math.floor(1000 + Math.random() * 9000);
+  return `HCDC-REED-2026-${random}`;
 }
 
 const enrollBtn = document.getElementById('enrollBtn');
@@ -29,11 +35,29 @@ if (enrollBtn) {
     enrollBtn.textContent = 'Enrolling...';
 
     try {
-      // Profile creation (and default rank/achievements/progress) happens
-      // server-side so a returning student re-enrolling never wipes their
-      // existing progress, and so those fields can't be forged from the client.
-      const enrollStudent = httpsCallable(functions, 'enrollStudent');
-      await enrollStudent({ section, name });
+      const studentRef = doc(db, 'students', email);
+      const snap = await getDoc(studentRef);
+      const alreadyEnrolled = snap.exists();
+
+      const payload = {
+        name,
+        email,
+        section,
+        studentId: alreadyEnrolled && snap.data().studentId ? snap.data().studentId : generateStudentId()
+      };
+
+      // Only set starting defaults for a brand-new profile — never overwrite
+      // an existing student's progress just because they re-submitted this form.
+      if (!alreadyEnrolled) {
+        payload.rank = 'Seeker';
+        payload.achievements = [];
+        payload.totalPieces = 0;
+        payload.puzzle1 = [];
+        payload.puzzle1Completed = false;
+        payload.createdAt = new Date().toISOString();
+      }
+
+      await setDoc(studentRef, payload, { merge: true });
 
       window.location.href = 'dashboard.html';
 

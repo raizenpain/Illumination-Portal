@@ -1,4 +1,4 @@
-import { db, doc, getDoc, functions, httpsCallable } from './firebase.js';
+import { db, doc, getDoc, setDoc, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 
@@ -119,27 +119,60 @@ function attachUploadHandler() {
       return;
     }
 
-    let result;
+    uploadedPieces.push(pieceNumber);
 
     try {
-      const claimPuzzlePiece = httpsCallable(functions, 'claimPuzzlePiece');
-      result = await claimPuzzlePiece({ puzzleNumber, pieceNumber });
+      const studentRef = doc(db, 'students', email);
+
+      await setDoc(studentRef, {
+        name,
+        email,
+        [config.piecesField]: uploadedPieces
+      }, { merge: true });
+
+      const snap = await getDoc(studentRef);
+      if (snap.exists()) {
+        const data = snap.data();
+        const achievements = data.achievements || [];
+
+        for (const milestone of config.milestoneAchievements) {
+          if (uploadedPieces.length >= milestone.count && !achievements.includes(milestone.id)) {
+            achievements.push(milestone.id);
+            await updateDoc(studentRef, { achievements });
+            showAchievement(milestone.title, milestone.text, milestone.icon);
+          }
+        }
+      }
+
     } catch (err) {
       console.error('Failed to save progress:', err);
-      if (status) status.textContent = err.message || 'Error saving progress. Please try again.';
+      if (status) status.textContent = 'Error saving progress. Please try again.';
       return;
     }
-
-    if (!result.data.alreadyHad) {
-      uploadedPieces.push(pieceNumber);
-    }
-
-    (result.data.newAchievements || []).forEach((a) => showAchievement(a.title, a.text, a.icon));
 
     renderBoard();
     if (status) status.textContent = `Piece ${pieceNumber} accepted!`;
 
-    if (result.data.completed) {
+    if (uploadedPieces.length === config.totalPieces) {
+      const studentRef = doc(db, 'students', email);
+      const snap = await getDoc(studentRef);
+
+      if (snap.exists()) {
+        const data = snap.data();
+        const achievements = data.achievements || [];
+        const comp = config.completionAchievement;
+
+        if (!achievements.includes(comp.id)) {
+          achievements.push(comp.id);
+          await updateDoc(studentRef, {
+            achievements,
+            rank: comp.rank,
+            [config.completedField]: true
+          });
+          showAchievement(comp.title, comp.text, comp.icon);
+        }
+      }
+
       setTimeout(() => {
         window.location.href = 'completion.html';
       }, 3000);

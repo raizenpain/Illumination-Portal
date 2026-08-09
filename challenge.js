@@ -1,4 +1,4 @@
-import { db, doc, getDoc, functions, httpsCallable } from './firebase.js';
+import { db, doc, getDoc, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { CHALLENGES } from './questions.js';
 
@@ -105,7 +105,7 @@ function renderQuiz() {
 }
 
 async function handleSubmit() {
-  const answers = [];
+  let allCorrect = true;
   let allAnswered = true;
 
   questions.forEach((q, index) => {
@@ -114,7 +114,9 @@ async function handleSubmit() {
       allAnswered = false;
       return;
     }
-    answers.push(parseInt(selected.value));
+    if (parseInt(selected.value) !== q.correctIndex) {
+      allCorrect = false;
+    }
   });
 
   if (!allAnswered) {
@@ -122,30 +124,32 @@ async function handleSubmit() {
     return;
   }
 
-  statusEl.textContent = 'Checking your answers...';
-
-  try {
-    const submitChallengeAnswers = httpsCallable(functions, 'submitChallengeAnswers');
-    const result = await submitChallengeAnswers({ gate, answers });
-
-    if (result.data.correct) {
-      await unlockPuzzle();
-    } else {
-      registerFailedAttempt();
-    }
-  } catch (err) {
-    console.error('Failed to submit answers:', err);
-    statusEl.textContent = 'Something went wrong. Please try again.';
+  if (allCorrect) {
+    await unlockPuzzle();
+  } else {
+    registerFailedAttempt();
   }
 }
 
 async function unlockPuzzle() {
   statusEl.textContent = '🎉 Correct! Unlocking...';
-  clearAttempts();
 
-  setTimeout(() => {
-    window.location.href = gateInfo.nextPage;
-  }, 1500);
+  try {
+    const studentRef = doc(db, 'students', email);
+    await updateDoc(studentRef, {
+      [gateInfo.unlockField]: true
+    });
+
+    clearAttempts();
+
+    setTimeout(() => {
+      window.location.href = gateInfo.nextPage;
+    }, 1500);
+
+  } catch (err) {
+    console.error('Failed to unlock puzzle:', err);
+    statusEl.textContent = 'Something went wrong. Please try again.';
+  }
 }
 
 // ================================

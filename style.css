@@ -68,6 +68,24 @@ body {
   letter-spacing: 0.06em;
 }
 
+.portal-tagline {
+  flex: 1;
+  text-align: center;
+  padding: 0 24px;
+  color: #56B2BB;
+  font-size: 13px;
+  font-weight: 600;
+  font-style: italic;
+  text-decoration: none;
+  letter-spacing: 0.01em;
+  transition: color 0.15s ease;
+}
+
+.portal-tagline:hover {
+  color: #1D2233;
+  text-decoration: underline;
+}
+
 .logout-btn {
   background: transparent;
   color: #1D2233;
@@ -1426,6 +1444,11 @@ body.teacher-page {
     flex-direction: column;
     gap: 15px;
     text-align: center;
+  }
+
+  .portal-tagline {
+    flex: none;
+    padding: 0;
   }
 
   .portal-brand {

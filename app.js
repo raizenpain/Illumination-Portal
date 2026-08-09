@@ -1,6 +1,13 @@
 import { db, doc, getDoc, setDoc, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
+import { PIECE_CODES } from './codes.js';
+
+// ================================
+// SETTINGS — adjust freely
+// ================================
+const MAX_ATTEMPTS = 3;        // wrong attempts allowed before cooldown
+const COOLDOWN_SECONDS = 60;   // cooldown length in seconds
 
 const { email, name } = requireLogin();
 
@@ -9,7 +16,8 @@ const puzzleNumber = parseInt(params.get('puzzle')) || 1;
 const config = PUZZLE_CONFIG[puzzleNumber];
 
 const board = document.getElementById('board');
-const upload = document.getElementById('pieceUpload');
+const codeInput = document.getElementById('pieceCode');
+const submitCodeBtn = document.getElementById('submitCodeBtn');
 const status = document.getElementById('status');
 const info = document.getElementById('studentInfo');
 const titleEl = document.getElementById('puzzleTitle');
@@ -54,7 +62,7 @@ async function init() {
   }
 
   renderBoard();
-  attachUploadHandler();
+  attachCodeHandler();
 }
 
 function renderBoard() {
@@ -83,101 +91,186 @@ async function getReleasedPieces() {
   return snap.exists() ? (snap.data().released || []) : [];
 }
 
-function attachUploadHandler() {
-  if (!upload) {
-    console.warn('Upload input (#pieceUpload) not found in the DOM.');
+function attachCodeHandler() {
+  if (!codeInput || !submitCodeBtn) {
+    console.warn('Code entry elements (#pieceCode / #submitCodeBtn) not found in the DOM.');
     return;
   }
 
-  upload.addEventListener('change', async (event) => {
-    const file = event.target.files[0];
-    if (!file) return;
-
-    const match = file.name.match(/^piece(\d+)\.(png|jpg|jpeg)$/i);
-
-    if (!match) {
-      if (status) status.textContent = 'Invalid file. Upload only official puzzle pieces.';
-      return;
-    }
-
-    const pieceNumber = parseInt(match[1]);
-    const releasedPieces = await getReleasedPieces();
-
-    if (!releasedPieces.includes(pieceNumber)) {
-      if (status) status.textContent = `Piece ${pieceNumber} has not been released by your instructor yet.`;
-      upload.value = '';
-      return;
-    }
-
-    if (pieceNumber < 1 || pieceNumber > config.totalPieces) {
-      if (status) status.textContent = 'This puzzle piece does not belong to this puzzle.';
-      return;
-    }
-
-    if (uploadedPieces.includes(pieceNumber)) {
-      if (status) status.textContent = 'You already uploaded this puzzle piece.';
-      return;
-    }
-
-    uploadedPieces.push(pieceNumber);
-
-    try {
-      const studentRef = doc(db, 'students', email);
-
-      await setDoc(studentRef, {
-        name,
-        email,
-        [config.piecesField]: uploadedPieces
-      }, { merge: true });
-
-      const snap = await getDoc(studentRef);
-      if (snap.exists()) {
-        const data = snap.data();
-        const achievements = data.achievements || [];
-
-        for (const milestone of config.milestoneAchievements) {
-          if (uploadedPieces.length >= milestone.count && !achievements.includes(milestone.id)) {
-            achievements.push(milestone.id);
-            await updateDoc(studentRef, { achievements });
-            showAchievement(milestone.title, milestone.text, milestone.icon);
-          }
-        }
-      }
-
-    } catch (err) {
-      console.error('Failed to save progress:', err);
-      if (status) status.textContent = 'Error saving progress. Please try again.';
-      return;
-    }
-
-    renderBoard();
-    if (status) status.textContent = `Piece ${pieceNumber} accepted!`;
-
-    if (uploadedPieces.length === config.totalPieces) {
-      const studentRef = doc(db, 'students', email);
-      const snap = await getDoc(studentRef);
-
-      if (snap.exists()) {
-        const data = snap.data();
-        const achievements = data.achievements || [];
-        const comp = config.completionAchievement;
-
-        if (!achievements.includes(comp.id)) {
-          achievements.push(comp.id);
-          await updateDoc(studentRef, {
-            achievements,
-            rank: comp.rank,
-            [config.completedField]: true
-          });
-          showAchievement(comp.title, comp.text, comp.icon);
-        }
-      }
-
-      setTimeout(() => {
-        window.location.href = 'completion.html';
-      }, 3000);
-    }
-
-    upload.value = '';
+  codeInput.addEventListener('input', () => {
+    codeInput.value = codeInput.value.toUpperCase();
   });
+
+  codeInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleCodeSubmit();
+    }
+  });
+
+  submitCodeBtn.addEventListener('click', handleCodeSubmit);
+
+  if (isOnCooldown()) {
+    renderCooldown();
+  }
+}
+
+async function handleCodeSubmit() {
+  if (isOnCooldown()) return;
+
+  const code = codeInput.value.trim().toUpperCase();
+
+  if (!code) {
+    if (status) status.textContent = 'Please enter a code.';
+    return;
+  }
+
+  const puzzleCodes = PIECE_CODES[`puzzle${puzzleNumber}`] || {};
+  const matchedKey = Object.keys(puzzleCodes).find((key) => puzzleCodes[key] === code);
+
+  if (!matchedKey) {
+    registerFailedAttempt();
+    return;
+  }
+
+  const pieceNumber = parseInt(matchedKey);
+
+  if (uploadedPieces.includes(pieceNumber)) {
+    if (status) status.textContent = 'You have already collected this piece.';
+    return;
+  }
+
+  const releasedPieces = await getReleasedPieces();
+
+  if (!releasedPieces.includes(pieceNumber)) {
+    if (status) status.textContent = '🔒 That piece has not been released yet.';
+    return;
+  }
+
+  uploadedPieces.push(pieceNumber);
+
+  try {
+    const studentRef = doc(db, 'students', email);
+
+    await setDoc(studentRef, {
+      name,
+      email,
+      [config.piecesField]: uploadedPieces
+    }, { merge: true });
+
+    const snap = await getDoc(studentRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      const achievements = data.achievements || [];
+
+      for (const milestone of config.milestoneAchievements) {
+        if (uploadedPieces.length >= milestone.count && !achievements.includes(milestone.id)) {
+          achievements.push(milestone.id);
+          await updateDoc(studentRef, { achievements });
+          showAchievement(milestone.title, milestone.text, milestone.icon);
+        }
+      }
+    }
+
+  } catch (err) {
+    console.error('Failed to save progress:', err);
+    uploadedPieces.pop();
+    if (status) status.textContent = 'Error saving progress. Please try again.';
+    return;
+  }
+
+  clearAttempts();
+  renderBoard();
+  if (status) status.textContent = `✅ Piece ${pieceNumber} unlocked!`;
+  codeInput.value = '';
+
+  if (uploadedPieces.length === config.totalPieces) {
+    const studentRef = doc(db, 'students', email);
+    const snap = await getDoc(studentRef);
+
+    if (snap.exists()) {
+      const data = snap.data();
+      const achievements = data.achievements || [];
+      const comp = config.completionAchievement;
+
+      if (!achievements.includes(comp.id)) {
+        achievements.push(comp.id);
+        await updateDoc(studentRef, {
+          achievements,
+          rank: comp.rank,
+          [config.completedField]: true
+        });
+        showAchievement(comp.title, comp.text, comp.icon);
+      }
+    }
+
+    setTimeout(() => {
+      window.location.href = 'completion.html';
+    }, 3000);
+  }
+}
+
+// ================================
+// COOLDOWN / ATTEMPT TRACKING (per browser)
+// ================================
+
+function attemptsKey() {
+  return `piece_attempts_puzzle${puzzleNumber}_${email}`;
+}
+
+function cooldownKey() {
+  return `piece_cooldown_puzzle${puzzleNumber}_${email}`;
+}
+
+function registerFailedAttempt() {
+  const current = parseInt(localStorage.getItem(attemptsKey()) || '0') + 1;
+  localStorage.setItem(attemptsKey(), current);
+
+  if (current >= MAX_ATTEMPTS) {
+    const cooldownEnd = Date.now() + COOLDOWN_SECONDS * 1000;
+    localStorage.setItem(cooldownKey(), cooldownEnd);
+    renderCooldown();
+  } else {
+    const remaining = MAX_ATTEMPTS - current;
+    if (status) status.textContent = `Not quite right — try again! (${remaining} attempt${remaining === 1 ? '' : 's'} left before a short cooldown)`;
+  }
+}
+
+function clearAttempts() {
+  localStorage.removeItem(attemptsKey());
+  localStorage.removeItem(cooldownKey());
+}
+
+function isOnCooldown() {
+  const end = parseInt(localStorage.getItem(cooldownKey()) || '0');
+  return end > Date.now();
+}
+
+function renderCooldown() {
+  codeInput.disabled = true;
+  submitCodeBtn.disabled = true;
+
+  function updateCountdown() {
+    const end = parseInt(localStorage.getItem(cooldownKey()) || '0');
+    const remainingMs = end - Date.now();
+
+    if (remainingMs <= 0) {
+      clearAttempts();
+      codeInput.disabled = false;
+      submitCodeBtn.disabled = false;
+      if (status) status.textContent = '';
+      return;
+    }
+
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    const display = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+    if (status) status.textContent = `⏳ Too many tries! Take a breather — try again in ${display}`;
+
+    setTimeout(updateCountdown, 500);
+  }
+
+  updateCountdown();
 }

@@ -525,32 +525,69 @@ body.puzzle-page {
   border-radius: 12px;
 }
 
-.upload-label {
+.code-entry {
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
+  gap: 10px;
+}
+
+.code-input {
+  flex: 1;
+  padding: 13px 16px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-align: center;
+  text-transform: uppercase;
+  color: #1D2233;
+  background: white;
+  box-sizing: border-box;
+  transition: all 0.25s ease;
+}
+
+.code-input::placeholder {
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: #9CA3AF;
+}
+
+.code-input:focus {
+  outline: none;
+  border-color: #56B2BB;
+  box-shadow: 0 0 0 3px rgba(86,178,187,0.15);
+}
+
+.code-input:disabled {
+  background: #F0F4F8;
+  color: #9CA3AF;
+  cursor: not-allowed;
+}
+
+.submit-code-btn {
   background: #56B2BB;
   color: white;
+  border: none;
   padding: 13px 20px;
   border-radius: 12px;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
+  white-space: nowrap;
   transition: all 0.25s ease;
 }
 
-.upload-label:hover {
+.submit-code-btn:hover {
   background: #3c98a1;
   transform: translateY(-2px);
 }
 
-.upload-icon {
-  font-size: 16px;
-}
-
-.upload-input {
-  display: none;
+.submit-code-btn:disabled {
+  background: #E2E8F0;
+  color: #9CA3AF;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .puzzle-status {

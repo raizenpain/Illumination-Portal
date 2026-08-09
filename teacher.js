@@ -8,6 +8,7 @@ import {
 } from './firebase.js';
 import { requireAdmin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
+import { PIECE_CODES } from './codes.js';
 
 const user = requireAdmin('jornie.hinay@hcdc.edu.ph');
 
@@ -62,7 +63,8 @@ if (user) {
       const btn = document.createElement('button');
 
       if (released.includes(i)) {
-        btn.textContent = `Piece ${i} Released — click to unrelease`;
+        const code = (PIECE_CODES[`puzzle${activePuzzle}`] || {})[i];
+        btn.textContent = code ? `✓ Piece ${i} — ${code}` : `Piece ${i} Released — click to unrelease`;
         btn.classList.add('released');
         btn.onclick = async () => {
           if (!confirm(`Unrelease Piece ${i}? Students will no longer be able to upload it, but anyone who already collected it keeps it.`)) {

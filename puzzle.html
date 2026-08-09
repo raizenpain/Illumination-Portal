@@ -17,10 +17,10 @@
 
     <div id="board" class="board"></div>
 
-    <label class="upload-label" for="pieceUpload">
-      <span class="upload-icon">📤</span> Upload Puzzle Piece
-    </label>
-    <input type="file" id="pieceUpload" accept="image/png, image/jpeg" class="upload-input">
+    <div class="code-entry">
+      <input type="text" id="pieceCode" class="code-input" placeholder="Enter piece code" autocomplete="off">
+      <button id="submitCodeBtn" class="submit-code-btn">Unlock Piece</button>
+    </div>
 
     <p id="status" class="puzzle-status"></p>
 

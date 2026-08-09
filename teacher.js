@@ -62,8 +62,9 @@ if (user) {
     for (let i = 1; i <= config.totalPieces; i++) {
       const btn = document.createElement('button');
 
+      const code = (PIECE_CODES[`puzzle${activePuzzle}`] || {})[i];
+
       if (released.includes(i)) {
-        const code = (PIECE_CODES[`puzzle${activePuzzle}`] || {})[i];
         btn.textContent = code ? `✓ Piece ${i} — ${code}` : `Piece ${i} Released — click to unrelease`;
         btn.classList.add('released');
         btn.onclick = async () => {
@@ -80,7 +81,7 @@ if (user) {
           loadReleasedPieces();
         };
       } else {
-        btn.textContent = `Release Piece ${i}`;
+        btn.textContent = code ? `Release Piece ${i} — ${code}` : `Release Piece ${i}`;
         btn.onclick = async () => {
           released.push(i);
 

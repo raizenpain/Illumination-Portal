@@ -72,7 +72,7 @@
 
   <section class="puzzle-section">
     <div class="section-title">
-      <h2>Your Puzzle Journey</h2>
+      <h2>Prelim Season</h2>
       <p>Complete each formation milestone</p>
     </div>
 
@@ -97,6 +97,38 @@
         <h3>Puzzle 3</h3>
         <p>Christian Vocation</p>
         <span class="status-badge">Loading...</span>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="puzzle-section">
+    <div class="section-title">
+      <h2>Upcoming Seasons</h2>
+      <p>Unlocks after you complete Prelim Season</p>
+    </div>
+
+    <div class="puzzle-grid">
+
+      <div class="puzzle-card locked" id="midtermSeasonBtn">
+        <div class="puzzle-icon">🔒</div>
+        <h3>Midterm Season</h3>
+        <p>Coming soon</p>
+        <span class="status-badge">Locked</span>
+      </div>
+
+      <div class="puzzle-card locked" id="semifinalSeasonBtn">
+        <div class="puzzle-icon">🔒</div>
+        <h3>SemiFinal Season</h3>
+        <p>Coming soon</p>
+        <span class="status-badge">Locked</span>
+      </div>
+
+      <div class="puzzle-card locked" id="finalSeasonBtn">
+        <div class="puzzle-icon">🔒</div>
+        <h3>Final Season</h3>
+        <p>Coming soon</p>
+        <span class="status-badge">Locked</span>
       </div>
 
     </div>
@@ -266,6 +298,13 @@ function setupPuzzleCard(puzzleNumber, data, previousPuzzleNumber) {
 }
 
 loadStudentCard();
+
+['midtermSeasonBtn', 'semifinalSeasonBtn', 'finalSeasonBtn'].forEach((id) => {
+  const card = document.getElementById(id);
+  if (card) {
+    card.onclick = () => alert('Complete Prelim Season first to unlock this season.');
+  }
+});
 
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {

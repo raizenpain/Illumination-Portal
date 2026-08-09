@@ -31,8 +31,8 @@
 
       <div>
         <h2 id="cardName">Loading...</h2>
-        <p id="cardSection">Section</p>
-        <p id="cardStudentId">Student ID</p>
+        <p class="id-meta-row"><span class="id-meta-label">Section</span><span id="cardSection" class="id-meta-value">—</span></p>
+        <p class="id-meta-row"><span class="id-meta-label">Student ID</span><span id="cardStudentId" class="id-meta-value">—</span></p>
       </div>
     </div>
 
@@ -46,7 +46,7 @@
     <div class="card-info">
       <div class="info-row">
         <span>Rank</span>
-        <strong id="cardRank">Seeker</strong>
+        <strong id="cardRank" class="rank-chip">Seeker</strong>
       </div>
 
       <div class="info-row">
@@ -69,10 +69,10 @@
     </div>
   </div>
 
-<hr>
-
 <div class="badge-section">
+  <span class="section-kicker">Milestones</span>
   <h3>Achievements</h3>
+  <p class="section-subtitle">Badges you've earned so far</p>
   <div id="badgeContainer" class="badge-grid">
     <p>No achievements yet.</p>
   </div>
@@ -80,28 +80,29 @@
 
   <section class="puzzle-section">
     <div class="section-title">
+      <span class="section-kicker">Formation Journey</span>
       <h2>Prelim Season</h2>
-      <p>Complete each formation milestone</p>
+      <p class="section-subtitle">Complete each formation milestone</p>
     </div>
 
     <div class="puzzle-grid">
 
       <div class="puzzle-card" id="puzzle1Btn">
-        <div class="puzzle-icon">🧩</div>
+        <div class="puzzle-icon-chip"><span class="puzzle-icon">🧩</span></div>
         <h3>Puzzle 1</h3>
         <p>Beatitudes</p>
         <span class="status-badge">Loading...</span>
       </div>
 
       <div class="puzzle-card" id="puzzle2Btn">
-        <div class="puzzle-icon">🔒</div>
+        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
         <h3>Puzzle 2</h3>
         <p>Sacraments</p>
         <span class="status-badge">Loading...</span>
       </div>
 
       <div class="puzzle-card" id="puzzle3Btn">
-        <div class="puzzle-icon">🔒</div>
+        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
         <h3>Puzzle 3</h3>
         <p>Christian Vocation</p>
         <span class="status-badge">Loading...</span>
@@ -112,31 +113,32 @@
 
   <section class="puzzle-section">
     <div class="section-title">
+      <span class="section-kicker">What's Next</span>
       <h2>Upcoming Seasons</h2>
-      <p>Unlocks after you complete Prelim Season</p>
+      <p class="section-subtitle">Unlocks after you complete Prelim Season</p>
     </div>
 
     <div class="puzzle-grid">
 
-      <div class="puzzle-card locked" id="midtermSeasonBtn">
-        <div class="puzzle-icon">🔒</div>
+      <div class="puzzle-card state-locked" id="midtermSeasonBtn">
+        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
         <h3>Midterm Season</h3>
         <p>Coming soon</p>
-        <span class="status-badge">Locked</span>
+        <span class="status-badge status-locked">Locked</span>
       </div>
 
-      <div class="puzzle-card locked" id="semifinalSeasonBtn">
-        <div class="puzzle-icon">🔒</div>
+      <div class="puzzle-card state-locked" id="semifinalSeasonBtn">
+        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
         <h3>SemiFinal Season</h3>
         <p>Coming soon</p>
-        <span class="status-badge">Locked</span>
+        <span class="status-badge status-locked">Locked</span>
       </div>
 
-      <div class="puzzle-card locked" id="finalSeasonBtn">
-        <div class="puzzle-icon">🔒</div>
+      <div class="puzzle-card state-locked" id="finalSeasonBtn">
+        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
         <h3>Final Season</h3>
         <p>Coming soon</p>
-        <span class="status-badge">Locked</span>
+        <span class="status-badge status-locked">Locked</span>
       </div>
 
     </div>
@@ -144,13 +146,14 @@
 
   <section class="activity-section">
     <div class="section-title">
+      <span class="section-kicker">Timeline</span>
       <h2>Recent Activity</h2>
-      <p>Your latest formation progress</p>
+      <p class="section-subtitle">Your latest formation progress</p>
     </div>
 
     <div class="activity-card">
       <div class="activity-item">
-        <div class="activity-dot"></div>
+        <div class="activity-icon">🎉</div>
         <div>
           <strong>Puzzle Portal Ready</strong>
           <p>Your HCDC formation profile is active.</p>
@@ -158,7 +161,7 @@
       </div>
 
       <div class="activity-item">
-        <div class="activity-dot"></div>
+        <div class="activity-icon">🎯</div>
         <div>
           <strong>Next Goal</strong>
           <p>Complete Puzzle 1 to unlock the next milestone.</p>
@@ -194,8 +197,8 @@ async function loadStudentCard() {
     const data = snapshot.exists() ? snapshot.data() : {};
 
     document.getElementById('cardName').textContent = data.name || name;
-    document.getElementById('cardSection').textContent = data.section || 'Section: Not Assigned';
-    document.getElementById('cardStudentId').textContent = data.studentId || 'Student ID: N/A';
+    document.getElementById('cardSection').textContent = data.section || 'Not Assigned';
+    document.getElementById('cardStudentId').textContent = data.studentId || 'N/A';
     document.getElementById('cardRank').textContent = data.rank || 'Seeker';
 
     const progress = data.puzzle1 ? Math.round((data.puzzle1.length / 9) * 100) : 0;
@@ -252,6 +255,13 @@ function renderPuzzleCards(data) {
   setupPuzzleCard(3, data, 2);
 }
 
+const PUZZLE_STATE_UI = {
+  locked: { icon: '🔒', badge: 'Locked' },
+  completed: { icon: '✅', badge: 'Completed' },
+  challenge: { icon: '🗝️', badge: 'Take Challenge' },
+  available: { icon: '🧩', badge: 'Available' }
+};
+
 function setupPuzzleCard(puzzleNumber, data, previousPuzzleNumber) {
   const config = PUZZLE_CONFIG[puzzleNumber];
   const card = document.getElementById(`puzzle${puzzleNumber}Btn`);
@@ -266,43 +276,23 @@ function setupPuzzleCard(puzzleNumber, data, previousPuzzleNumber) {
     ? !!data[PUZZLE_CONFIG[previousPuzzleNumber].completedField]
     : true; // Puzzle 1 has no prerequisite
 
-  card.classList.remove('locked', 'available');
+  let state;
+  if (!previousCompleted) state = 'locked';
+  else if (completed) state = 'completed';
+  else if (!unlocked) state = 'challenge';
+  else state = 'available';
 
-  if (!previousCompleted) {
-    // Locked — previous puzzle not finished yet
-    card.classList.add('locked');
-    icon.textContent = '🔒';
-    badge.textContent = 'Locked';
-    card.onclick = () => {
-      alert(`Complete Puzzle ${previousPuzzleNumber} first to unlock this puzzle.`);
-    };
+  card.className = `puzzle-card state-${state}`;
+  badge.className = `status-badge status-${state}`;
+  icon.textContent = PUZZLE_STATE_UI[state].icon;
+  badge.textContent = PUZZLE_STATE_UI[state].badge;
 
-  } else if (completed) {
-    // Fully completed
-    card.classList.add('available');
-    icon.textContent = '✅';
-    badge.textContent = 'Completed';
-    card.onclick = () => {
-      window.location.href = `puzzle.html?puzzle=${puzzleNumber}`;
-    };
-
-  } else if (!unlocked) {
-    // Ready for the challenge gate
-    card.classList.add('available');
-    icon.textContent = '🗝️';
-    badge.textContent = 'Take Challenge';
-    card.onclick = () => {
-      window.location.href = `challenge.html?gate=puzzle${puzzleNumber}`;
-    };
-
+  if (state === 'locked') {
+    card.onclick = () => alert(`Complete Puzzle ${previousPuzzleNumber} first to unlock this puzzle.`);
+  } else if (state === 'challenge') {
+    card.onclick = () => { window.location.href = `challenge.html?gate=puzzle${puzzleNumber}`; };
   } else {
-    // Unlocked and playable
-    card.classList.add('available');
-    icon.textContent = '🧩';
-    badge.textContent = 'Available';
-    card.onclick = () => {
-      window.location.href = `puzzle.html?puzzle=${puzzleNumber}`;
-    };
+    card.onclick = () => { window.location.href = `puzzle.html?puzzle=${puzzleNumber}`; };
   }
 }
 

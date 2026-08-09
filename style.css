@@ -54,25 +54,37 @@ body {
 .portal-brand h1 {
   margin: 0;
   color: #1D2233;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: -0.01em;
 }
 
 .portal-brand p {
-  margin: 4px 0 0 0;
+  margin: 3px 0 0 0;
   color: #6B7280;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
 }
 
 .logout-btn {
-  background: #1D2233;
-  color: white;
-  border: none;
-  padding: 12px 18px;
-  border-radius: 12px;
+  background: transparent;
+  color: #1D2233;
+  border: 1.5px solid #E2E8F0;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: 0.3s;
+  transition: all 0.25s ease;
 }
 
 .logout-btn:hover {
-  background: #0A0F22;
+  background: #1D2233;
+  color: white;
+  border-color: #1D2233;
+  transform: translateY(-1px);
 }
 
 /* ================================
@@ -131,6 +143,7 @@ body {
   height: 110px;
   border-radius: 50%;
   background: rgba(255,255,255,0.1);
+  border: 2px solid rgba(86,178,187,0.35);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -154,9 +167,36 @@ body {
   margin: 0;
 }
 
+.id-card h2 {
+  font-size: 26px;
+  font-weight: 700;
+}
+
 .id-card p {
   color: #D7E3F0;
   margin: 8px 0;
+}
+
+.id-meta-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin: 6px 0;
+}
+
+.id-meta-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7C8AAE;
+  min-width: 78px;
+}
+
+.id-meta-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #D7E3F0;
 }
 
 /* Rank / Progress rows */
@@ -177,6 +217,17 @@ body {
   color: white;
 }
 
+.rank-chip {
+  background: rgba(86,178,187,0.15);
+  color: #56B2BB;
+  border: 1px solid rgba(86,178,187,0.35);
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+
 /* Progress bar */
 
 .progress-bar {
@@ -193,6 +244,7 @@ body {
   width: 0%;
   background: linear-gradient(90deg, #56B2BB, #7fd4dc);
   border-radius: 10px;
+  box-shadow: 0 0 10px rgba(86,178,187,0.5);
   transition: width 0.4s ease;
 }
 
@@ -205,6 +257,10 @@ body {
   margin-top: 20px;
   flex-wrap: wrap;
   gap: 15px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 14px;
+  padding: 16px 18px;
 }
 
 .qr-section h3 {
@@ -231,14 +287,26 @@ body {
    SECTION TITLES
 ================================ */
 
+.section-kicker {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #56B2BB;
+  margin-bottom: 6px;
+}
+
 .section-title h2 {
   margin: 0 0 4px 0;
   color: #1D2233;
+  font-size: 22px;
 }
 
-.section-title p {
+.section-subtitle {
   margin: 0 0 18px 0;
   color: #6B7280;
+  font-size: 14px;
 }
 
 /* ================================
@@ -258,34 +326,73 @@ body {
 .puzzle-card {
   background: white;
   border-radius: 18px;
-  padding: 30px;
+  padding: 28px 26px 26px 26px;
   text-align: center;
   cursor: pointer;
   transition: all 0.25s ease;
   box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  border-top: 4px solid #E2E8F0;
 }
 
 .puzzle-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+  box-shadow: 0 14px 28px rgba(0,0,0,0.14);
+}
+
+.puzzle-icon-chip {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px auto;
+  border-radius: 50%;
+  background: #F0F4F8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.25s ease;
 }
 
 .puzzle-icon {
-  font-size: 44px;
-  margin-bottom: 10px;
+  font-size: 32px;
 }
 
 .puzzle-card h3 {
   margin: 0;
   color: #1D2233;
+  font-size: 17px;
 }
 
 .puzzle-card p {
   color: #6B7280;
+  font-size: 13.5px;
+  margin: 4px 0 0 0;
 }
 
-.puzzle-card.locked {
-  opacity: 0.55;
+.puzzle-card.state-available {
+  border-top-color: #56B2BB;
+}
+
+.puzzle-card.state-available .puzzle-icon-chip {
+  background: rgba(86,178,187,0.12);
+}
+
+.puzzle-card.state-completed {
+  border-top-color: #34D399;
+}
+
+.puzzle-card.state-completed .puzzle-icon-chip {
+  background: rgba(52,211,153,0.12);
+}
+
+.puzzle-card.state-challenge {
+  border-top-color: #FBBF24;
+}
+
+.puzzle-card.state-challenge .puzzle-icon-chip {
+  background: rgba(251,191,36,0.14);
+}
+
+.puzzle-card.state-locked {
+  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -298,14 +405,26 @@ body {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
+  background: #F0F4F8;
+  color: #6B7280;
 }
 
-.puzzle-card.available .status-badge {
+.status-badge.status-available {
+  background: #E0F2FE;
+  color: #0284C7;
+}
+
+.status-badge.status-completed {
   background: #DFF5E5;
   color: #1E9E5A;
 }
 
-.puzzle-card.locked .status-badge {
+.status-badge.status-challenge {
+  background: #FEF3E0;
+  color: #C2760C;
+}
+
+.status-badge.status-locked {
   background: #EEE;
   color: #999;
 }
@@ -332,12 +451,15 @@ body {
   border-bottom: 1px solid #EEF1F5;
 }
 
-.activity-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: #56B2BB;
-  margin-top: 6px;
+.activity-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 10px;
+  background: rgba(86,178,187,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
   flex-shrink: 0;
 }
 
@@ -380,7 +502,7 @@ body.dashboard-page {
   color: white;
 }
 
-.dashboard-page .section-title p {
+.dashboard-page .section-subtitle {
   color: #9CA9C4;
 }
 
@@ -1160,11 +1282,12 @@ body.teacher-page {
 ================================ */
 
 .badge-section {
-  margin-top: 20px;
+  margin: 0 0 35px 0;
 }
 
 .badge-section h3 {
-  margin-bottom: 12px;
+  margin: 0 0 4px 0;
+  font-size: 20px;
 }
 
 .badge-grid {

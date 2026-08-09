@@ -147,7 +147,14 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 15px;
-  flex: 0 0 auto;
+  flex: 0 1 auto;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.id-info {
+  min-width: 0;
+  flex: 1 1 auto;
 }
 
 .gospel-quote {
@@ -222,6 +229,8 @@ body {
 .id-card h2 {
   font-size: 26px;
   font-weight: 700;
+  overflow-wrap: break-word;
+  word-break: break-word;
 }
 
 .id-card p {

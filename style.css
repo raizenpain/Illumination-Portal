@@ -94,7 +94,31 @@ body {
 .id-header {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: 15px;
+}
+
+.gospel-quote {
+  margin-left: auto;
+  max-width: 320px;
+  text-align: right;
+}
+
+.gospel-quote-text {
+  font-family: 'Dancing Script', cursive;
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.3;
+  color: #C7D2E3;
+  margin: 0;
+}
+
+.gospel-quote-ref {
+  font-family: 'Dancing Script', cursive;
+  font-weight: 600;
+  font-size: 15px;
+  color: #7C8AAE;
+  margin: 6px 0 0 0;
 }
 
 .avatar-circle {
@@ -1262,6 +1286,12 @@ body.teacher-page {
 
   .id-card {
     padding: 24px;
+  }
+
+  .gospel-quote {
+    margin-left: 0;
+    max-width: 100%;
+    text-align: left;
   }
 
   .board {

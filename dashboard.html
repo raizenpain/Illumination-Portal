@@ -4,6 +4,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HCDC Illumination Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="dashboard-page">
@@ -30,6 +33,11 @@
         <h2 id="cardName">Loading...</h2>
         <p id="cardSection">Section</p>
         <p id="cardStudentId">Student ID</p>
+      </div>
+
+      <div class="gospel-quote">
+        <p class="gospel-quote-text" id="gospelQuoteText"></p>
+        <p class="gospel-quote-ref" id="gospelQuoteRef"></p>
       </div>
     </div>
 
@@ -165,6 +173,7 @@
 import { db, doc, getDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
+import { loadGospelQuote } from './gospel.js';
 
 const { email, name } = requireLogin();
 
@@ -297,7 +306,18 @@ function setupPuzzleCard(puzzleNumber, data, previousPuzzleNumber) {
   }
 }
 
+async function loadGospel() {
+  const quoteEl = document.getElementById('gospelQuoteText');
+  const refEl = document.getElementById('gospelQuoteRef');
+  if (!quoteEl) return;
+
+  const { text, ref } = await loadGospelQuote();
+  quoteEl.textContent = `“${text}”`;
+  if (refEl) refEl.textContent = ref ? `— ${ref}` : '';
+}
+
 loadStudentCard();
+loadGospel();
 
 ['midtermSeasonBtn', 'semifinalSeasonBtn', 'finalSeasonBtn'].forEach((id) => {
   const card = document.getElementById(id);

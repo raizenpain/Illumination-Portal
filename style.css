@@ -95,12 +95,18 @@ body {
   display: flex;
   align-items: flex-start;
   gap: 15px;
+  position: relative;
 }
 
 .gospel-quote {
-  margin: 18px 0 0 0;
-  padding-left: 14px;
-  border-left: 3px solid rgba(86,178,187,0.4);
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+  pointer-events: none;
 }
 
 .gospel-quote-text {
@@ -1285,6 +1291,13 @@ body.teacher-page {
 
   .id-card {
     padding: 24px;
+  }
+
+  .gospel-quote {
+    position: static;
+    transform: none;
+    max-width: 100%;
+    margin-top: 18px;
   }
 
   .board {

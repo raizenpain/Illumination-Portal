@@ -135,11 +135,27 @@ body {
 }
 
 .gospel-quote-ref {
-  font-family: 'Dancing Script', cursive;
+  display: inline-block;
+  pointer-events: auto;
+  margin: 10px 0 0 0;
+  padding: 5px 14px;
+  border-radius: 10px;
+  border: 1.5px solid rgba(124,138,174,0.4);
+  background: transparent;
+  font-family: 'Segoe UI', sans-serif;
   font-weight: 600;
-  font-size: 15px;
+  font-size: 12px;
+  letter-spacing: 0.02em;
   color: #7C8AAE;
-  margin: 6px 0 0 0;
+  text-decoration: none;
+  transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+}
+
+.gospel-quote-ref:hover {
+  background: rgba(86,178,187,0.15);
+  color: #56B2BB;
+  border-color: rgba(86,178,187,0.5);
+  transform: translateY(-1px);
 }
 
 .avatar-circle {

@@ -39,7 +39,7 @@
 
       <div class="gospel-quote">
         <p class="gospel-quote-text" id="gospelQuoteText"></p>
-        <p class="gospel-quote-ref" id="gospelQuoteRef"></p>
+        <a class="gospel-quote-ref" id="gospelQuoteRef" href="#" target="_blank" rel="noopener noreferrer"></a>
       </div>
     </div>
 
@@ -305,7 +305,15 @@ async function loadGospel() {
 
   const { text, ref } = await loadGospelQuote();
   quoteEl.textContent = `“${text}”`;
-  if (refEl) refEl.textContent = ref ? `— ${ref}` : '';
+  if (refEl) {
+    refEl.textContent = ref || '';
+    if (ref) {
+      refEl.href = `https://www.biblegateway.com/passage/?search=${encodeURIComponent(ref)}&version=NIV`;
+      refEl.style.display = '';
+    } else {
+      refEl.style.display = 'none';
+    }
+  }
 }
 
 loadStudentCard();

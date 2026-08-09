@@ -850,21 +850,24 @@ body.completion-page {
 
 body.teacher-page {
   margin: 0;
-  background: #F0F4F8;
   min-height: 100vh;
+  background: radial-gradient(circle at top, #1D2233, #0A0F22);
+  padding: 40px 20px;
+  box-sizing: border-box;
 }
 
 .teacher-container {
   max-width: 900px;
-  margin: 40px auto;
-  padding: 0 20px;
+  margin: 0 auto;
+  padding: 0;
 }
 
 .teacher-header {
-  background: white;
+  background: linear-gradient(135deg, rgba(86,178,187,0.1), rgba(29,34,51,0.4));
+  border: 1px solid rgba(86,178,187,0.25);
   padding: 22px 28px;
   border-radius: 18px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
   margin-bottom: 28px;
   display: flex;
   justify-content: space-between;
@@ -873,30 +876,32 @@ body.teacher-page {
 
 .teacher-header h1 {
   margin: 0;
-  color: #1D2233;
+  color: white;
   font-size: 20px;
+  letter-spacing: 0.02em;
 }
 
 #teacherInfo {
-  color: #6B7280;
+  color: #9CA9C4;
   font-size: 14px;
   margin: 4px 0 0 0;
 }
 
 .teacher-panel {
-  background: white;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1px solid rgba(86,178,187,0.18);
   padding: 28px;
   border-radius: 18px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
 }
 
 .teacher-panel h2 {
   margin: 0 0 4px 0;
-  color: #1D2233;
+  color: white;
 }
 
 .teacher-panel p {
-  color: #6B7280;
+  color: #9CA9C4;
   font-size: 14px;
   margin: 0 0 20px 0;
 }
@@ -910,20 +915,30 @@ body.teacher-page {
 #releaseButtons button {
   margin: 0;
   background: #56B2BB;
+  box-shadow: 0 0 0 rgba(86,178,187,0);
+  transition: all 0.25s ease;
+}
+
+#releaseButtons button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(86,178,187,0.35);
 }
 
 #releaseButtons button:disabled {
-  background: #E2E8F0;
-  color: #9CA3AF;
+  background: rgba(255,255,255,0.06);
+  color: #5B667D;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 #releaseButtons button.released {
-  background: #4CAF83;
+  background: #34D399;
 }
 
 #releaseButtons button.released:hover {
-  background: #3d9c6d;
+  background: #22b385;
+  box-shadow: 0 6px 18px rgba(52,211,153,0.35);
 }
 
 .puzzle-tabs {
@@ -934,9 +949,9 @@ body.teacher-page {
 }
 
 .puzzle-tab {
-  background: #F0F4F8;
-  color: #1D2233;
-  border: 1.5px solid #E2E8F0;
+  background: rgba(255,255,255,0.05);
+  color: #D7E3F0;
+  border: 1.5px solid rgba(255,255,255,0.12);
   padding: 9px 16px;
   border-radius: 10px;
   font-size: 13px;
@@ -947,12 +962,14 @@ body.teacher-page {
 
 .puzzle-tab:hover {
   border-color: #56B2BB;
+  color: white;
 }
 
 .puzzle-tab.active {
-  background: #1D2233;
-  color: white;
-  border-color: #1D2233;
+  background: #56B2BB;
+  color: #0A0F22;
+  border-color: #56B2BB;
+  box-shadow: 0 0 14px rgba(86,178,187,0.5);
 }
 
 /* Student progress table */
@@ -972,8 +989,8 @@ body.teacher-page {
 }
 
 .student-table thead th {
-  background: #F0F4F8;
-  color: #6B7280;
+  background: rgba(255,255,255,0.04);
+  color: #9CA9C4;
   font-weight: 600;
   font-size: 12px;
   text-transform: uppercase;
@@ -989,19 +1006,20 @@ body.teacher-page {
 }
 
 .student-table tbody tr {
-  border-bottom: 1px solid #EEF1F5;
+  border-bottom: 1px solid rgba(255,255,255,0.07);
 }
 
 .student-table tbody tr:hover {
-  background: #F8FAFC;
+  background: rgba(86,178,187,0.07);
 }
 
 .student-table tbody td {
-  color: #1D2233;
+  color: #D7E3F0;
 }
 
 .student-table tbody td:first-child {
   font-weight: 600;
+  color: white;
 }
 
 .progress-pill {
@@ -1012,18 +1030,18 @@ body.teacher-page {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  background: #EEF1F5;
-  color: #6B7280;
+  background: rgba(255,255,255,0.08);
+  color: #9CA9C4;
 }
 
 .progress-pill.complete {
-  background: #DFF5E5;
-  color: #1E9E5A;
+  background: rgba(52,211,153,0.15);
+  color: #4ADE80;
 }
 
 .progress-pill.in-progress {
-  background: #FEF3E0;
-  color: #C2760C;
+  background: rgba(251,191,36,0.15);
+  color: #FBBF24;
 }
 
 .rank-pill {

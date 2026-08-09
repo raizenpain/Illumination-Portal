@@ -329,7 +329,7 @@ body {
 ================================ */
 
 body.dashboard-page {
-  background: radial-gradient(circle at top, #1D2233, #0A0F22);
+  background: radial-gradient(circle at top, #354064, #1D2233);
   min-height: 100vh;
 }
 

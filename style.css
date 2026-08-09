@@ -70,38 +70,52 @@ body {
 
 .portal-tagline {
   flex: 1;
-  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
   padding: 0 24px;
-  color: #56B2BB;
-  font-size: 13px;
-  font-weight: 600;
-  font-style: italic;
   text-decoration: none;
-  letter-spacing: 0.01em;
-  transition: color 0.15s ease;
+  transition: opacity 0.15s ease;
 }
 
 .portal-tagline:hover {
-  color: #1D2233;
-  text-decoration: underline;
+  opacity: 0.75;
+}
+
+.portal-tagline-script {
+  font-family: 'Dancing Script', cursive;
+  font-weight: 700;
+  font-size: 25px;
+  line-height: 1.1;
+  color: #8A1F2B;
+}
+
+.portal-tagline-bold {
+  font-family: 'Segoe UI', sans-serif;
+  font-weight: 800;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  color: #8A1F2B;
 }
 
 .logout-btn {
-  background: transparent;
-  color: #1D2233;
-  border: 1.5px solid #E2E8F0;
-  padding: 10px 18px;
+  background: #1D2233;
+  color: white;
+  border: 1.5px solid #1D2233;
+  padding: 13px 26px;
   border-radius: 10px;
-  font-size: 13px;
-  font-weight: 600;
+  font-size: 15px;
+  font-weight: 700;
   cursor: pointer;
   transition: all 0.25s ease;
 }
 
 .logout-btn:hover {
-  background: #1D2233;
-  color: white;
-  border-color: #1D2233;
+  background: #56B2BB;
+  border-color: #56B2BB;
+  color: #0A0F22;
   transform: translateY(-1px);
 }
 

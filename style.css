@@ -325,6 +325,37 @@ body {
 }
 
 /* ================================
+   DASHBOARD PAGE (dashboard.html)
+================================ */
+
+body.dashboard-page {
+  background: radial-gradient(circle at top, #1D2233, #0A0F22);
+  min-height: 100vh;
+}
+
+.dashboard-page hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  margin: 25px 0;
+}
+
+.dashboard-page .badge-section h3 {
+  color: white;
+}
+
+.dashboard-page .badge-grid p {
+  color: #9CA9C4;
+}
+
+.dashboard-page .section-title h2 {
+  color: white;
+}
+
+.dashboard-page .section-title p {
+  color: #9CA9C4;
+}
+
+/* ================================
    SHARED BUTTON DEFAULTS
 ================================ */
 

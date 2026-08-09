@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Jornie Console | HCDC Puzzle Master</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="teacher-page">
+
+  <div class="teacher-container">
+
+    <div class="teacher-header">
+      <div>
+        <h1>Jornie Console</h1>
+        <p id="teacherInfo">HCDC Puzzle Master</p>
+      </div>
+      <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+    </div>
+
+    <div class="teacher-panel">
+      <h2>Piece Release</h2>
+      <p>Choose a puzzle, then release each piece so students can upload it</p>
+
+      <div id="puzzleTabs" class="puzzle-tabs"></div>
+      <div id="releaseButtons"></div>
+    </div>
+
+    <div class="teacher-panel" style="margin-top: 24px;">
+      <h2>Student Progress</h2>
+      <p>Track each student's puzzle completion</p>
+
+      <table id="studentTable" class="student-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Email</th>
+            <th>Puzzle 1</th>
+            <th>Puzzle 2</th>
+            <th>Puzzle 3</th>
+            <th>Rank</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+  </div>
+
+  <script type="module" src="teacher.js"></script>
+
+</body>
+</html>

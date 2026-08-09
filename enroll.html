@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Enroll - HCDC Illumination Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="enroll-page">
+
+  <div class="enroll-card">
+    <img src="assets/hcdc-logo.png" alt="HCDC Logo" class="enroll-logo">
+
+    <h1>Complete Your Enrollment</h1>
+    <p>Just one more step before you begin your formation journey</p>
+
+    <p id="studentName" class="enroll-student-name">Loading...</p>
+
+    <div class="form-group">
+      <label for="sectionSelect">Select your section</label>
+      <select id="sectionSelect">
+        <option value="">-- Choose section --</option>
+        <option value="REED 101 - A">REED 101 - A</option>
+        <option value="REED 101 - B">REED 101 - B</option>
+        <option value="REED 101 - C">REED 101 - C</option>
+      </select>
+    </div>
+
+    <button id="enrollBtn" class="enroll-btn">Enroll</button>
+  </div>
+
+  <script type="module" src="enroll.js"></script>
+
+</body>
+</html>

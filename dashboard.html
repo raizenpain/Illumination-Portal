@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HCDC Illumination Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="portal-container">
+
+  <header class="portal-header">
+    <div class="portal-brand">
+      <img src="assets/hcdc-logo.png" class="portal-logo" alt="HCDC Logo">
+      <div>
+        <h1>HCDC Illumination Portal</h1>
+        <p>Religious Education Formation Portal</p>
+      </div>
+    </div>
+
+    <button id="logoutBtn" class="logout-btn">Sign Out</button>
+  </header>
+
+  <div class="id-card">
+    <div class="id-header">
+      <div class="avatar-circle">👤</div>
+
+      <div>
+        <h2 id="cardName">Loading...</h2>
+        <p id="cardSection">Section</p>
+        <p id="cardStudentId">Student ID</p>
+      </div>
+    </div>
+
+    <hr>
+
+    <div class="card-info">
+      <div class="info-row">
+        <span>Rank</span>
+        <strong id="cardRank">Seeker</strong>
+      </div>
+
+      <div class="info-row">
+        <span>Progress</span>
+        <strong id="cardProgress">0%</strong>
+      </div>
+    </div>
+
+    <div class="progress-bar">
+      <div class="progress-fill" id="progressFill"></div>
+    </div>
+
+    <div class="qr-section">
+      <div>
+        <h3>Identity QR</h3>
+        <p>Use this QR for HCDC activities</p>
+      </div>
+
+      <div id="cardQR"></div>
+    </div>
+  </div>
+
+<hr>
+
+<div class="badge-section">
+  <h3>Achievements</h3>
+  <div id="badgeContainer" class="badge-grid">
+    <p>No achievements yet.</p>
+  </div>
+</div>
+
+  <section class="puzzle-section">
+    <div class="section-title">
+      <h2>Your Puzzle Journey</h2>
+      <p>Complete each formation milestone</p>
+    </div>
+
+    <div class="puzzle-grid">
+
+      <div class="puzzle-card" id="puzzle1Btn">
+        <div class="puzzle-icon">🧩</div>
+        <h3>Puzzle 1</h3>
+        <p>Beatitudes</p>
+        <span class="status-badge">Loading...</span>
+      </div>
+
+      <div class="puzzle-card" id="puzzle2Btn">
+        <div class="puzzle-icon">🔒</div>
+        <h3>Puzzle 2</h3>
+        <p>Sacraments</p>
+        <span class="status-badge">Loading...</span>
+      </div>
+
+      <div class="puzzle-card" id="puzzle3Btn">
+        <div class="puzzle-icon">🔒</div>
+        <h3>Puzzle 3</h3>
+        <p>Christian Vocation</p>
+        <span class="status-badge">Loading...</span>
+      </div>
+
+    </div>
+  </section>
+
+  <section class="activity-section">
+    <div class="section-title">
+      <h2>Recent Activity</h2>
+      <p>Your latest formation progress</p>
+    </div>
+
+    <div class="activity-card">
+      <div class="activity-item">
+        <div class="activity-dot"></div>
+        <div>
+          <strong>Puzzle Portal Ready</strong>
+          <p>Your HCDC formation profile is active.</p>
+        </div>
+      </div>
+
+      <div class="activity-item">
+        <div class="activity-dot"></div>
+        <div>
+          <strong>Next Goal</strong>
+          <p>Complete Puzzle 1 to unlock the next milestone.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script type="module">
+import { db, doc, getDoc } from './firebase.js';
+import { requireLogin } from './auth.js';
+import { PUZZLE_CONFIG } from './puzzles.js';
+
+const { email, name } = requireLogin();
+
+const BADGE_INFO = {
+  first_step: { icon: '🥉', title: 'First Step', sub: 'Collected first piece' },
+  faith_explorer: { icon: '🧭', title: 'Faith Explorer', sub: 'Collected 3 pieces' },
+  mission_builder: { icon: '🛠️', title: 'Mission Builder', sub: 'Collected 6 pieces' },
+  beatitudes_master: { icon: '👑', title: 'Beatitudes Master', sub: 'Completed Puzzle 1' },
+  sacraments_master: { icon: '👑', title: 'Sacraments Master', sub: 'Completed Puzzle 2' },
+  vocation_master: { icon: '👑', title: 'Vocation Master', sub: 'Completed Puzzle 3' },
+  formation_champion: { icon: '🏆', title: 'Formation Champion', sub: 'Completed all puzzles' }
+};
+
+async function loadStudentCard() {
+  try {
+    const studentRef = doc(db, 'students', email);
+    const snapshot = await getDoc(studentRef);
+    const data = snapshot.exists() ? snapshot.data() : {};
+
+    document.getElementById('cardName').textContent = data.name || name;
+    document.getElementById('cardSection').textContent = data.section || 'Section: Not Assigned';
+    document.getElementById('cardStudentId').textContent = data.studentId || 'Student ID: N/A';
+    document.getElementById('cardRank').textContent = data.rank || 'Seeker';
+
+    const progress = data.puzzle1 ? Math.round((data.puzzle1.length / 9) * 100) : 0;
+    document.getElementById('cardProgress').textContent = progress + '%';
+    document.getElementById('progressFill').style.width = progress + '%';
+
+    if (snapshot.exists()) {
+      const qr = document.createElement('img');
+      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${data.studentId || email}`;
+      qr.alt = 'Identity QR';
+      const cardQR = document.getElementById('cardQR');
+      cardQR.innerHTML = '';
+      cardQR.appendChild(qr);
+    }
+
+    renderBadges(data.achievements || []);
+    renderPuzzleCards(data);
+
+  } catch (err) {
+    console.error('Failed to load student card:', err);
+    document.getElementById('cardName').textContent = name;
+    document.getElementById('cardSection').textContent = 'Could not load data';
+  }
+}
+
+function renderBadges(achievements) {
+  const badgeContainer = document.getElementById('badgeContainer');
+
+  if (achievements.length === 0) {
+    badgeContainer.innerHTML = '<p>No achievements yet.</p>';
+    return;
+  }
+
+  badgeContainer.innerHTML = '';
+
+  achievements.forEach(id => {
+    const info = BADGE_INFO[id];
+    if (!info) return;
+
+    const badge = document.createElement('div');
+    badge.className = 'badge';
+    badge.innerHTML = `
+      <span class="badge-icon">${info.icon}</span>
+      <div class="badge-title">${info.title}</div>
+      <div class="badge-sub">${info.sub}</div>
+    `;
+    badgeContainer.appendChild(badge);
+  });
+}
+
+function renderPuzzleCards(data) {
+  setupPuzzleCard(1, data, null);
+  setupPuzzleCard(2, data, 1);
+  setupPuzzleCard(3, data, 2);
+}
+
+function setupPuzzleCard(puzzleNumber, data, previousPuzzleNumber) {
+  const config = PUZZLE_CONFIG[puzzleNumber];
+  const card = document.getElementById(`puzzle${puzzleNumber}Btn`);
+  if (!card || !config) return;
+
+  const icon = card.querySelector('.puzzle-icon');
+  const badge = card.querySelector('.status-badge');
+
+  const completed = !!data[config.completedField];
+  const unlocked = !config.requiresGate || !!data[config.requiresGate];
+  const previousCompleted = previousPuzzleNumber
+    ? !!data[PUZZLE_CONFIG[previousPuzzleNumber].completedField]
+    : true; // Puzzle 1 has no prerequisite
+
+  card.classList.remove('locked', 'available');
+
+  if (!previousCompleted) {
+    // Locked — previous puzzle not finished yet
+    card.classList.add('locked');
+    icon.textContent = '🔒';
+    badge.textContent = 'Locked';
+    card.onclick = () => {
+      alert(`Complete Puzzle ${previousPuzzleNumber} first to unlock this puzzle.`);
+    };
+
+  } else if (completed) {
+    // Fully completed
+    card.classList.add('available');
+    icon.textContent = '✅';
+    badge.textContent = 'Completed';
+    card.onclick = () => {
+      window.location.href = `puzzle.html?puzzle=${puzzleNumber}`;
+    };
+
+  } else if (!unlocked) {
+    // Ready for the challenge gate
+    card.classList.add('available');
+    icon.textContent = '🗝️';
+    badge.textContent = 'Take Challenge';
+    card.onclick = () => {
+      window.location.href = `challenge.html?gate=puzzle${puzzleNumber}`;
+    };
+
+  } else {
+    // Unlocked and playable
+    card.classList.add('available');
+    icon.textContent = '🧩';
+    badge.textContent = 'Available';
+    card.onclick = () => {
+      window.location.href = `puzzle.html?puzzle=${puzzleNumber}`;
+    };
+  }
+}
+
+loadStudentCard();
+
+const logoutBtn = document.getElementById('logoutBtn');
+if (logoutBtn) {
+  logoutBtn.onclick = () => {
+    localStorage.clear();
+    window.location.href = 'login.html';
+  };
+}
+</script>
+
+</body>
+</html>

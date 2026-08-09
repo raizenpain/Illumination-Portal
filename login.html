@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>HCDC Puzzle Portal Login</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="login-page">
+
+  <div class="login-box">
+    <img src="assets/hcdc-logo.png" alt="HCDC Logo" class="login-logo">
+
+    <h1>HCDC Illumination Portal</h1>
+    <p>Sign in using your HCDC email account to continue your formation journey</p>
+
+    <button id="googleLogin" class="google-btn">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="google-icon">
+      Sign in with Google
+    </button>
+
+    <p id="message"></p>
+
+    <div class="login-footer">
+      <small>Access restricted to official @hcdc.edu.ph accounts</small>
+    </div>
+  </div>
+
+  <script type="module">
+    import { auth, provider, signInWithPopup, signOut, db, doc, getDoc } from './firebase.js';
+
+    const loginBtn = document.getElementById('googleLogin');
+    const message = document.getElementById('message');
+
+    loginBtn.addEventListener('click', async () => {
+      loginBtn.disabled = true;
+      loginBtn.textContent = 'Signing in...';
+
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+
+        const allowedDomain = '@hcdc.edu.ph';
+
+        if (!user.email.endsWith(allowedDomain)) {
+          await signOut(auth);
+          message.textContent = 'Access denied. Please use your HCDC email account.';
+          loginBtn.disabled = false;
+          loginBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="google-icon"> Sign in with Google';
+          return;
+        }
+
+        localStorage.setItem('studentName', user.displayName);
+        localStorage.setItem('studentEmail', user.email);
+
+        const ADMIN_EMAIL = 'jornie.hinay@hcdc.edu.ph';
+
+        if (user.email === ADMIN_EMAIL) {
+          window.location.href = 'teacher.html';
+          return;
+        }
+
+        // Returning students (already enrolled) go straight to their
+        // dashboard instead of back through the enrollment form.
+        const snap = await getDoc(doc(db, 'students', user.email));
+        window.location.href = (snap.exists() && snap.data().studentId) ? 'dashboard.html' : 'enroll.html';
+
+      } catch (error) {
+        console.error(error);
+        message.textContent = 'Login failed. Please try again.';
+        loginBtn.disabled = false;
+        loginBtn.innerHTML = '<img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google" class="google-icon"> Sign in with Google';
+      }
+    });
+  </script>
+
+</body>
+</html>

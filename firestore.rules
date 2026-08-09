@@ -1,0 +1,48 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Students collection — doc ID is the student's email
+    match /students/{studentId} {
+      // A student can read their own record, and so can the admin (for the progress table)
+      allow read: if request.auth != null &&
+                     (request.auth.token.email == studentId ||
+                      request.auth.token.email == 'jornie.hinay@hcdc.edu.ph');
+
+      // Student profiles are only ever created by the enrollStudent Cloud
+      // Function (Admin SDK bypasses these rules), so clients can never
+      // forge a starting rank/achievements/progress via a raw create.
+      allow create: if false;
+
+      // A student may update their own record, but never the fields that
+      // represent earned progress — those are only written server-side by
+      // the enrollStudent / submitChallengeAnswers / claimPuzzlePiece
+      // Cloud Functions.
+      allow update: if request.auth != null &&
+                       request.auth.token.email == studentId &&
+                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                       !request.resource.data.diff(resource.data).affectedKeys()
+                          .hasAny(['puzzle1', 'puzzle2', 'puzzle3',
+                                   'puzzle1Completed', 'puzzle2Completed', 'puzzle3Completed',
+                                   'puzzle2Unlocked', 'puzzle3Unlocked',
+                                   'achievements', 'rank', 'studentId', 'createdAt']);
+
+      allow delete: if false;
+    }
+
+    // Settings collection — puzzle piece release status
+    match /settings/{settingId} {
+      // Any signed-in student can check which pieces are released
+      allow read: if request.auth != null;
+
+      // Only Jornie can release pieces
+      allow write: if request.auth != null &&
+                      request.auth.token.email == 'jornie.hinay@hcdc.edu.ph';
+    }
+
+    // Everything else — denied by default
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

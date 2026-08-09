@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Puzzle</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="puzzle-page">
+
+  <div class="puzzle-card-wrapper">
+    <img src="assets/hcdc-logo.png" alt="HCDC Logo" class="puzzle-logo">
+
+    <h1 id="puzzleTitle">Puzzle</h1>
+    <p class="puzzle-subtitle" id="puzzleSubtitle"></p>
+    <p id="studentInfo" class="puzzle-student-info"></p>
+
+    <div id="board" class="board"></div>
+
+    <label class="upload-label" for="pieceUpload">
+      <span class="upload-icon">📤</span> Upload Puzzle Piece
+    </label>
+    <input type="file" id="pieceUpload" accept="image/png, image/jpeg" class="upload-input">
+
+    <p id="status" class="puzzle-status"></p>
+
+    <button class="back-btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+  </div>
+
+  <div id="achievementPopup" class="achievement-popup hidden">
+    <div class="achievement-box">
+      <div class="achievement-icon">🏅</div>
+      <h2>Achievement Unlocked!</h2>
+      <h3 id="achievementTitle">Title</h3>
+      <p id="achievementText">Description</p>
+    </div>
+  </div>
+
+  <script type="module" src="app.js"></script>
+
+</body>
+</html>

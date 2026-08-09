@@ -1,0 +1,1181 @@
+/* ================================
+   HCDC ILLUMINATION PORTAL
+================================ */
+
+body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background: #F0F4F8;
+  color: #1D2233;
+}
+
+.portal-container {
+  max-width: 1100px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+/* ================================
+   HEADER
+================================ */
+
+.portal-header {
+  position: sticky;
+  top: 0;
+  z-index: 1000;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  background: rgba(255,255,255,0.95);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+
+  padding: 18px 25px;
+  border-radius: 18px;
+
+  box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+
+  margin-bottom: 30px;
+}
+
+.portal-brand {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.portal-logo {
+  width: 60px;
+  height: 60px;
+}
+
+.portal-brand h1 {
+  margin: 0;
+  color: #1D2233;
+}
+
+.portal-brand p {
+  margin: 4px 0 0 0;
+  color: #6B7280;
+}
+
+.logout-btn {
+  background: #1D2233;
+  color: white;
+  border: none;
+  padding: 12px 18px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.logout-btn:hover {
+  background: #0A0F22;
+}
+
+/* ================================
+   ID CARD
+================================ */
+
+.id-card {
+  width: 100%;
+  max-width: 100%;
+  margin: 0 auto 35px auto;
+  background: linear-gradient(135deg, #0A0F22, #1D2233);
+  color: white;
+  border-radius: 22px;
+  padding: 30px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.25);
+  box-sizing: border-box;
+}
+
+.id-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 15px;
+}
+
+.avatar-circle {
+  width: 110px;
+  height: 110px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  flex-shrink: 0;
+}
+
+.id-logo {
+  width: 60px;
+  height: 60px;
+}
+
+.id-card hr {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.15);
+  margin: 20px 0;
+}
+
+.id-card h2,
+.id-card h3 {
+  margin: 0;
+}
+
+.id-card p {
+  color: #D7E3F0;
+  margin: 8px 0;
+}
+
+/* Rank / Progress rows */
+
+.card-info {
+  margin: 20px 0;
+}
+
+.info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  color: #D7E3F0;
+}
+
+.info-row strong {
+  color: white;
+}
+
+/* Progress bar */
+
+.progress-bar {
+  width: 100%;
+  height: 10px;
+  background: rgba(255,255,255,0.15);
+  border-radius: 10px;
+  overflow: hidden;
+  margin-bottom: 10px;
+}
+
+.progress-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #56B2BB, #7fd4dc);
+  border-radius: 10px;
+  transition: width 0.4s ease;
+}
+
+/* QR section */
+
+.qr-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+  flex-wrap: wrap;
+  gap: 15px;
+}
+
+.qr-section h3 {
+  font-size: 15px;
+}
+
+.qr-section p {
+  font-size: 13px;
+  margin: 4px 0 0 0;
+}
+
+#cardQR {
+  display: flex;
+  justify-content: center;
+}
+
+#cardQR img {
+  background: white;
+  padding: 8px;
+  border-radius: 10px;
+}
+
+/* ================================
+   SECTION TITLES
+================================ */
+
+.section-title h2 {
+  margin: 0 0 4px 0;
+  color: #1D2233;
+}
+
+.section-title p {
+  margin: 0 0 18px 0;
+  color: #6B7280;
+}
+
+/* ================================
+   PUZZLE SECTION (dashboard cards)
+================================ */
+
+.puzzle-section {
+  margin-bottom: 35px;
+}
+
+.puzzle-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 20px;
+}
+
+.puzzle-card {
+  background: white;
+  border-radius: 18px;
+  padding: 30px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.puzzle-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 12px 24px rgba(0,0,0,0.12);
+}
+
+.puzzle-icon {
+  font-size: 44px;
+  margin-bottom: 10px;
+}
+
+.puzzle-card h3 {
+  margin: 0;
+  color: #1D2233;
+}
+
+.puzzle-card p {
+  color: #6B7280;
+}
+
+.puzzle-card.locked {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* Status badges */
+
+.status-badge {
+  display: inline-block;
+  margin-top: 10px;
+  padding: 5px 14px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.puzzle-card.available .status-badge {
+  background: #DFF5E5;
+  color: #1E9E5A;
+}
+
+.puzzle-card.locked .status-badge {
+  background: #EEE;
+  color: #999;
+}
+
+/* ================================
+   ACTIVITY
+================================ */
+
+.activity-card {
+  background: white;
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.activity-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  padding: 12px 0;
+}
+
+.activity-item:not(:last-child) {
+  border-bottom: 1px solid #EEF1F5;
+}
+
+.activity-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #56B2BB;
+  margin-top: 6px;
+  flex-shrink: 0;
+}
+
+.activity-item strong {
+  display: block;
+  color: #1D2233;
+  margin-bottom: 3px;
+}
+
+.activity-item p {
+  margin: 0;
+  color: #6B7280;
+  font-size: 14px;
+}
+
+/* ================================
+   SHARED BUTTON DEFAULTS
+================================ */
+
+button {
+  padding: 12px 20px;
+  margin: 10px;
+  border: none;
+  border-radius: 8px;
+  background: #56B2BB;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+button:hover {
+  background: #3c98a1;
+}
+
+#message {
+  color: red;
+  margin-top: 15px;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* ================================
+   LOGIN PAGE (login.html)
+================================ */
+
+body.login-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background: radial-gradient(circle at top, #1D2233, #0A0F22);
+}
+
+.login-box {
+  background: white;
+  padding: 45px 40px;
+  border-radius: 22px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  text-align: center;
+  width: 380px;
+  animation: fadeInUp 0.5s ease;
+}
+
+.login-logo {
+  width: 70px;
+  height: 70px;
+  margin-bottom: 16px;
+}
+
+.login-box h1 {
+  font-size: 22px;
+  margin: 0 0 8px 0;
+  color: #1D2233;
+}
+
+.login-box p {
+  color: #6B7280;
+  font-size: 14px;
+  margin: 0 0 28px 0;
+  line-height: 1.5;
+}
+
+.google-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: 100%;
+  background: white;
+  color: #1D2233;
+  border: 1.5px solid #E2E8F0;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.google-btn:hover {
+  border-color: #56B2BB;
+  box-shadow: 0 4px 14px rgba(86,178,187,0.25);
+  transform: translateY(-2px);
+}
+
+.google-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.google-icon {
+  width: 20px;
+  height: 20px;
+}
+
+.login-footer {
+  margin-top: 22px;
+  color: #9CA3AF;
+}
+
+/* ================================
+   PUZZLE PAGE (puzzle.html)
+================================ */
+
+body.puzzle-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  background: radial-gradient(circle at top, #1D2233, #0A0F22);
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.puzzle-card-wrapper {
+  background: white;
+  max-width: 480px;
+  width: 100%;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  text-align: center;
+  animation: fadeInUp 0.5s ease;
+  box-sizing: border-box;
+}
+
+.puzzle-logo {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 14px;
+}
+
+.puzzle-card-wrapper h1 {
+  margin: 0 0 4px 0;
+  color: #1D2233;
+}
+
+.puzzle-subtitle {
+  color: #56B2BB;
+  font-weight: 600;
+  margin: 0 0 4px 0;
+}
+
+.puzzle-student-info {
+  color: #6B7280;
+  font-size: 14px;
+  margin: 0 0 24px 0;
+}
+
+.board {
+  display: grid;
+  grid-template-columns: repeat(3, 90px);
+  gap: 12px;
+  justify-content: center;
+  margin: 0 auto 28px auto;
+}
+
+.slot {
+  width: 90px;
+  height: 90px;
+  border: 2px dashed #C7D2E3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #F8FAFC;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 18px;
+  color: #9CA3AF;
+  transition: all 0.25s ease;
+}
+
+.slot:has(img) {
+  border-style: solid;
+  border-color: #56B2BB;
+  background: white;
+}
+
+.slot img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.upload-label {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  background: #56B2BB;
+  color: white;
+  padding: 13px 20px;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.upload-label:hover {
+  background: #3c98a1;
+  transform: translateY(-2px);
+}
+
+.upload-icon {
+  font-size: 16px;
+}
+
+.upload-input {
+  display: none;
+}
+
+.puzzle-status {
+  min-height: 20px;
+  margin: 14px 0 0 0;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1D2233;
+}
+
+.back-btn {
+  margin-top: 20px;
+  background: transparent;
+  color: #6B7280;
+  border: 1.5px solid #E2E8F0;
+  padding: 11px 20px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.back-btn:hover {
+  background: #F0F4F8;
+  border-color: #C7D2E3;
+  transform: translateY(-2px);
+}
+
+/* ================================
+   CHALLENGE QUIZ
+================================ */
+
+.quiz-question {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.quiz-question-text {
+  font-weight: 600;
+  color: #1D2233;
+  margin-bottom: 10px;
+  font-size: 14px;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.quiz-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #1D2233;
+  transition: all 0.2s ease;
+}
+
+.quiz-option:hover {
+  border-color: #56B2BB;
+  background: #F8FAFC;
+}
+
+.quiz-option input {
+  accent-color: #56B2BB;
+}
+
+.submit-quiz-btn {
+  width: 100%;
+  background: #56B2BB;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 10px;
+  transition: all 0.25s ease;
+}
+
+.submit-quiz-btn:hover {
+  background: #3c98a1;
+  transform: translateY(-2px);
+}
+
+/* ================================
+   ENROLL PAGE (enroll.html)
+================================ */
+
+body.enroll-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  background: radial-gradient(circle at top, #1D2233, #0A0F22);
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.enroll-card {
+  background: white;
+  max-width: 440px;
+  width: 100%;
+  padding: 40px;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  text-align: center;
+  animation: fadeInUp 0.5s ease;
+  box-sizing: border-box;
+}
+
+.enroll-logo {
+  width: 60px;
+  height: 60px;
+  margin-bottom: 14px;
+}
+
+.enroll-card h1 {
+  margin: 0 0 6px 0;
+  color: #1D2233;
+  font-size: 22px;
+}
+
+.enroll-card p {
+  color: #6B7280;
+  font-size: 14px;
+  margin: 0 0 24px 0;
+}
+
+.enroll-student-name {
+  font-weight: 700;
+  color: #1D2233;
+  margin-bottom: 24px;
+}
+
+.form-group {
+  text-align: left;
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #1D2233;
+  margin-bottom: 6px;
+}
+
+.form-group select,
+.form-group input {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 10px;
+  font-size: 14px;
+  color: #1D2233;
+  background: white;
+  box-sizing: border-box;
+  transition: all 0.25s ease;
+}
+
+.form-group select:focus,
+.form-group input:focus {
+  outline: none;
+  border-color: #56B2BB;
+  box-shadow: 0 0 0 3px rgba(86,178,187,0.15);
+}
+
+.enroll-btn {
+  width: 100%;
+  background: #56B2BB;
+  color: white;
+  border: none;
+  padding: 14px 20px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 6px;
+  transition: all 0.25s ease;
+}
+
+.enroll-btn:hover {
+  background: #3c98a1;
+  transform: translateY(-2px);
+}
+
+.enroll-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ================================
+   COMPLETION PAGE (completion.html)
+================================ */
+
+body.completion-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  background: radial-gradient(circle at top, #1D2233, #0A0F22);
+  padding: 40px 20px;
+  box-sizing: border-box;
+}
+
+.completion-card {
+  background: white;
+  max-width: 460px;
+  width: 100%;
+  padding: 45px 40px;
+  border-radius: 24px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+  text-align: center;
+  animation: fadeInUp 0.5s ease;
+  box-sizing: border-box;
+}
+
+.completion-icon {
+  font-size: 64px;
+  margin-bottom: 10px;
+}
+
+.completion-card h1 {
+  margin: 0 0 8px 0;
+  color: #1D2233;
+}
+
+.completion-card p {
+  color: #6B7280;
+  font-size: 14px;
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.completion-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.completion-actions button {
+  margin: 0;
+  width: 100%;
+}
+
+/* ================================
+   TEACHER / ADMIN CONSOLE
+================================ */
+
+body.teacher-page {
+  margin: 0;
+  background: #F0F4F8;
+  min-height: 100vh;
+}
+
+.teacher-container {
+  max-width: 900px;
+  margin: 40px auto;
+  padding: 0 20px;
+}
+
+.teacher-header {
+  background: white;
+  padding: 22px 28px;
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  margin-bottom: 28px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.teacher-header h1 {
+  margin: 0;
+  color: #1D2233;
+  font-size: 20px;
+}
+
+#teacherInfo {
+  color: #6B7280;
+  font-size: 14px;
+  margin: 4px 0 0 0;
+}
+
+.teacher-panel {
+  background: white;
+  padding: 28px;
+  border-radius: 18px;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+}
+
+.teacher-panel h2 {
+  margin: 0 0 4px 0;
+  color: #1D2233;
+}
+
+.teacher-panel p {
+  color: #6B7280;
+  font-size: 14px;
+  margin: 0 0 20px 0;
+}
+
+#releaseButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+#releaseButtons button {
+  margin: 0;
+  background: #56B2BB;
+}
+
+#releaseButtons button:disabled {
+  background: #E2E8F0;
+  color: #9CA3AF;
+  cursor: not-allowed;
+}
+
+.puzzle-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+
+.puzzle-tab {
+  background: #F0F4F8;
+  color: #1D2233;
+  border: 1.5px solid #E2E8F0;
+  padding: 9px 16px;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.puzzle-tab:hover {
+  border-color: #56B2BB;
+}
+
+.puzzle-tab.active {
+  background: #1D2233;
+  color: white;
+  border-color: #1D2233;
+}
+
+/* Student progress table */
+
+.student-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  margin-top: 14px;
+}
+
+.student-table th,
+.student-table td {
+  text-align: left;
+  padding: 14px 16px;
+  font-size: 14px;
+}
+
+.student-table thead th {
+  background: #F0F4F8;
+  color: #6B7280;
+  font-weight: 600;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.student-table thead th:first-child {
+  border-radius: 10px 0 0 10px;
+}
+
+.student-table thead th:last-child {
+  border-radius: 0 10px 10px 0;
+}
+
+.student-table tbody tr {
+  border-bottom: 1px solid #EEF1F5;
+}
+
+.student-table tbody tr:hover {
+  background: #F8FAFC;
+}
+
+.student-table tbody td {
+  color: #1D2233;
+}
+
+.student-table tbody td:first-child {
+  font-weight: 600;
+}
+
+.progress-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 600;
+  background: #EEF1F5;
+  color: #6B7280;
+}
+
+.progress-pill.complete {
+  background: #DFF5E5;
+  color: #1E9E5A;
+}
+
+.progress-pill.in-progress {
+  background: #FEF3E0;
+  color: #C2760C;
+}
+
+.rank-pill {
+  display: inline-block;
+  padding: 4px 12px;
+  border-radius: 20px;
+  font-size: 12px;
+  font-weight: 700;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  color: #56B2BB;
+}
+
+/* ================================
+   CERTIFICATE
+================================ */
+
+.certificate {
+  width: 800px;
+  max-width: 95%;
+  margin: 40px auto;
+  padding: 40px;
+  background: white;
+  border: 10px solid #56B2BB;
+  border-radius: 20px;
+  text-align: center;
+  box-shadow: 0 0 30px rgba(0,0,0,0.2);
+}
+
+.certificate-header .logo {
+  width: 80px;
+  margin-bottom: 10px;
+}
+
+.certificate-header h1 {
+  color: #1D2233;
+  margin: 0;
+}
+
+.certificate-details {
+  text-align: left;
+  display: inline-block;
+}
+
+.signature {
+  margin-top: 30px;
+}
+
+.signature-line {
+  width: 250px;
+  border-top: 2px solid black;
+  margin: 0 auto 10px auto;
+}
+
+/* ================================
+   BADGES
+================================ */
+
+.badge-section {
+  margin-top: 20px;
+}
+
+.badge-section h3 {
+  margin-bottom: 12px;
+}
+
+.badge-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+}
+
+.badge {
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1px solid #56B2BB;
+  border-radius: 16px;
+  padding: 14px;
+  width: 150px;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.25);
+  transition: all 0.3s ease;
+}
+
+.badge:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(86,178,187,0.35);
+}
+
+.badge-icon {
+  font-size: 32px;
+  display: block;
+  margin-bottom: 8px;
+}
+
+.badge-title {
+  font-weight: 700;
+  color: #FFFFFF;
+  font-size: 15px;
+}
+
+.badge-sub {
+  font-size: 12px;
+  color: #C7D2E3;
+  margin-top: 4px;
+}
+
+/* ================================
+   ACHIEVEMENT POPUP
+================================ */
+
+.achievement-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(10,15,34,0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.3s ease;
+}
+
+.hidden {
+  display: none;
+}
+
+.achievement-box {
+  width: min(420px, calc(100% - 32px));
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 2px solid #56B2BB;
+  border-radius: 24px;
+  padding: 28px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+  animation: popupScale 0.35s ease;
+}
+
+.achievement-icon {
+  font-size: 60px;
+  margin-bottom: 10px;
+}
+
+.achievement-box h2 {
+  margin: 0;
+  color: #56B2BB;
+}
+
+.achievement-box h3 {
+  margin: 10px 0 8px;
+  font-size: 28px;
+}
+
+.achievement-box p {
+  color: #D7E3F0;
+}
+
+@keyframes popupScale {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ================================
+   MOBILE
+================================ */
+
+@media (max-width: 700px) {
+  .portal-header {
+    flex-direction: column;
+    gap: 15px;
+    text-align: center;
+  }
+
+  .portal-brand {
+    flex-direction: column;
+  }
+
+  .id-card {
+    padding: 24px;
+  }
+
+  .board {
+    grid-template-columns: repeat(3, 80px);
+  }
+
+  .slot {
+    width: 80px;
+    height: 80px;
+  }
+}

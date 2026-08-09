@@ -53,6 +53,9 @@ window.open(
 '_blank'
 );
 };
+document.getElementById('dashboardBtn').onclick = () => {
+window.location.href = 'dashboard.html';
+};
 document.getElementById('downloadBtn').onclick = () => {
   const element = document.querySelector('.certificate');
 

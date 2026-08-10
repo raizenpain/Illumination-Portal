@@ -42,6 +42,21 @@ async function init() {
   submitBtn.onclick = handleSubmit;
 }
 
+function blockPasteInto(textarea, onBlocked) {
+  const block = (event) => {
+    event.preventDefault();
+    onBlocked();
+  };
+
+  textarea.addEventListener('paste', block);
+  textarea.addEventListener('drop', block);
+  textarea.addEventListener('contextmenu', (event) => event.preventDefault());
+}
+
+blockPasteInto(inputEl, () => {
+  statusEl.textContent = "Pasting isn't allowed here — please write your reflection yourself.";
+});
+
 async function handleSubmit() {
   const text = inputEl.value.trim();
 

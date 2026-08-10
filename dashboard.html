@@ -190,7 +190,7 @@
     <h2>📝 Your Prelim Reflection</h2>
     <p class="reflection-modal-meta" id="reflectionModalMeta"></p>
     <textarea id="reflectionModalText" class="reflection-textarea" readonly></textarea>
-    <p class="reflection-hint" id="reflectionModalHint">Write at least a short paragraph (150 characters).</p>
+    <p class="reflection-hint" id="reflectionModalHint">Write at least a short paragraph (150 characters) in your own words — pasting is disabled.</p>
     <div class="reflection-modal-actions">
       <button class="back-btn" id="reflectionModalClose">Close</button>
       <button class="submit-quiz-btn" id="reflectionModalEdit">Revise</button>
@@ -497,6 +497,7 @@ if (reflectionModalEdit) {
   reflectionModalEdit.onclick = () => {
     reflectionModalText.readOnly = false;
     reflectionModalText.focus();
+    reflectionModalHint.textContent = "Write it yourself — pasting is disabled.";
     reflectionModalEdit.classList.add('hidden');
     reflectionModalSave.classList.remove('hidden');
   };
@@ -505,6 +506,21 @@ if (reflectionModalEdit) {
 if (reflectionModalSave) {
   reflectionModalSave.onclick = saveReflectionEdit;
 }
+
+function blockPasteInto(textarea, onBlocked) {
+  const block = (event) => {
+    event.preventDefault();
+    onBlocked();
+  };
+
+  textarea.addEventListener('paste', block);
+  textarea.addEventListener('drop', block);
+  textarea.addEventListener('contextmenu', (event) => event.preventDefault());
+}
+
+blockPasteInto(reflectionModalText, () => {
+  reflectionModalHint.textContent = "Pasting isn't allowed here — please write your reflection yourself.";
+});
 </script>
 
 </body>

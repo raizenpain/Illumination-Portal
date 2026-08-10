@@ -114,7 +114,7 @@
       </div>
 
       <div class="puzzle-card" id="puzzle3Btn">
-        <button class="reflection-symbol hidden" id="reflectionSymbol" title="Revisit your reflection">📝</button>
+        <button class="reflection-symbol locked" id="reflectionSymbol" title="Finish all three puzzles to unlock">🔒</button>
         <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
         <h3>Puzzle 3</h3>
         <p>Christian Vocation</p>
@@ -364,10 +364,14 @@ function setupReflectionSymbol(data) {
   const symbol = document.getElementById('reflectionSymbol');
   if (!symbol) return;
 
-  if (prelimSeasonDone(data) && data.puzzle3Reflection) {
-    symbol.classList.remove('hidden');
+  if (prelimSeasonDone(data)) {
+    symbol.classList.remove('locked');
+    symbol.textContent = '📝';
+    symbol.title = data.puzzle3Reflection ? 'Revisit your reflection' : 'Write your reflection';
   } else {
-    symbol.classList.add('hidden');
+    symbol.classList.add('locked');
+    symbol.textContent = '🔒';
+    symbol.title = 'Finish all three puzzles to unlock';
   }
 }
 
@@ -474,7 +478,14 @@ async function saveReflectionEdit() {
 if (reflectionSymbol) {
   reflectionSymbol.addEventListener('click', (event) => {
     event.stopPropagation();
-    openReflectionModal();
+
+    if (!prelimSeasonDone(studentData)) {
+      alert('Finish all three Prelim puzzles to unlock your reflection.');
+    } else if (!studentData.puzzle3Reflection) {
+      window.location.href = 'reflection.html';
+    } else {
+      openReflectionModal();
+    }
   });
 }
 

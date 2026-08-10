@@ -644,6 +644,17 @@ body {
   transform: scale(1.12);
 }
 
+.reflection-symbol.locked {
+  background: #CBD5E1;
+  color: #6B7280;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.reflection-symbol.locked:hover {
+  transform: none;
+}
+
 /* ================================
    ACTIVITY
 ================================ */

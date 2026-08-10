@@ -324,6 +324,10 @@ function setupPuzzleCard(puzzleNumber, data, previousPuzzleNumber) {
   }
 }
 
+function prelimSeasonDone(data) {
+  return Object.values(PUZZLE_CONFIG).every((config) => !!data[config.completedField]);
+}
+
 function setupMidtermCard(data) {
   const card = document.getElementById('midtermSeasonBtn');
   if (!card) return;
@@ -339,7 +343,7 @@ function setupMidtermCard(data) {
     label.textContent = 'Coming soon';
     badge.textContent = 'Unlocked';
     card.onclick = () => alert('Midterm Season puzzles are on the way — check back soon!');
-  } else if (data.puzzle3Completed) {
+  } else if (prelimSeasonDone(data)) {
     card.className = 'puzzle-card state-challenge';
     badge.className = 'status-badge status-challenge';
     icon.textContent = '📝';
@@ -360,7 +364,7 @@ function setupReflectionSymbol(data) {
   const symbol = document.getElementById('reflectionSymbol');
   if (!symbol) return;
 
-  if (data.puzzle3Completed && data.puzzle3Reflection) {
+  if (prelimSeasonDone(data) && data.puzzle3Reflection) {
     symbol.classList.remove('hidden');
   } else {
     symbol.classList.add('hidden');

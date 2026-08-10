@@ -1,5 +1,6 @@
 import { db, doc, getDoc, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
+import { PUZZLE_CONFIG } from './puzzles.js';
 
 // ================================
 // SETTINGS — adjust freely
@@ -17,11 +18,15 @@ const studentRef = doc(db, 'students', email);
 
 init();
 
+function prelimSeasonDone(data) {
+  return Object.values(PUZZLE_CONFIG).every((config) => !!data[config.completedField]);
+}
+
 async function init() {
   const snap = await getDoc(studentRef);
   const data = snap.exists() ? snap.data() : {};
 
-  if (!data.puzzle3Completed) {
+  if (!prelimSeasonDone(data)) {
     window.location.href = 'dashboard.html';
     return;
   }

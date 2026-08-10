@@ -515,6 +515,7 @@ body {
 }
 
 .puzzle-card {
+  position: relative;
   background: white;
   border-radius: 18px;
   padding: 28px 26px 26px 26px;
@@ -618,6 +619,29 @@ body {
 .status-badge.status-locked {
   background: #EEE;
   color: #999;
+}
+
+/* Reflection revisit symbol (Puzzle 3 card) */
+
+.reflection-symbol {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #56B2BB, #7fd4dc);
+  color: white;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 0 8px rgba(86,178,187,0.5);
+  transition: transform 0.2s ease;
+}
+
+.reflection-symbol:hover {
+  transform: scale(1.12);
 }
 
 /* ================================
@@ -845,6 +869,13 @@ body.puzzle-page {
   margin-bottom: 14px;
 }
 
+.reflection-logo {
+  width: 84px;
+  height: 84px;
+  border-radius: 12px;
+  object-fit: cover;
+}
+
 .puzzle-card-wrapper h1 {
   margin: 0 0 4px 0;
   color: #1D2233;
@@ -1051,6 +1082,41 @@ body.puzzle-page {
 .submit-quiz-btn:hover {
   background: #3c98a1;
   transform: translateY(-2px);
+}
+
+/* Reflection textarea (reflection.html + dashboard revisit modal) */
+
+.reflection-textarea {
+  width: 100%;
+  min-height: 160px;
+  padding: 14px 16px;
+  border: 1.5px solid #E2E8F0;
+  border-radius: 12px;
+  font-size: 14px;
+  font-family: inherit;
+  color: #1D2233;
+  resize: vertical;
+  box-sizing: border-box;
+  transition: border-color 0.2s ease;
+}
+
+.reflection-textarea:focus {
+  outline: none;
+  border-color: #56B2BB;
+}
+
+.reflection-textarea[readonly] {
+  background: #F8FAFC;
+  color: #4B5563;
+  cursor: default;
+}
+
+.reflection-hint {
+  min-height: 16px;
+  margin: 8px 0 0 0;
+  font-size: 12.5px;
+  color: #6B7280;
+  text-align: left;
 }
 
 /* ================================
@@ -1570,6 +1636,51 @@ body.teacher-page {
 
 .achievement-box p {
   color: #D7E3F0;
+}
+
+.reflection-box {
+  width: min(480px, calc(100% - 32px));
+  text-align: left;
+}
+
+.reflection-box h2 {
+  text-align: center;
+  font-size: 20px;
+}
+
+.reflection-box .reflection-hint {
+  color: #9FDDE3;
+}
+
+.reflection-modal-meta {
+  font-size: 12px;
+  color: #9FDDE3;
+  margin: -4px 0 10px 0;
+  min-height: 14px;
+  text-align: center;
+}
+
+.reflection-modal-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.reflection-modal-actions .back-btn,
+.reflection-modal-actions .submit-quiz-btn {
+  flex: 1;
+  margin-top: 0;
+  width: auto;
+}
+
+.reflection-modal-actions .back-btn {
+  color: #C7D2E3;
+  border-color: rgba(255,255,255,0.25);
+}
+
+.reflection-modal-actions .back-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.4);
 }
 
 @keyframes popupScale {

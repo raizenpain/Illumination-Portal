@@ -114,6 +114,7 @@
       </div>
 
       <div class="puzzle-card" id="puzzle3Btn">
+        <button class="reflection-symbol hidden" id="reflectionSymbol" title="Revisit your reflection">📝</button>
         <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
         <h3>Puzzle 3</h3>
         <p>Christian Vocation</p>
@@ -184,13 +185,30 @@
 
 </div>
 
+<div id="reflectionModal" class="achievement-popup hidden">
+  <div class="achievement-box reflection-box">
+    <h2>📝 Your Prelim Reflection</h2>
+    <p class="reflection-modal-meta" id="reflectionModalMeta"></p>
+    <textarea id="reflectionModalText" class="reflection-textarea" readonly></textarea>
+    <p class="reflection-hint" id="reflectionModalHint">Write at least a short paragraph (150 characters).</p>
+    <div class="reflection-modal-actions">
+      <button class="back-btn" id="reflectionModalClose">Close</button>
+      <button class="submit-quiz-btn" id="reflectionModalEdit">Revise</button>
+      <button class="submit-quiz-btn hidden" id="reflectionModalSave">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <script type="module">
-import { db, doc, getDoc } from './firebase.js';
+import { db, doc, getDoc, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { loadGospelQuote } from './gospel.js';
 
 const { email, name } = requireLogin();
+
+const studentRef = doc(db, 'students', email);
+let studentData = {};
 
 const BADGE_INFO = {
   first_step: { icon: '🥉', title: 'First Step', sub: 'Collected first piece' },
@@ -204,9 +222,9 @@ const BADGE_INFO = {
 
 async function loadStudentCard() {
   try {
-    const studentRef = doc(db, 'students', email);
     const snapshot = await getDoc(studentRef);
     const data = snapshot.exists() ? snapshot.data() : {};
+    studentData = data;
 
     document.getElementById('cardName').textContent = data.name || name;
     document.getElementById('cardSection').textContent = data.section || 'Not Assigned';
@@ -224,6 +242,8 @@ async function loadStudentCard() {
 
     renderBadges(data.achievements || []);
     renderPuzzleCards(data);
+    setupMidtermCard(data);
+    setupReflectionSymbol(data);
 
   } catch (err) {
     console.error('Failed to load student card:', err);
@@ -304,6 +324,49 @@ function setupPuzzleCard(puzzleNumber, data, previousPuzzleNumber) {
   }
 }
 
+function setupMidtermCard(data) {
+  const card = document.getElementById('midtermSeasonBtn');
+  if (!card) return;
+
+  const icon = card.querySelector('.puzzle-icon');
+  const label = card.querySelector('p');
+  const badge = card.querySelector('.status-badge');
+
+  if (data.midtermUnlocked) {
+    card.className = 'puzzle-card state-completed';
+    badge.className = 'status-badge status-completed';
+    icon.textContent = '✨';
+    label.textContent = 'Coming soon';
+    badge.textContent = 'Unlocked';
+    card.onclick = () => alert('Midterm Season puzzles are on the way — check back soon!');
+  } else if (data.puzzle3Completed) {
+    card.className = 'puzzle-card state-challenge';
+    badge.className = 'status-badge status-challenge';
+    icon.textContent = '📝';
+    label.textContent = 'Write your reflection';
+    badge.textContent = 'Write Reflection';
+    card.onclick = () => { window.location.href = 'reflection.html'; };
+  } else {
+    card.className = 'puzzle-card state-locked';
+    badge.className = 'status-badge status-locked';
+    icon.textContent = '🔒';
+    label.textContent = 'Coming soon';
+    badge.textContent = 'Locked';
+    card.onclick = () => alert('Complete Prelim Season first to unlock this season.');
+  }
+}
+
+function setupReflectionSymbol(data) {
+  const symbol = document.getElementById('reflectionSymbol');
+  if (!symbol) return;
+
+  if (data.puzzle3Completed && data.puzzle3Reflection) {
+    symbol.classList.remove('hidden');
+  } else {
+    symbol.classList.add('hidden');
+  }
+}
+
 async function loadGospel() {
   const quoteEl = document.getElementById('gospelQuoteText');
   const refEl = document.getElementById('gospelQuoteRef');
@@ -325,7 +388,7 @@ async function loadGospel() {
 loadStudentCard();
 loadGospel();
 
-['midtermSeasonBtn', 'semifinalSeasonBtn', 'finalSeasonBtn'].forEach((id) => {
+['semifinalSeasonBtn', 'finalSeasonBtn'].forEach((id) => {
   const card = document.getElementById(id);
   if (card) {
     card.onclick = () => alert('Complete Prelim Season first to unlock this season.');
@@ -338,6 +401,94 @@ if (logoutBtn) {
     localStorage.clear();
     window.location.href = 'login.html';
   };
+}
+
+// ================================
+// REFLECTION MODAL — view/revise the saved Prelim reflection
+// ================================
+const REFLECTION_MIN_LENGTH = 150;
+
+const reflectionModal = document.getElementById('reflectionModal');
+const reflectionModalText = document.getElementById('reflectionModalText');
+const reflectionModalMeta = document.getElementById('reflectionModalMeta');
+const reflectionModalHint = document.getElementById('reflectionModalHint');
+const reflectionModalClose = document.getElementById('reflectionModalClose');
+const reflectionModalEdit = document.getElementById('reflectionModalEdit');
+const reflectionModalSave = document.getElementById('reflectionModalSave');
+const reflectionSymbol = document.getElementById('reflectionSymbol');
+
+function openReflectionModal() {
+  reflectionModalText.value = studentData.puzzle3Reflection || '';
+  reflectionModalText.readOnly = true;
+  reflectionModalMeta.textContent = studentData.puzzle3ReflectionSubmittedAt
+    ? `Last revised ${new Date(studentData.puzzle3ReflectionSubmittedAt).toLocaleDateString()}`
+    : '';
+  reflectionModalHint.textContent = '';
+  reflectionModalEdit.classList.remove('hidden');
+  reflectionModalSave.classList.add('hidden');
+  reflectionModal.classList.remove('hidden');
+}
+
+function closeReflectionModal() {
+  reflectionModal.classList.add('hidden');
+}
+
+async function saveReflectionEdit() {
+  const text = reflectionModalText.value.trim();
+
+  if (text.length < REFLECTION_MIN_LENGTH) {
+    reflectionModalHint.textContent = `Please write a bit more — ${REFLECTION_MIN_LENGTH - text.length} characters to go.`;
+    return;
+  }
+
+  reflectionModalSave.disabled = true;
+
+  try {
+    const submittedAt = new Date().toISOString();
+    await updateDoc(studentRef, {
+      puzzle3Reflection: text,
+      puzzle3ReflectionSubmittedAt: submittedAt
+    });
+
+    studentData.puzzle3Reflection = text;
+    studentData.puzzle3ReflectionSubmittedAt = submittedAt;
+
+    reflectionModalText.readOnly = true;
+    reflectionModalHint.textContent = '';
+    reflectionModalMeta.textContent = `Last revised ${new Date(submittedAt).toLocaleDateString()}`;
+    reflectionModalEdit.classList.remove('hidden');
+    reflectionModalSave.classList.add('hidden');
+
+  } catch (err) {
+    console.error('Failed to save reflection:', err);
+    reflectionModalHint.textContent = 'Something went wrong. Please try again.';
+  }
+
+  reflectionModalSave.disabled = false;
+}
+
+if (reflectionSymbol) {
+  reflectionSymbol.addEventListener('click', (event) => {
+    event.stopPropagation();
+    openReflectionModal();
+  });
+}
+
+if (reflectionModalClose) {
+  reflectionModalClose.onclick = closeReflectionModal;
+}
+
+if (reflectionModalEdit) {
+  reflectionModalEdit.onclick = () => {
+    reflectionModalText.readOnly = false;
+    reflectionModalText.focus();
+    reflectionModalEdit.classList.add('hidden');
+    reflectionModalSave.classList.remove('hidden');
+  };
+}
+
+if (reflectionModalSave) {
+  reflectionModalSave.onclick = saveReflectionEdit;
 }
 </script>
 

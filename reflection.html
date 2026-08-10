@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Prelim Reflection</title>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="puzzle-page">
+
+  <div class="puzzle-card-wrapper">
+    <img src="assets/reflection-icon.png" alt="Reflection scroll and quill" class="puzzle-logo reflection-logo">
+
+    <h1 id="reflectionTitle">Prelim Reflection</h1>
+    <p class="puzzle-subtitle" id="reflectionSubtitle">Look back before you move forward</p>
+
+    <textarea id="reflectionInput" class="reflection-textarea" placeholder="What did you learn about yourself, your faith, or your formation journey this Prelim Season?"></textarea>
+    <p class="reflection-hint" id="reflectionHint">Write at least a short paragraph (150 characters).</p>
+
+    <button class="submit-quiz-btn" id="submitReflectionBtn">Submit Reflection</button>
+
+    <p id="reflectionStatus" class="puzzle-status"></p>
+
+    <button class="back-btn" onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+  </div>
+
+  <script type="module" src="reflection.js"></script>
+
+</body>
+</html>

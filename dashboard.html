@@ -6,7 +6,7 @@
   <title>HCDC Illumination Portal</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="dashboard-page">
@@ -50,20 +50,21 @@
 
     <hr>
 
-    <div class="card-info">
-      <div class="info-row">
-        <span>Rank</span>
-        <strong id="cardRank" class="rank-chip">Seeker</strong>
-      </div>
-
-      <div class="info-row">
-        <span>Progress</span>
+    <div class="stats-panel">
+      <div class="stats-progress">
+        <span class="info-label">Level Progress</span>
+        <div class="progress-bar">
+          <div class="progress-fill" id="progressFill"></div>
+        </div>
         <strong id="cardProgress">0%</strong>
       </div>
-    </div>
 
-    <div class="progress-bar">
-      <div class="progress-fill" id="progressFill"></div>
+      <div class="stats-divider"></div>
+
+      <div class="stats-rank">
+        <span class="info-label">Rank</span>
+        <strong id="cardRank" class="rank-chip">Seeker</strong>
+      </div>
     </div>
 
     <div class="logo-carousel">
@@ -210,11 +211,16 @@ async function loadStudentCard() {
     document.getElementById('cardName').textContent = data.name || name;
     document.getElementById('cardSection').textContent = data.section || 'Not Assigned';
     document.getElementById('cardStudentId').textContent = data.studentId || 'N/A';
-    document.getElementById('cardRank').textContent = data.rank || 'Seeker';
+    const rank = data.rank || 'Seeker';
+    const rankEl = document.getElementById('cardRank');
+    rankEl.textContent = rank;
+    rankEl.setAttribute('data-rank', rank);
 
     const progress = data.puzzle1 ? Math.round((data.puzzle1.length / 9) * 100) : 0;
     document.getElementById('cardProgress').textContent = progress + '%';
-    document.getElementById('progressFill').style.width = progress + '%';
+    requestAnimationFrame(() => {
+      document.getElementById('progressFill').style.width = progress + '%';
+    });
 
     renderBadges(data.achievements || []);
     renderPuzzleCards(data);

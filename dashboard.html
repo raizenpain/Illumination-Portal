@@ -66,13 +66,17 @@
       <div class="progress-fill" id="progressFill"></div>
     </div>
 
-    <div class="qr-section">
-      <div>
-        <h3>Identity QR</h3>
-        <p>Use this QR for HCDC activities</p>
+    <div class="logo-carousel">
+      <div class="logo-carousel-track">
+        <img src="assets/carousel/hcdc-logo.png" alt="HCDC Logo">
+        <img src="assets/carousel/logo-hcdc.png" alt="HCDC Logo">
+        <img src="assets/carousel/hcdc-logo-website-01.png" alt="HCDC Logo">
+        <img src="assets/carousel/speaker-2.png" alt="ABLAZE - Bro. Noelvic H. Deloria, SC">
+        <img src="assets/carousel/hcdc-logo.png" alt="" aria-hidden="true">
+        <img src="assets/carousel/logo-hcdc.png" alt="" aria-hidden="true">
+        <img src="assets/carousel/hcdc-logo-website-01.png" alt="" aria-hidden="true">
+        <img src="assets/carousel/speaker-2.png" alt="" aria-hidden="true">
       </div>
-
-      <div id="cardQR"></div>
     </div>
   </div>
 
@@ -211,15 +215,6 @@ async function loadStudentCard() {
     const progress = data.puzzle1 ? Math.round((data.puzzle1.length / 9) * 100) : 0;
     document.getElementById('cardProgress').textContent = progress + '%';
     document.getElementById('progressFill').style.width = progress + '%';
-
-    if (snapshot.exists()) {
-      const qr = document.createElement('img');
-      qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=${data.studentId || email}`;
-      qr.alt = 'Identity QR';
-      const cardQR = document.getElementById('cardQR');
-      cardQR.innerHTML = '';
-      cardQR.appendChild(qr);
-    }
 
     renderBadges(data.achievements || []);
     renderPuzzleCards(data);

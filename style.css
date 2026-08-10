@@ -309,39 +309,44 @@ body {
   transition: width 0.4s ease;
 }
 
-/* QR section */
+/* Logo carousel */
 
-.qr-section {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.logo-carousel {
   margin-top: 20px;
-  flex-wrap: wrap;
-  gap: 15px;
+  overflow: hidden;
   background: rgba(255,255,255,0.04);
   border: 1px solid rgba(255,255,255,0.08);
   border-radius: 14px;
-  padding: 16px 18px;
+  padding: 14px 0;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
 
-.qr-section h3 {
-  font-size: 15px;
-}
-
-.qr-section p {
-  font-size: 13px;
-  margin: 4px 0 0 0;
-}
-
-#cardQR {
+.logo-carousel-track {
   display: flex;
-  justify-content: center;
+  align-items: center;
+  gap: 32px;
+  width: max-content;
+  animation: logo-carousel-scroll 22s linear infinite;
 }
 
-#cardQR img {
+.logo-carousel:hover .logo-carousel-track {
+  animation-play-state: paused;
+}
+
+.logo-carousel-track img {
+  height: 48px;
+  width: auto;
+  object-fit: contain;
+  flex-shrink: 0;
   background: white;
-  padding: 8px;
-  border-radius: 10px;
+  padding: 6px 10px;
+  border-radius: 8px;
+}
+
+@keyframes logo-carousel-scroll {
+  from { transform: translateX(0); }
+  to { transform: translateX(-50%); }
 }
 
 /* ================================

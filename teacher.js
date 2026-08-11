@@ -144,6 +144,7 @@ if (user) {
 
       snapshot.forEach((student) => {
         const data = student.data();
+        data._docId = student.id; // the real document ID — may differ from data.email if that field is blank/stale
         const teacherEmail = data.teacherEmail && teacherGroups[data.teacherEmail]
           ? data.teacherEmail
           : UNASSIGNED_KEY;
@@ -246,8 +247,8 @@ if (user) {
 
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${data.name || ''}</td>
-        <td>${data.email || ''}</td>
+        <td>${data.name || '(no name)'}</td>
+        <td>${data.email || data._docId || ''}</td>
         <td>${progressPill(p1, data.puzzle1Completed)}</td>
         <td>${progressPill(p2, data.puzzle2Completed)}</td>
         <td>${progressPill(p3, data.puzzle3Completed)}</td>
@@ -269,14 +270,16 @@ if (user) {
   }
 
   async function deleteStudent(data, section) {
-    const label = data.name ? `${data.name} (${data.email})` : data.email;
+    const label = data.name
+      ? `${data.name} (${data.email || data._docId})`
+      : (data.email || data._docId || 'this record');
 
     if (!confirm(`Remove ${label} from the roster?\n\nThis permanently deletes their enrollment, puzzle progress, and achievements. This cannot be undone.`)) {
       return;
     }
 
     try {
-      await deleteDoc(doc(db, 'students', data.email));
+      await deleteDoc(doc(db, 'students', data._docId));
 
       const list = teacherGroups[currentTeacher.email].bySection[section];
       const index = list.indexOf(data);
@@ -313,7 +316,7 @@ if (user) {
 
     const rows = students.map((data) => [
       data.name || '',
-      data.email || '',
+      data.email || data._docId || '',
       progressText(pieceCount(data, 'puzzle1'), data.puzzle1Completed),
       progressText(pieceCount(data, 'puzzle2'), data.puzzle2Completed),
       progressText(pieceCount(data, 'puzzle3'), data.puzzle3Completed),

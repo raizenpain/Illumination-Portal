@@ -5,6 +5,7 @@ import {
   getDoc,
   getDocs,
   setDoc,
+  deleteDoc,
   arrayUnion,
   arrayRemove
 } from './firebase.js';
@@ -253,8 +254,45 @@ if (user) {
         <td><span class="rank-chip" data-rank="${data.rank || 'Seeker'}">${data.rank || 'Seeker'}</span></td>
       `;
 
+      const actionCell = document.createElement('td');
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'roster-delete-btn';
+      deleteBtn.title = 'Remove this student';
+      deleteBtn.textContent = '🗑️';
+      deleteBtn.onclick = () => deleteStudent(data, section);
+      actionCell.appendChild(deleteBtn);
+      row.appendChild(actionCell);
+
       tableBody.appendChild(row);
     });
+  }
+
+  async function deleteStudent(data, section) {
+    const label = data.name ? `${data.name} (${data.email})` : data.email;
+
+    if (!confirm(`Remove ${label} from the roster?\n\nThis permanently deletes their enrollment, puzzle progress, and achievements. This cannot be undone.`)) {
+      return;
+    }
+
+    try {
+      await deleteDoc(doc(db, 'students', data.email));
+
+      const list = teacherGroups[currentTeacher.email].bySection[section];
+      const index = list.indexOf(data);
+      if (index !== -1) list.splice(index, 1);
+
+      if (list.length === 0) {
+        delete teacherGroups[currentTeacher.email].bySection[section];
+        showClassList(currentTeacher.email);
+      } else {
+        showRoster(section);
+      }
+
+    } catch (err) {
+      console.error('Failed to delete student:', err);
+      alert('Something went wrong while removing this student. Please try again.');
+    }
   }
 
   // ================================

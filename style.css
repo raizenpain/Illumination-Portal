@@ -1882,6 +1882,25 @@ body.teacher-page {
   color: #FBBF24;
 }
 
+.roster-delete-btn {
+  margin: 0;
+  padding: 6px 10px;
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.6;
+  transition: all 0.2s ease;
+}
+
+.roster-delete-btn:hover {
+  opacity: 1;
+  background: rgba(138,31,43,0.18);
+  border-color: rgba(138,31,43,0.6);
+}
+
 /* ================================
    CERTIFICATE
 ================================ */

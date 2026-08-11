@@ -8,15 +8,15 @@
 
 export const PIECE_CODES = {
   puzzle1: { // The Cross
-    1: "BEAT-POOR",
-    2: "BEAT-MOURN",
-    3: "BEAT-MEEK",
-    4: "BEAT-HUNGER",
-    5: "BEAT-MERCY",
-    6: "BEAT-PURE",
-    7: "BEAT-PEACE",
-    8: "BEAT-PERSECUTED",
-    9: "BEAT-REJOICE"
+    1: "CROSS-SAVING",
+    2: "CROSS-GLORY",
+    3: "CROSS-SACRIFICE",
+    4: "CROSS-TRIUMPH",
+    5: "CROSS-REDEEM",
+    6: "CROSS-SIGN",
+    7: "CROSS-STEWARD",
+    8: "CROSS-CONSERVE",
+    9: "CROSS-ECOLOGY"
   },
   puzzle2: { // Sacraments
     1: "SACR-BAPTISM",

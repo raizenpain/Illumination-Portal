@@ -10,19 +10,19 @@ export const CHALLENGES = {
 
   puzzle2: [
     {
-      question: "According to the Beatitudes, who will inherit the earth?",
-      options: ["The rich", "The meek", "The proud", "The powerful"],
+      question: "According to the Catechism for Filipino Catholics (CFC no. 557-559), the Cross is a symbol of what?",
+      options: ["Suffering alone", "Saving love", "Fear of God", "Worldly power"],
       correctIndex: 1
     },
     {
-      question: '"Blessed are the poor in spirit, for theirs is..."',
-      options: ["great wealth", "the kingdom of heaven", "long life", "many friends"],
-      correctIndex: 1
+      question: "What is the Latin name for the Sign of the Cross, described as the shortest prayer a Christian makes?",
+      options: ["Signum Crucis", "Lumen Christi", "Agnus Dei", "Imago Dei"],
+      correctIndex: 0
     },
     {
-      question: "How many Beatitudes are there in the Gospel of Matthew?",
-      options: ["5", "7", "8", "10"],
-      correctIndex: 2
+      question: "The Spirituality of Stewardship is rooted in the Creation account found in which book of the Bible?",
+      options: ["Exodus", "Genesis", "Psalms", "Leviticus"],
+      correctIndex: 1
     }
   ],
 

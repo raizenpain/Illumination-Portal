@@ -2,6 +2,7 @@ import { db, doc, getDoc, setDoc, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
+import { PIECE_LESSONS } from './lessons.js';
 
 // ================================
 // SETTINGS — adjust freely
@@ -32,14 +33,42 @@ if (!config) {
   init();
 }
 
-function showAchievement(title, text, icon = '🏅') {
+// A piece unlock can trigger more than one popup at once (a lesson note
+// plus a milestone/completion achievement) — queue them so each one gets
+// its own moment on screen instead of overwriting the one before it.
+const popupQueue = [];
+let popupBusy = false;
+
+function queuePopup(popup) {
+  popupQueue.push(popup);
+  processPopupQueue();
+}
+
+function processPopupQueue() {
+  if (popupBusy || popupQueue.length === 0) return;
+  popupBusy = true;
+
+  const { heading = 'Achievement Unlocked!', title, text, icon = '🏅' } = popupQueue.shift();
   const popup = document.getElementById('achievementPopup');
+  document.getElementById('achievementHeading').textContent = heading;
   document.getElementById('achievementTitle').textContent = title;
   document.getElementById('achievementText').textContent = text;
   document.querySelector('.achievement-icon').textContent = icon;
 
   popup.classList.remove('hidden');
-  setTimeout(() => popup.classList.add('hidden'), 3000);
+  setTimeout(() => {
+    popup.classList.add('hidden');
+    popupBusy = false;
+    setTimeout(processPopupQueue, 300);
+  }, 3000);
+}
+
+function showAchievement(title, text, icon = '🏅') {
+  queuePopup({ title, text, icon });
+}
+
+function showLesson(lesson) {
+  queuePopup({ heading: '📖 Catechism Moment', title: lesson.title, text: lesson.text, icon: '✝️' });
 }
 
 async function init() {
@@ -184,6 +213,14 @@ async function handleCodeSubmit() {
   if (status) status.textContent = `✅ Piece ${pieceNumber} unlocked!`;
   codeInput.value = '';
 
+  let popupsQueued = 0;
+
+  const lesson = (PIECE_LESSONS[`puzzle${puzzleNumber}`] || {})[pieceNumber];
+  if (lesson) {
+    showLesson(lesson);
+    popupsQueued++;
+  }
+
   if (uploadedPieces.length === config.totalPieces) {
     const studentRef = doc(db, 'students', email);
     const snap = await getDoc(studentRef);
@@ -201,12 +238,13 @@ async function handleCodeSubmit() {
           [config.completedField]: true
         });
         showAchievement(comp.title, comp.text, comp.icon);
+        popupsQueued++;
       }
     }
 
     setTimeout(() => {
       window.location.href = 'completion.html';
-    }, 3000);
+    }, Math.max(3000, popupsQueued * 3300));
   }
 }
 

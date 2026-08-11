@@ -28,18 +28,18 @@ export const CHALLENGES = {
 
   puzzle3: [
     {
-      question: "How many Sacraments are there in the Catholic Church?",
-      options: ["5", "6", "7", "8"],
+      question: "According to the material, Stewardship is a lifestyle rather than what?",
+      options: ["A calling", "A noun", "A practice", "A discipline"],
+      correctIndex: 1
+    },
+    {
+      question: "Who does the material identify as 'The True Steward'?",
+      options: ["Adam", "Moses", "Jesus Christ", "St. Paul"],
       correctIndex: 2
     },
     {
-      question: "Which Sacrament can only be received once?",
-      options: ["Confession", "Holy Communion", "Baptism", "Anointing of the Sick"],
-      correctIndex: 2
-    },
-    {
-      question: "What is the Sacrament of healing for the seriously ill called?",
-      options: ["Confirmation", "Anointing of the Sick", "Holy Orders", "Matrimony"],
+      question: "Which expression of Stewardship refers to living contented with our basic needs, without complexity or luxury?",
+      options: ["Conservation", "Simple Lifestyle", "Co-Responsibility", "Spiritual Discipline"],
       correctIndex: 1
     }
   ]

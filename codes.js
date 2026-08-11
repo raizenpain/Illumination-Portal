@@ -19,15 +19,15 @@ export const PIECE_CODES = {
     9: "CROSS-ECOLOGY"
   },
   puzzle2: { // The Spirituality
-    1: "SACR-BAPTISM",
-    2: "SACR-CONFIRM",
-    3: "SACR-EUCHARIST",
-    4: "SACR-RECONCILE",
-    5: "SACR-ANOINTING",
-    6: "SACR-ORDERS",
-    7: "SACR-MATRIMONY",
-    8: "SACR-GRACE",
-    9: "SACR-COVENANT"
+    1: "SPIRIT-CREATOR",
+    2: "SPIRIT-IMAGE",
+    3: "SPIRIT-COCREATE",
+    4: "SPIRIT-TRUESTEWARD",
+    5: "SPIRIT-TRUST",
+    6: "SPIRIT-LIFESTYLE",
+    7: "SPIRIT-SIMPLE",
+    8: "SPIRIT-DISCIPLINE",
+    9: "SPIRIT-CORESP"
   },
   puzzle3: { // Christian Vocation
     1: "VOC-CALLING",

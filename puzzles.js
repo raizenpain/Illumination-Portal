@@ -29,6 +29,8 @@ export const PUZZLE_CONFIG = {
     totalPieces: 9,
     title: "Puzzle 2",
     subtitle: "The Spirituality",
+    pieceImageExt: "jpg",
+    pieceImageAspect: "326 / 341",
     piecesField: "puzzle2",
     completedField: "puzzle2Completed",
     requiresGate: "puzzle2Unlocked",

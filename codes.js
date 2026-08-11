@@ -7,7 +7,7 @@
 // ============================================
 
 export const PIECE_CODES = {
-  puzzle1: { // Beatitudes
+  puzzle1: { // The Cross
     1: "BEAT-POOR",
     2: "BEAT-MOURN",
     3: "BEAT-MEEK",

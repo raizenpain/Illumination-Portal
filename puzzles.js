@@ -9,12 +9,12 @@ export const PUZZLE_CONFIG = {
   1: {
     totalPieces: 9,
     title: "Puzzle 1",
-    subtitle: "Beatitudes",
+    subtitle: "The Cross",
     piecesField: "puzzle1",
     completedField: "puzzle1Completed",
     requiresGate: null,
     completionAchievement: {
-      id: "beatitudes_master", title: "Beatitudes Master",
+      id: "beatitudes_master", title: "Cross Master",
       text: "You completed Puzzle 1.", icon: "👑", rank: "Disciple"
     },
     milestoneAchievements: [

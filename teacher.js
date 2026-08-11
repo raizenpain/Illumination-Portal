@@ -11,7 +11,9 @@ import {
 import { requireAdmin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
-import { ADMIN_EMAILS } from './admins.js';
+import { ADMIN_EMAILS, ADMINS } from './admins.js';
+
+const UNASSIGNED_KEY = '__unassigned__';
 
 const user = requireAdmin(ADMIN_EMAILS);
 
@@ -96,45 +98,214 @@ if (user) {
     }
   }
 
+  // ================================
+  // ROSTER — Teacher -> Class -> Roster drill-down
+  // ================================
+
+  const rosterSubtitle = document.getElementById('rosterSubtitle');
+  const teacherListView = document.getElementById('teacherListView');
+  const classListView = document.getElementById('classListView');
+  const classListGrid = document.getElementById('classListGrid');
+  const rosterView = document.getElementById('rosterView');
+  const backToTeachersBtn = document.getElementById('backToTeachers');
+  const backToClassesBtn = document.getElementById('backToClasses');
+  const exportCsvBtn = document.getElementById('exportCsvBtn');
+
+  let teacherGroups = {}; // { teacherEmail: { name, bySection: { section: [studentData] } } }
+  let currentTeacher = null; // { email, name }
+  let currentSection = null;
+
+  function progressPill(count, completed) {
+    const state = completed ? 'complete' : count > 0 ? 'in-progress' : '';
+    const label = `${count}/9${completed ? ' ✅' : ''}`;
+    return `<span class="progress-pill${state ? ' ' + state : ''}">${label}</span>`;
+  }
+
+  function progressText(count, completed) {
+    return completed ? `${count}/9 (Completed)` : `${count}/9`;
+  }
+
+  function pieceCount(data, field) {
+    return data[field] ? data[field].length : 0;
+  }
+
   async function loadStudents() {
-    const tableBody = document.querySelector('#studentTable tbody');
-    if (!tableBody) return;
+    if (!teacherListView) return;
 
     try {
       const snapshot = await getDocs(collection(db, 'students'));
 
-      tableBody.innerHTML = '';
-
-      const progressPill = (count, completed) => {
-        const state = completed ? 'complete' : count > 0 ? 'in-progress' : '';
-        const label = `${count}/9${completed ? ' ✅' : ''}`;
-        return `<span class="progress-pill${state ? ' ' + state : ''}">${label}</span>`;
-      };
+      teacherGroups = {};
+      ADMINS.forEach((admin) => {
+        teacherGroups[admin.email] = { name: admin.name, bySection: {} };
+      });
+      teacherGroups[UNASSIGNED_KEY] = { name: 'Unassigned', bySection: {} };
 
       snapshot.forEach((student) => {
         const data = student.data();
+        const teacherEmail = data.teacherEmail && teacherGroups[data.teacherEmail]
+          ? data.teacherEmail
+          : UNASSIGNED_KEY;
+        const section = data.section || 'No class offering selected';
 
-        const p1 = data.puzzle1 ? data.puzzle1.length : 0;
-        const p2 = data.puzzle2 ? data.puzzle2.length : 0;
-        const p3 = data.puzzle3 ? data.puzzle3.length : 0;
-
-        const row = document.createElement('tr');
-        row.innerHTML = `
-          <td>${data.name || ''}</td>
-          <td>${data.email || ''}</td>
-          <td>${progressPill(p1, data.puzzle1Completed)}</td>
-          <td>${progressPill(p2, data.puzzle2Completed)}</td>
-          <td>${progressPill(p3, data.puzzle3Completed)}</td>
-          <td><span class="rank-chip" data-rank="${data.rank || 'Seeker'}">${data.rank || 'Seeker'}</span></td>
-        `;
-
-        tableBody.appendChild(row);
+        const group = teacherGroups[teacherEmail];
+        if (!group.bySection[section]) group.bySection[section] = [];
+        group.bySection[section].push(data);
       });
+
+      renderTeacherListView();
 
     } catch (err) {
       console.error('Failed to load students:', err);
-      tableBody.innerHTML = '<tr><td colspan="6">Failed to load student data.</td></tr>';
+      teacherListView.innerHTML = '<p>Failed to load student data.</p>';
     }
+  }
+
+  function teacherStudentCount(group) {
+    return Object.values(group.bySection).reduce((sum, list) => sum + list.length, 0);
+  }
+
+  function renderTeacherListView() {
+    rosterSubtitle.textContent = 'Choose a teacher to view their classes.';
+    teacherListView.innerHTML = '';
+    classListView.classList.add('hidden');
+    rosterView.classList.add('hidden');
+    teacherListView.classList.remove('hidden');
+
+    [...ADMINS.map((a) => a.email), UNASSIGNED_KEY].forEach((teacherEmail) => {
+      const group = teacherGroups[teacherEmail];
+      const count = teacherStudentCount(group);
+
+      if (teacherEmail === UNASSIGNED_KEY && count === 0) return;
+
+      const card = document.createElement('div');
+      card.className = 'roster-nav-card';
+      card.innerHTML = `
+        <h3>${group.name}</h3>
+        <p>${count} seeker${count === 1 ? '' : 's'}</p>
+      `;
+      card.onclick = () => showClassList(teacherEmail);
+      teacherListView.appendChild(card);
+    });
+  }
+
+  function showClassList(teacherEmail) {
+    const group = teacherGroups[teacherEmail];
+    currentTeacher = { email: teacherEmail, name: group.name };
+
+    rosterSubtitle.textContent = `Choose a class for ${group.name}.`;
+    teacherListView.classList.add('hidden');
+    rosterView.classList.add('hidden');
+    classListView.classList.remove('hidden');
+
+    classListGrid.innerHTML = '';
+
+    const sections = Object.keys(group.bySection).sort();
+
+    if (sections.length === 0) {
+      classListGrid.innerHTML = '<p>No students yet.</p>';
+      return;
+    }
+
+    sections.forEach((section) => {
+      const list = group.bySection[section];
+      const card = document.createElement('div');
+      card.className = 'roster-nav-card';
+      card.innerHTML = `
+        <h3>${section}</h3>
+        <p>${list.length} seeker${list.length === 1 ? '' : 's'}</p>
+      `;
+      card.onclick = () => showRoster(section);
+      classListGrid.appendChild(card);
+    });
+  }
+
+  function showRoster(section) {
+    currentSection = section;
+    const students = teacherGroups[currentTeacher.email].bySection[section] || [];
+
+    rosterSubtitle.textContent = `${currentTeacher.name} — ${section} (${students.length} seeker${students.length === 1 ? '' : 's'})`;
+    classListView.classList.add('hidden');
+    rosterView.classList.remove('hidden');
+
+    const tableBody = document.querySelector('#studentTable tbody');
+    tableBody.innerHTML = '';
+
+    students.forEach((data) => {
+      const p1 = pieceCount(data, 'puzzle1');
+      const p2 = pieceCount(data, 'puzzle2');
+      const p3 = pieceCount(data, 'puzzle3');
+
+      const row = document.createElement('tr');
+      row.innerHTML = `
+        <td>${data.name || ''}</td>
+        <td>${data.email || ''}</td>
+        <td>${progressPill(p1, data.puzzle1Completed)}</td>
+        <td>${progressPill(p2, data.puzzle2Completed)}</td>
+        <td>${progressPill(p3, data.puzzle3Completed)}</td>
+        <td><span class="rank-chip" data-rank="${data.rank || 'Seeker'}">${data.rank || 'Seeker'}</span></td>
+      `;
+
+      tableBody.appendChild(row);
+    });
+  }
+
+  // ================================
+  // CSV EXPORT — current class only
+  // ================================
+
+  function sanitizeFilename(str) {
+    return str.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '');
+  }
+
+  function csvCell(value) {
+    const str = String(value);
+    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+  }
+
+  function buildCsv(students) {
+    const header = ['Name', 'Email', 'Puzzle 1', 'Puzzle 2', 'Puzzle 3', 'Rank'];
+
+    const rows = students.map((data) => [
+      data.name || '',
+      data.email || '',
+      progressText(pieceCount(data, 'puzzle1'), data.puzzle1Completed),
+      progressText(pieceCount(data, 'puzzle2'), data.puzzle2Completed),
+      progressText(pieceCount(data, 'puzzle3'), data.puzzle3Completed),
+      data.rank || 'Seeker'
+    ]);
+
+    return [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
+  }
+
+  function downloadCsv(filename, csvContent) {
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+
+    URL.revokeObjectURL(url);
+  }
+
+  if (backToTeachersBtn) {
+    backToTeachersBtn.onclick = renderTeacherListView;
+  }
+
+  if (backToClassesBtn) {
+    backToClassesBtn.onclick = () => showClassList(currentTeacher.email);
+  }
+
+  if (exportCsvBtn) {
+    exportCsvBtn.onclick = () => {
+      const students = teacherGroups[currentTeacher.email].bySection[currentSection] || [];
+      const filename = `${sanitizeFilename(currentTeacher.name)}_${sanitizeFilename(currentSection)}.csv`;
+      downloadCsv(filename, buildCsv(students));
+    };
   }
 
   renderTabs();

@@ -60,9 +60,19 @@
         }
 
         // Returning students (already enrolled) go straight to their
-        // dashboard instead of back through the enrollment form.
+        // dashboard instead of back through the enrollment form. Anyone
+        // who enrolled before the teacher-selection step existed gets
+        // sent there once before reaching the dashboard.
         const snap = await getDoc(doc(db, 'students', user.email));
-        window.location.href = (snap.exists() && snap.data().studentId) ? 'dashboard.html' : 'enroll.html';
+        const data = snap.exists() ? snap.data() : null;
+
+        if (!data || !data.studentId) {
+          window.location.href = 'enroll.html';
+        } else if (!data.teacherName) {
+          window.location.href = 'teacher-select.html';
+        } else {
+          window.location.href = 'dashboard.html';
+        }
 
       } catch (error) {
         console.error(error);

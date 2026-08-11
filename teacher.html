@@ -35,21 +35,35 @@
 
     <div class="teacher-panel" style="margin-top: 24px;">
       <h2>📜 The Roster</h2>
-      <p>Track each seeker's journey through the trials.</p>
+      <p id="rosterSubtitle">Choose a teacher to begin.</p>
 
-      <table id="studentTable" class="student-table">
-        <thead>
-          <tr>
-            <th>Name</th>
-            <th>Email</th>
-            <th>Puzzle 1</th>
-            <th>Puzzle 2</th>
-            <th>Puzzle 3</th>
-            <th>Rank</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
+      <div id="teacherListView" class="roster-nav-grid"></div>
+
+      <div id="classListView" class="hidden">
+        <button type="button" class="dm-back-btn roster-back-btn" id="backToTeachers">&larr; Back to Teachers</button>
+        <div id="classListGrid" class="roster-nav-grid"></div>
+      </div>
+
+      <div id="rosterView" class="hidden">
+        <div class="roster-view-actions">
+          <button type="button" class="dm-back-btn roster-back-btn" id="backToClasses">&larr; Back to Classes</button>
+          <button type="button" class="submit-quiz-btn roster-export-btn" id="exportCsvBtn">⬇ Export CSV</button>
+        </div>
+
+        <table id="studentTable" class="student-table">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>Email</th>
+              <th>Puzzle 1</th>
+              <th>Puzzle 2</th>
+              <th>Puzzle 3</th>
+              <th>Rank</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
 
   </div>

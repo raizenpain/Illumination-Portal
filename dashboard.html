@@ -238,6 +238,13 @@ async function loadStudentCard() {
     const data = snapshot.exists() ? snapshot.data() : {};
     studentData = data;
 
+    // Anyone who enrolled before the teacher-selection step existed (or
+    // landed here directly via a bookmark) gets sent there once.
+    if (data.studentId && !data.teacherName) {
+      window.location.href = 'teacher-select.html';
+      return;
+    }
+
     document.getElementById('cardName').textContent = data.name || name;
     document.getElementById('cardSection').textContent = data.section || 'Not Assigned';
     document.getElementById('cardStudentId').textContent = data.studentId || 'N/A';

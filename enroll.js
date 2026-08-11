@@ -58,7 +58,7 @@ if (enrollBtn) {
 
       await setDoc(studentRef, payload, { merge: true });
 
-      window.location.href = 'dashboard.html';
+      window.location.href = 'teacher-select.html';
 
     } catch (err) {
       console.error('Failed to save student profile:', err);

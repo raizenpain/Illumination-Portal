@@ -97,6 +97,7 @@ async function init() {
 function renderBoard() {
   if (!board) return;
   board.innerHTML = '';
+  board.style.setProperty('--piece-aspect', config.pieceImageAspect || '1 / 1');
 
   for (let i = 1; i <= config.totalPieces; i++) {
     const slot = document.createElement('div');

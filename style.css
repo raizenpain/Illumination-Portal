@@ -907,29 +907,32 @@ body.puzzle-page {
 .board {
   display: grid;
   grid-template-columns: repeat(3, 90px);
-  gap: 12px;
+  gap: 0;
   justify-content: center;
   margin: 0 auto 28px auto;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid #E2E8F0;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
 }
 
 .slot {
   width: 90px;
-  height: 90px;
-  border: 2px dashed #C7D2E3;
+  aspect-ratio: var(--piece-aspect, 1 / 1);
+  outline: 1px dashed #C7D2E3;
+  outline-offset: -1px;
   display: flex;
   align-items: center;
   justify-content: center;
   background: #F8FAFC;
-  border-radius: 14px;
   font-weight: 700;
   font-size: 18px;
   color: #9CA3AF;
-  transition: all 0.25s ease;
+  transition: background 0.25s ease;
 }
 
 .slot:has(img) {
-  border-style: solid;
-  border-color: #56B2BB;
+  outline: none;
   background: white;
 }
 
@@ -937,7 +940,7 @@ body.puzzle-page {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 12px;
+  display: block;
 }
 
 .code-entry {
@@ -1838,6 +1841,5 @@ body.teacher-page {
 
   .slot {
     width: 80px;
-    height: 80px;
   }
 }

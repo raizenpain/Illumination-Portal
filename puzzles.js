@@ -11,6 +11,7 @@ export const PUZZLE_CONFIG = {
     title: "Puzzle 1",
     subtitle: "The Cross",
     pieceImageExt: "jpg",
+    pieceImageAspect: "3 / 4",
     piecesField: "puzzle1",
     completedField: "puzzle1Completed",
     requiresGate: null,

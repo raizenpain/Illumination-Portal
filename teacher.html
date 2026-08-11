@@ -3,7 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Jornie Console | HCDC Puzzle Master</title>
+  <title>Dungeon Master | HCDC Illumination Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="teacher-page">
@@ -11,24 +14,28 @@
   <div class="teacher-container">
 
     <div class="teacher-header">
-      <div>
-        <h1>Jornie Console</h1>
-        <p id="teacherInfo">HCDC Puzzle Master</p>
+      <div class="teacher-crest">
+        <span class="teacher-crest-icon">🗝️</span>
+        <div>
+          <span class="info-label">Illumination Portal</span>
+          <h1>Dungeon Master</h1>
+          <p id="teacherInfo">HCDC Puzzle Master</p>
+        </div>
       </div>
-      <button onclick="window.location.href='dashboard.html'">Back to Dashboard</button>
+      <button class="dm-back-btn" onclick="window.location.href='dashboard.html'">&larr; Dashboard</button>
     </div>
 
     <div class="teacher-panel">
-      <h2>Piece Release</h2>
-      <p>Choose a puzzle, then release each piece so students can upload it</p>
+      <h2>🗝️ Relic Release</h2>
+      <p>Choose a chapter, then unseal each relic so seekers can claim it.</p>
 
       <div id="puzzleTabs" class="puzzle-tabs"></div>
       <div id="releaseButtons"></div>
     </div>
 
     <div class="teacher-panel" style="margin-top: 24px;">
-      <h2>Student Progress</h2>
-      <p>Track each student's puzzle completion</p>
+      <h2>📜 The Roster</h2>
+      <p>Track each seeker's journey through the trials.</p>
 
       <table id="studentTable" class="student-table">
         <thead>

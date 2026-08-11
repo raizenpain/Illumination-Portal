@@ -126,7 +126,7 @@ if (user) {
           <td>${progressPill(p1, data.puzzle1Completed)}</td>
           <td>${progressPill(p2, data.puzzle2Completed)}</td>
           <td>${progressPill(p3, data.puzzle3Completed)}</td>
-          <td><span class="rank-pill">${data.rank || 'Seeker'}</span></td>
+          <td><span class="rank-chip" data-rank="${data.rank || 'Seeker'}">${data.rank || 'Seeker'}</span></td>
         `;
 
         tableBody.appendChild(row);

@@ -1295,7 +1295,7 @@ body.completion-page {
 }
 
 /* ================================
-   TEACHER / ADMIN CONSOLE
+   DUNGEON MASTER CONSOLE
 ================================ */
 
 body.teacher-page {
@@ -1313,6 +1313,7 @@ body.teacher-page {
 }
 
 .teacher-header {
+  position: relative;
   background: linear-gradient(135deg, rgba(86,178,187,0.1), rgba(29,34,51,0.4));
   border: 1px solid rgba(86,178,187,0.25);
   padding: 22px 28px;
@@ -1322,19 +1323,77 @@ body.teacher-page {
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.teacher-header::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 18px;
+  padding: 1px;
+  background: linear-gradient(90deg, transparent, rgba(127,212,220,0.55), transparent);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.teacher-crest {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.teacher-crest-icon {
+  font-size: 32px;
+  line-height: 1;
+  filter: drop-shadow(0 0 8px rgba(127,212,220,0.65));
+  animation: icon-glow 3.4s ease-in-out infinite;
+}
+
+@keyframes icon-glow {
+  0%, 100% { filter: drop-shadow(0 0 5px rgba(127,212,220,0.4)); }
+  50% { filter: drop-shadow(0 0 12px rgba(127,212,220,0.85)); }
 }
 
 .teacher-header h1 {
-  margin: 0;
-  color: white;
-  font-size: 20px;
+  margin: 3px 0 2px;
+  font-family: 'Cinzel Decorative', 'Cinzel', serif;
+  font-size: 25px;
+  color: #D8FBFF;
   letter-spacing: 0.02em;
+  text-shadow: 0 0 8px rgba(127,212,220,0.5);
+  animation: label-glow 3.4s ease-in-out infinite;
 }
 
 #teacherInfo {
   color: #9CA9C4;
-  font-size: 14px;
-  margin: 4px 0 0 0;
+  font-size: 13px;
+  margin: 0;
+}
+
+.dm-back-btn {
+  margin: 0;
+  background: transparent;
+  border: 1.5px solid rgba(127,212,220,0.4);
+  color: #D7E3F0;
+  font-family: 'Cinzel', serif;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  padding: 10px 20px;
+  border-radius: 10px;
+  transition: all 0.25s ease;
+}
+
+.dm-back-btn:hover {
+  border-color: #56B2BB;
+  color: #9FDDE3;
+  background: rgba(86,178,187,0.08);
+  box-shadow: 0 0 12px rgba(86,178,187,0.35);
+  transform: translateY(-1px);
 }
 
 .teacher-panel {
@@ -1347,7 +1406,10 @@ body.teacher-page {
 
 .teacher-panel h2 {
   margin: 0 0 4px 0;
-  color: white;
+  color: #D8FBFF;
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  letter-spacing: 0.02em;
 }
 
 .teacher-panel p {
@@ -1364,18 +1426,28 @@ body.teacher-page {
 
 #releaseButtons button {
   margin: 0;
-  background: #56B2BB;
-  box-shadow: 0 0 0 rgba(86,178,187,0);
+  background: linear-gradient(135deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+  border: 1.5px dashed rgba(127,212,220,0.35);
+  color: #9FDDE3;
+  font-family: 'Cinzel', serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  box-shadow: none;
   transition: all 0.25s ease;
 }
 
 #releaseButtons button:hover {
+  border-color: #56B2BB;
+  border-style: solid;
+  color: #D8FBFF;
   transform: translateY(-2px);
-  box-shadow: 0 6px 18px rgba(86,178,187,0.35);
+  box-shadow: 0 6px 18px rgba(86,178,187,0.3);
 }
 
 #releaseButtons button:disabled {
-  background: rgba(255,255,255,0.06);
+  background: rgba(255,255,255,0.03);
+  border-color: rgba(255,255,255,0.08);
   color: #5B667D;
   cursor: not-allowed;
   transform: none;
@@ -1383,12 +1455,17 @@ body.teacher-page {
 }
 
 #releaseButtons button.released {
-  background: #34D399;
+  background: linear-gradient(135deg, rgba(86,178,187,0.28), rgba(127,212,220,0.12));
+  border: 1.5px solid rgba(127,212,220,0.6);
+  color: #D8FBFF;
+  text-shadow: 0 0 6px rgba(127,212,220,0.5);
+  box-shadow: 0 0 8px rgba(86,178,187,0.3), inset 0 0 6px rgba(86,178,187,0.15);
+  animation: rank-glow 3s ease-in-out infinite;
 }
 
 #releaseButtons button.released:hover {
-  background: #22b385;
-  box-shadow: 0 6px 18px rgba(52,211,153,0.35);
+  transform: translateY(-2px);
+  box-shadow: 0 0 18px rgba(127,212,220,0.6), inset 0 0 10px rgba(127,212,220,0.25);
 }
 
 .puzzle-tabs {
@@ -1404,8 +1481,10 @@ body.teacher-page {
   border: 1.5px solid rgba(255,255,255,0.12);
   padding: 9px 16px;
   border-radius: 10px;
-  font-size: 13px;
+  font-family: 'Cinzel', serif;
+  font-size: 12.5px;
   font-weight: 600;
+  letter-spacing: 0.01em;
   cursor: pointer;
   transition: all 0.2s ease;
 }
@@ -1420,6 +1499,11 @@ body.teacher-page {
   color: #0A0F22;
   border-color: #56B2BB;
   box-shadow: 0 0 14px rgba(86,178,187,0.5);
+  animation: rank-glow 3s ease-in-out infinite;
+}
+
+.puzzle-tab.active::before {
+  content: "✦ ";
 }
 
 /* Student progress table */
@@ -1440,11 +1524,12 @@ body.teacher-page {
 
 .student-table thead th {
   background: rgba(255,255,255,0.04);
-  color: #9CA9C4;
+  color: #9FDDE3;
+  font-family: 'Cinzel', serif;
   font-weight: 600;
-  font-size: 12px;
+  font-size: 11.5px;
   text-transform: uppercase;
-  letter-spacing: 0.03em;
+  letter-spacing: 0.06em;
 }
 
 .student-table thead th:first-child {
@@ -1468,6 +1553,7 @@ body.teacher-page {
 }
 
 .student-table tbody td:first-child {
+  font-family: 'Cinzel', serif;
   font-weight: 600;
   color: white;
 }
@@ -1492,16 +1578,6 @@ body.teacher-page {
 .progress-pill.in-progress {
   background: rgba(251,191,36,0.15);
   color: #FBBF24;
-}
-
-.rank-pill {
-  display: inline-block;
-  padding: 4px 12px;
-  border-radius: 20px;
-  font-size: 12px;
-  font-weight: 700;
-  background: linear-gradient(135deg, #1D2233, #0A0F22);
-  color: #56B2BB;
 }
 
 /* ================================

@@ -3,6 +3,7 @@ import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
 import { PIECE_LESSONS } from './lessons.js';
+import { logActivity } from './activity.js';
 
 // ================================
 // SETTINGS — adjust freely
@@ -198,6 +199,11 @@ async function handleCodeSubmit() {
           achievements.push(milestone.id);
           await updateDoc(studentRef, { achievements });
           showAchievement(milestone.title, milestone.text, milestone.icon);
+          logActivity({
+            email, name, type: 'achievement',
+            title: `Unlocked "${milestone.title}"`,
+            icon: milestone.icon
+          });
         }
       }
     }
@@ -213,6 +219,12 @@ async function handleCodeSubmit() {
   renderBoard();
   if (status) status.textContent = `✅ Piece ${pieceNumber} unlocked!`;
   codeInput.value = '';
+
+  logActivity({
+    email, name, type: 'piece',
+    title: `Collected Piece ${pieceNumber} of ${config.subtitle}`,
+    icon: '🧩'
+  });
 
   let popupsQueued = 0;
 
@@ -240,6 +252,17 @@ async function handleCodeSubmit() {
         });
         showAchievement(comp.title, comp.text, comp.icon);
         popupsQueued++;
+
+        logActivity({
+          email, name, type: 'puzzle',
+          title: `Completed ${config.title} — ${config.subtitle}`,
+          icon: '👑'
+        });
+        logActivity({
+          email, name, type: 'rank',
+          title: `Reached ${comp.rank} Rank`,
+          icon: '⭐'
+        });
       }
     }
 

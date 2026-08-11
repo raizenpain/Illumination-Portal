@@ -81,6 +81,18 @@
     </div>
   </div>
 
+  <section class="community-section">
+    <div class="section-title">
+      <span class="section-kicker">Live Feed</span>
+      <h2>Community Activity</h2>
+      <p class="section-subtitle">See what fellow seekers are accomplishing right now</p>
+    </div>
+
+    <div class="activity-card community-feed" id="communityFeed">
+      <p class="community-feed-empty">Loading activity…</p>
+    </div>
+  </section>
+
 <div class="badge-section">
   <span class="section-kicker">Milestones</span>
   <h3>Achievements</h3>
@@ -200,7 +212,7 @@
 </div>
 
 <script type="module">
-import { db, doc, getDoc, updateDoc } from './firebase.js';
+import { db, doc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { loadGospelQuote } from './gospel.js';
@@ -393,8 +405,91 @@ async function loadGospel() {
   }
 }
 
+// ================================
+// COMMUNITY ACTIVITY FEED — live, cross-student
+// ================================
+
+function timeAgo(date) {
+  if (!date) return 'Just now';
+
+  const seconds = Math.floor((Date.now() - date.getTime()) / 1000);
+  if (seconds < 60) return 'Just now';
+
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes} minute${minutes === 1 ? '' : 's'} ago`;
+
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`;
+
+  const days = Math.floor(hours / 24);
+  if (days === 1) return 'Yesterday';
+  if (days < 7) return `${days} days ago`;
+
+  return date.toLocaleDateString();
+}
+
+function renderCommunityFeed(snapshot) {
+  const feed = document.getElementById('communityFeed');
+  if (!feed) return;
+
+  if (snapshot.empty) {
+    feed.innerHTML = '<p class="community-feed-empty">No community activity yet — be the first!</p>';
+    return;
+  }
+
+  feed.innerHTML = '';
+
+  snapshot.forEach((docSnap) => {
+    const activity = docSnap.data();
+    const when = activity.timestamp ? timeAgo(activity.timestamp.toDate()) : 'Just now';
+
+    const item = document.createElement('div');
+    item.className = 'activity-item';
+
+    const icon = document.createElement('div');
+    icon.className = 'activity-icon';
+    icon.dataset.type = activity.type || '';
+    icon.textContent = activity.icon || '🔔';
+
+    const body = document.createElement('div');
+    body.className = 'activity-item-body';
+
+    const nameEl = document.createElement('strong');
+    nameEl.textContent = activity.studentName || 'A Seeker';
+
+    const titleEl = document.createElement('p');
+    titleEl.textContent = activity.title || '';
+
+    body.appendChild(nameEl);
+    body.appendChild(titleEl);
+
+    const timeEl = document.createElement('span');
+    timeEl.className = 'activity-time';
+    timeEl.textContent = when;
+
+    item.appendChild(icon);
+    item.appendChild(body);
+    item.appendChild(timeEl);
+
+    feed.appendChild(item);
+  });
+}
+
+function loadCommunityFeed() {
+  const feed = document.getElementById('communityFeed');
+  if (!feed) return;
+
+  const activitiesQuery = query(collection(db, 'activities'), orderBy('timestamp', 'desc'), limit(20));
+
+  onSnapshot(activitiesQuery, renderCommunityFeed, (err) => {
+    console.error('Failed to load community activity:', err);
+    feed.innerHTML = '<p class="community-feed-empty">Could not load community activity.</p>';
+  });
+}
+
 loadStudentCard();
 loadGospel();
+loadCommunityFeed();
 
 ['semifinalSeasonBtn', 'finalSeasonBtn'].forEach((id) => {
   const card = document.getElementById(id);

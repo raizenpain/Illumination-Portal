@@ -504,7 +504,8 @@ body {
    PUZZLE SECTION (dashboard cards)
 ================================ */
 
-.puzzle-section {
+.puzzle-section,
+.community-section {
   margin-bottom: 35px;
 }
 
@@ -699,6 +700,58 @@ body {
   margin: 0;
   color: #6B7280;
   font-size: 14px;
+}
+
+/* Community Activity feed (live, cross-student) */
+
+.community-feed {
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.community-feed .activity-item {
+  animation: fadeInUp 0.4s ease;
+}
+
+.activity-item-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.activity-time {
+  flex-shrink: 0;
+  margin-left: 8px;
+  color: #9CA3AF;
+  font-size: 11.5px;
+  white-space: nowrap;
+}
+
+.community-feed-empty {
+  margin: 0;
+  padding: 8px 0;
+  color: #6B7280;
+  font-size: 14px;
+  text-align: center;
+}
+
+.activity-icon[data-type="piece"] {
+  background: rgba(86,178,187,0.12);
+}
+
+.activity-icon[data-type="achievement"] {
+  background: rgba(251,191,36,0.16);
+}
+
+.activity-icon[data-type="puzzle"] {
+  background: rgba(138,31,43,0.14);
+}
+
+.activity-icon[data-type="rank"] {
+  background: rgba(52,211,153,0.16);
+}
+
+.activity-icon[data-type="challenge"] {
+  background: rgba(2,132,199,0.14);
 }
 
 /* ================================

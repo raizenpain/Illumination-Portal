@@ -1,6 +1,7 @@
 import { db, doc, getDoc, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { CHALLENGES } from './questions.js';
+import { logActivity } from './activity.js';
 
 // ================================
 // SETTINGS — adjust freely
@@ -8,7 +9,7 @@ import { CHALLENGES } from './questions.js';
 const MAX_ATTEMPTS = 3;        // wrong attempts allowed before cooldown
 const COOLDOWN_SECONDS = 60;   // cooldown length in seconds
 
-const { email } = requireLogin();
+const { email, name } = requireLogin();
 
 const params = new URLSearchParams(window.location.search);
 const gate = params.get('gate'); // "puzzle2" or "puzzle3"
@@ -138,6 +139,12 @@ async function unlockPuzzle() {
     const studentRef = doc(db, 'students', email);
     await updateDoc(studentRef, {
       [gateInfo.unlockField]: true
+    });
+
+    logActivity({
+      email, name, type: 'challenge',
+      title: `Passed the challenge to unlock Puzzle ${gate.replace('puzzle', '')}`,
+      icon: '🎯'
     });
 
     clearAttempts();

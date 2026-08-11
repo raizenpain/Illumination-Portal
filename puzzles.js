@@ -10,6 +10,7 @@ export const PUZZLE_CONFIG = {
     totalPieces: 9,
     title: "Puzzle 1",
     subtitle: "The Cross",
+    pieceImageExt: "jpg",
     piecesField: "puzzle1",
     completedField: "puzzle1Completed",
     requiresGate: null,

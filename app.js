@@ -75,7 +75,7 @@ function renderBoard() {
 
     if (uploadedPieces.includes(i)) {
       const img = document.createElement('img');
-      img.src = `assets/puzzle${puzzleNumber}/piece${i}.png`;
+      img.src = `assets/puzzle${puzzleNumber}/piece${i}.${config.pieceImageExt || 'png'}`;
       slot.appendChild(img);
     } else {
       slot.textContent = i;

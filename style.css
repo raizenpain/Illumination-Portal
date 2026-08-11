@@ -957,6 +957,85 @@ body.puzzle-page {
   margin: 0 0 24px 0;
 }
 
+/* Puzzle page quest theming — scoped to .quest-card only, since
+   .puzzle-card-wrapper/.puzzle-subtitle/.puzzle-status etc. are
+   shared with challenge.html and reflection.html, which keep the
+   original light-card look above. */
+
+.quest-card {
+  position: relative;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1px solid rgba(86,178,187,0.22);
+  box-shadow: 0 20px 50px rgba(0,0,0,0.45);
+}
+
+.quest-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: 24px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(127,212,220,0.5), transparent 40%, transparent 60%, rgba(138,31,43,0.35));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.quest-crest {
+  width: 74px;
+  height: 74px;
+  margin: 0 auto 16px auto;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(86,178,187,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 16px rgba(86,178,187,0.25);
+}
+
+.quest-crest .puzzle-logo {
+  width: 42px;
+  height: 42px;
+  margin-bottom: 0;
+}
+
+.quest-card h1 {
+  font-family: 'Cinzel', serif;
+  color: #D8FBFF;
+  letter-spacing: 0.02em;
+  text-shadow: 0 0 10px rgba(127,212,220,0.5);
+  animation: label-glow 3.4s ease-in-out infinite;
+}
+
+.quest-card .puzzle-subtitle {
+  font-family: 'Cinzel', serif;
+  color: #9FDDE3;
+  font-size: 13px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.quest-card .puzzle-student-info {
+  color: #9CA9C4;
+}
+
+.quest-card .puzzle-status {
+  color: #D7E3F0;
+}
+
+.quest-card .back-btn {
+  color: #D7E3F0;
+  border-color: rgba(255,255,255,0.25);
+}
+
+.quest-card .back-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.4);
+  color: white;
+}
+
 .board {
   display: grid;
   grid-template-columns: repeat(3, 90px);
@@ -965,28 +1044,29 @@ body.puzzle-page {
   margin: 0 auto 28px auto;
   border-radius: 14px;
   overflow: hidden;
-  border: 1px solid #E2E8F0;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+  border: 1px solid rgba(127,212,220,0.35);
+  box-shadow: 0 8px 24px rgba(0,0,0,0.35), 0 0 20px rgba(86,178,187,0.15);
 }
 
 .slot {
   width: 90px;
   aspect-ratio: var(--piece-aspect, 1 / 1);
-  outline: 1px dashed #C7D2E3;
+  outline: 1px dashed rgba(127,212,220,0.35);
   outline-offset: -1px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #F8FAFC;
+  background: rgba(255,255,255,0.04);
+  font-family: 'Cinzel', serif;
   font-weight: 700;
   font-size: 18px;
-  color: #9CA3AF;
+  color: #5B667D;
   transition: background 0.25s ease;
 }
 
 .slot:has(img) {
   outline: none;
-  background: white;
+  background: transparent;
 }
 
 .slot img {
@@ -1004,35 +1084,37 @@ body.puzzle-page {
 .code-input {
   flex: 1;
   padding: 13px 16px;
-  border: 1.5px solid #E2E8F0;
+  border: 1.5px solid rgba(127,212,220,0.3);
   border-radius: 12px;
+  font-family: 'Cinzel', serif;
   font-size: 15px;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-align: center;
   text-transform: uppercase;
-  color: #1D2233;
-  background: white;
+  color: #D8FBFF;
+  background: rgba(255,255,255,0.05);
   box-sizing: border-box;
   transition: all 0.25s ease;
 }
 
 .code-input::placeholder {
+  font-family: 'Segoe UI', sans-serif;
   font-weight: 400;
   letter-spacing: normal;
   text-transform: none;
-  color: #9CA3AF;
+  color: #5B667D;
 }
 
 .code-input:focus {
   outline: none;
   border-color: #56B2BB;
-  box-shadow: 0 0 0 3px rgba(86,178,187,0.15);
+  box-shadow: 0 0 0 3px rgba(86,178,187,0.2);
 }
 
 .code-input:disabled {
-  background: #F0F4F8;
-  color: #9CA3AF;
+  background: rgba(255,255,255,0.02);
+  color: #5B667D;
   cursor: not-allowed;
 }
 
@@ -1042,6 +1124,7 @@ body.puzzle-page {
   border: none;
   padding: 13px 20px;
   border-radius: 12px;
+  font-family: 'Cinzel', serif;
   font-weight: 600;
   font-size: 14px;
   cursor: pointer;
@@ -1052,13 +1135,15 @@ body.puzzle-page {
 .submit-code-btn:hover {
   background: #3c98a1;
   transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(86,178,187,0.4);
 }
 
 .submit-code-btn:disabled {
-  background: #E2E8F0;
-  color: #9CA3AF;
+  background: rgba(255,255,255,0.06);
+  color: #5B667D;
   cursor: not-allowed;
   transform: none;
+  box-shadow: none;
 }
 
 .puzzle-status {
@@ -1683,6 +1768,25 @@ body.teacher-page {
   margin: 6px 0 0 0;
   color: #9CA9C4;
   font-size: 13px;
+}
+
+.roster-teacher-avatar {
+  width: 44px;
+  height: 44px;
+  margin: 0 auto 10px auto;
+  border-radius: 50%;
+  background: rgba(86,178,187,0.12);
+  border: 1.5px solid rgba(127,212,220,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+}
+
+.roster-teacher-name {
+  color: #D8FBFF;
+  text-shadow: 0 0 8px rgba(127,212,220,0.6);
+  animation: label-glow 3.4s ease-in-out infinite;
 }
 
 .roster-back-btn {

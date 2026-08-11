@@ -175,13 +175,15 @@ if (user) {
     [...ADMINS.map((a) => a.email), UNASSIGNED_KEY].forEach((teacherEmail) => {
       const group = teacherGroups[teacherEmail];
       const count = teacherStudentCount(group);
+      const isRealTeacher = teacherEmail !== UNASSIGNED_KEY;
 
-      if (teacherEmail === UNASSIGNED_KEY && count === 0) return;
+      if (!isRealTeacher && count === 0) return;
 
       const card = document.createElement('div');
       card.className = 'roster-nav-card';
       card.innerHTML = `
-        <h3>${group.name}</h3>
+        ${isRealTeacher ? '<div class="roster-teacher-avatar">🧙</div>' : ''}
+        <h3 class="${isRealTeacher ? 'roster-teacher-name' : ''}">${group.name}</h3>
         <p>${count} seeker${count === 1 ? '' : 's'}</p>
       `;
       card.onclick = () => showClassList(teacherEmail);
@@ -189,11 +191,16 @@ if (user) {
     });
   }
 
+  function teacherNameHtml(name, isRealTeacher) {
+    return isRealTeacher ? `<span class="roster-teacher-name">${name}</span>` : name;
+  }
+
   function showClassList(teacherEmail) {
     const group = teacherGroups[teacherEmail];
-    currentTeacher = { email: teacherEmail, name: group.name };
+    const isRealTeacher = teacherEmail !== UNASSIGNED_KEY;
+    currentTeacher = { email: teacherEmail, name: group.name, isRealTeacher };
 
-    rosterSubtitle.textContent = `Choose a class for ${group.name}.`;
+    rosterSubtitle.innerHTML = `Choose a class for ${teacherNameHtml(group.name, isRealTeacher)}.`;
     teacherListView.classList.add('hidden');
     rosterView.classList.add('hidden');
     classListView.classList.remove('hidden');
@@ -224,7 +231,7 @@ if (user) {
     currentSection = section;
     const students = teacherGroups[currentTeacher.email].bySection[section] || [];
 
-    rosterSubtitle.textContent = `${currentTeacher.name} — ${section} (${students.length} seeker${students.length === 1 ? '' : 's'})`;
+    rosterSubtitle.innerHTML = `${teacherNameHtml(currentTeacher.name, currentTeacher.isRealTeacher)} — ${section} (${students.length} seeker${students.length === 1 ? '' : 's'})`;
     classListView.classList.add('hidden');
     rosterView.classList.remove('hidden');
 

@@ -22,7 +22,7 @@ const released = settingsSnap.exists()
 
 if (!released.includes(piece)) {
 message.textContent =
-`Piece ${piece} has not been released by Jornie yet.`;
+`Piece ${piece} has not been released by the Dungeon Master yet.`;
 return;
 }
 

@@ -28,6 +28,7 @@
 
   <script type="module">
     import { auth, provider, signInWithPopup, signOut, db, doc, getDoc } from './firebase.js';
+    import { ADMIN_EMAILS } from './admins.js';
 
     const loginBtn = document.getElementById('googleLogin');
     const message = document.getElementById('message');
@@ -53,9 +54,7 @@
         localStorage.setItem('studentName', user.displayName);
         localStorage.setItem('studentEmail', user.email);
 
-        const ADMIN_EMAIL = 'jornie.hinay@hcdc.edu.ph';
-
-        if (user.email === ADMIN_EMAIL) {
+        if (ADMIN_EMAILS.includes(user.email)) {
           window.location.href = 'teacher.html';
           return;
         }

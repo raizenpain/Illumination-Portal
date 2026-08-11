@@ -4,13 +4,16 @@ import {
   doc,
   getDoc,
   getDocs,
-  setDoc
+  setDoc,
+  arrayUnion,
+  arrayRemove
 } from './firebase.js';
 import { requireAdmin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
+import { ADMIN_EMAILS } from './admins.js';
 
-const user = requireAdmin('jornie.hinay@hcdc.edu.ph');
+const user = requireAdmin(ADMIN_EMAILS);
 
 if (user) {
   const { email, name } = user;
@@ -72,10 +75,8 @@ if (user) {
             return;
           }
 
-          const updated = released.filter((n) => n !== i);
-
           await setDoc(ref, {
-            released: updated
+            released: arrayRemove(i)
           }, { merge: true });
 
           loadReleasedPieces();
@@ -83,10 +84,8 @@ if (user) {
       } else {
         btn.textContent = code ? `Release Piece ${i} — ${code}` : `Release Piece ${i}`;
         btn.onclick = async () => {
-          released.push(i);
-
           await setDoc(ref, {
-            released: released
+            released: arrayUnion(i)
           }, { merge: true });
 
           loadReleasedPieces();

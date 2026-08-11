@@ -1,11 +1,10 @@
 import { db, doc, getDoc, setDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
+import { ADMIN_EMAILS } from './admins.js';
 
 const { email, name } = requireLogin();
 
-const ADMIN_EMAIL = 'jornie.hinay@hcdc.edu.ph';
-
-if (email === ADMIN_EMAIL) {
+if (ADMIN_EMAILS.includes(email)) {
   window.location.href = 'teacher.html';
 }
 

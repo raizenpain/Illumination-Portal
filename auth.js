@@ -10,11 +10,11 @@ export function requireLogin() {
   return { email, name };
 }
 
-export function requireAdmin(adminEmail) {
+export function requireAdmin(adminEmails) {
   const user = requireLogin();
   if (!user) return null;
 
-  if (user.email !== adminEmail) {
+  if (!adminEmails.includes(user.email)) {
     alert('Access denied.');
     window.location.href = 'dashboard.html';
     return null;

@@ -2,12 +2,21 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
+    // Dungeon Master admins — keep this list in sync with admins.js
+    // (Firestore rules can't import that file directly).
+    function isAdmin() {
+      return request.auth != null &&
+             request.auth.token.email in [
+               'jornie.hinay@hcdc.edu.ph',
+               'iris.miranda@hcdc.edu.ph'
+             ];
+    }
+
     // Students collection — doc ID is the student's email
     match /students/{studentId} {
-      // A student can read their own record, and so can the admin (for the progress table)
+      // A student can read their own record, and so can an admin (for the progress table)
       allow read: if request.auth != null &&
-                     (request.auth.token.email == studentId ||
-                      request.auth.token.email == 'jornie.hinay@hcdc.edu.ph');
+                     (request.auth.token.email == studentId || isAdmin());
 
       // A student can only write to their OWN record — never anyone else's
       allow write: if request.auth != null &&
@@ -20,9 +29,8 @@ service cloud.firestore {
       // Any signed-in student can check which pieces are released
       allow read: if request.auth != null;
 
-      // Only Jornie can release pieces
-      allow write: if request.auth != null &&
-                      request.auth.token.email == 'jornie.hinay@hcdc.edu.ph';
+      // Only admins can release pieces
+      allow write: if isAdmin();
     }
 
     // Everything else — denied by default

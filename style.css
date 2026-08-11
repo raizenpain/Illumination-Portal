@@ -479,7 +479,10 @@ body {
 ================================ */
 
 .section-kicker {
-  display: block;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-family: 'Cinzel', serif;
   font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
@@ -488,9 +491,21 @@ body {
   margin-bottom: 6px;
 }
 
+.section-kicker.is-live::before {
+  content: "";
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #56B2BB;
+  box-shadow: 0 0 6px 1px rgba(86,178,187,0.8);
+  animation: rank-glow 2s ease-in-out infinite;
+}
+
 .section-title h2 {
   margin: 0 0 4px 0;
+  font-family: 'Cinzel', serif;
   color: #1D2233;
+  letter-spacing: 0.01em;
   font-size: 22px;
 }
 
@@ -517,19 +532,20 @@ body {
 
 .puzzle-card {
   position: relative;
-  background: white;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 18px;
   padding: 28px 26px 26px 26px;
   text-align: center;
   cursor: pointer;
   transition: all 0.25s ease;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
-  border-top: 4px solid #E2E8F0;
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  border-top: 4px solid #465066;
 }
 
 .puzzle-card:hover {
   transform: translateY(-6px);
-  box-shadow: 0 14px 28px rgba(0,0,0,0.14);
+  box-shadow: 0 14px 32px rgba(0,0,0,0.4);
 }
 
 .puzzle-icon-chip {
@@ -537,7 +553,7 @@ body {
   height: 72px;
   margin: 0 auto 14px auto;
   border-radius: 50%;
-  background: #F0F4F8;
+  background: rgba(255,255,255,0.06);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -550,12 +566,13 @@ body {
 
 .puzzle-card h3 {
   margin: 0;
-  color: #1D2233;
+  font-family: 'Cinzel', serif;
+  color: #D8FBFF;
   font-size: 17px;
 }
 
 .puzzle-card p {
-  color: #6B7280;
+  color: #9CA9C4;
   font-size: 13.5px;
   margin: 4px 0 0 0;
 }
@@ -598,28 +615,28 @@ body {
   border-radius: 20px;
   font-size: 12px;
   font-weight: 600;
-  background: #F0F4F8;
-  color: #6B7280;
+  background: rgba(255,255,255,0.08);
+  color: #9CA9C4;
 }
 
 .status-badge.status-available {
-  background: #E0F2FE;
-  color: #0284C7;
+  background: rgba(86,178,187,0.15);
+  color: #7fd4dc;
 }
 
 .status-badge.status-completed {
-  background: #DFF5E5;
-  color: #1E9E5A;
+  background: rgba(52,211,153,0.15);
+  color: #4ADE80;
 }
 
 .status-badge.status-challenge {
-  background: #FEF3E0;
-  color: #C2760C;
+  background: rgba(251,191,36,0.15);
+  color: #FBBF24;
 }
 
 .status-badge.status-locked {
-  background: #EEE;
-  color: #999;
+  background: rgba(255,255,255,0.05);
+  color: #5B667D;
 }
 
 /* Reflection revisit symbol (Puzzle 3 card) */
@@ -661,10 +678,11 @@ body {
 ================================ */
 
 .activity-card {
-  background: white;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1px solid rgba(86,178,187,0.18);
   border-radius: 18px;
   padding: 22px;
-  box-shadow: 0 6px 18px rgba(0,0,0,0.08);
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
 }
 
 .activity-item {
@@ -675,14 +693,14 @@ body {
 }
 
 .activity-item:not(:last-child) {
-  border-bottom: 1px solid #EEF1F5;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
 }
 
 .activity-icon {
   width: 34px;
   height: 34px;
   border-radius: 10px;
-  background: rgba(86,178,187,0.1);
+  background: rgba(86,178,187,0.14);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -692,13 +710,14 @@ body {
 
 .activity-item strong {
   display: block;
-  color: #1D2233;
+  font-family: 'Cinzel', serif;
+  color: white;
   margin-bottom: 3px;
 }
 
 .activity-item p {
   margin: 0;
-  color: #6B7280;
+  color: #9CA9C4;
   font-size: 14px;
 }
 
@@ -729,7 +748,7 @@ body {
 .community-feed-empty {
   margin: 0;
   padding: 8px 0;
-  color: #6B7280;
+  color: #9CA9C4;
   font-size: 14px;
   text-align: center;
 }
@@ -770,7 +789,7 @@ body.dashboard-page {
 }
 
 .dashboard-page .badge-section h3 {
-  color: white;
+  color: #D8FBFF;
 }
 
 .dashboard-page .badge-grid p {
@@ -778,7 +797,7 @@ body.dashboard-page {
 }
 
 .dashboard-page .section-title h2 {
-  color: white;
+  color: #D8FBFF;
 }
 
 .dashboard-page .section-subtitle {
@@ -1952,6 +1971,7 @@ body.teacher-page {
 
 .badge-section h3 {
   margin: 0 0 4px 0;
+  font-family: 'Cinzel', serif;
   font-size: 20px;
 }
 
@@ -1985,6 +2005,7 @@ body.teacher-page {
 }
 
 .badge-title {
+  font-family: 'Cinzel', serif;
   font-weight: 700;
   color: #FFFFFF;
   font-size: 15px;

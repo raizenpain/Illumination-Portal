@@ -18,7 +18,7 @@ export const PIECE_CODES = {
     8: "CROSS-CONSERVE",
     9: "CROSS-ECOLOGY"
   },
-  puzzle2: { // Sacraments
+  puzzle2: { // The Spirituality
     1: "SACR-BAPTISM",
     2: "SACR-CONFIRM",
     3: "SACR-EUCHARIST",

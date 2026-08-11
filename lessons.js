@@ -84,5 +84,44 @@ export const PIECE_LESSONS = {
       title: "Co-Responsibility",
       text: "Living the spirit of ecclesial communion — a community of co-journeyers in the life of faith."
     }
+  },
+
+  puzzle3: {
+    1: {
+      title: "Called to Be Happy",
+      text: "God created everything to make the human being happy — this is our most basic calling, shared by all."
+    },
+    2: {
+      title: "Freedom",
+      text: "True happiness is drawn not from possessions, but from the ordinary experience of being ourselves — Freedom."
+    },
+    3: {
+      title: "Love",
+      text: "Happiness is drawn from the experience of being with others — Love."
+    },
+    4: {
+      title: "Responsibility",
+      text: "Happiness is drawn from the experience of being for others — Responsibility."
+    },
+    5: {
+      title: "Relating with Self",
+      text: "To become fully human, we care for our bodies and live in at-one-ness with nature — our natural home, our OIKOS."
+    },
+    6: {
+      title: "Relating with Others",
+      text: '"No man is an island, no man stands alone." We become who we are through the significant others who shape our lives.'
+    },
+    7: {
+      title: "Relating with History",
+      text: "We are people of a particular time, culture, and history, called to live in solidarity with all peoples, at all times."
+    },
+    8: {
+      title: "Relating with God",
+      text: "We relate with the Ultimate — God — the One in whose hands the future of the world and of history rests."
+    },
+    9: {
+      title: "Revelation",
+      text: "Revelation is God's self-communication — God freely unfolding who He is to all humanity, in every time."
+    }
   }
 };

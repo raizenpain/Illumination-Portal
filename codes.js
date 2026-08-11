@@ -29,15 +29,15 @@ export const PIECE_CODES = {
     8: "SPIRIT-DISCIPLINE",
     9: "SPIRIT-CORESP"
   },
-  puzzle3: { // Christian Vocation
-    1: "VOC-CALLING",
-    2: "VOC-PRIESTHOOD",
-    3: "VOC-RELIGIOUS",
-    4: "VOC-MARRIED",
-    5: "VOC-SINGLE",
-    6: "VOC-MISSION",
-    7: "VOC-SERVICE",
-    8: "VOC-DISCERN",
-    9: "VOC-FAITHFUL"
+  puzzle3: { // The Vocation
+    1: "VOC-HAPPY",
+    2: "VOC-FREEDOM",
+    3: "VOC-LOVE",
+    4: "VOC-RESPONSIBLE",
+    5: "VOC-SELF",
+    6: "VOC-OTHERS",
+    7: "VOC-HISTORY",
+    8: "VOC-GOD",
+    9: "VOC-REVEAL"
   }
 };

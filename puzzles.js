@@ -43,7 +43,7 @@ export const PUZZLE_CONFIG = {
   3: {
     totalPieces: 9,
     title: "Puzzle 3",
-    subtitle: "Christian Vocation",
+    subtitle: "The Vocation",
     piecesField: "puzzle3",
     completedField: "puzzle3Completed",
     requiresGate: "puzzle3Unlocked",

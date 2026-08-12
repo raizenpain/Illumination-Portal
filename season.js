@@ -3,6 +3,7 @@ import { requireLogin } from './auth.js';
 import { SEASON_CONTENT, mergeSeasonContent } from './seasonContent.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
+import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -415,7 +416,44 @@ function renderTaskModal(node) {
 }
 
 // ================================
-// AWARD — ticket + node completion, "boss moment" activity posts
+// ACHIEVEMENT POPUPS — queued so a node that also completes its
+// chapter and/or season gets a popup for each, one after another,
+// same pattern as app.js's piece-collection popups.
+// ================================
+
+const popupQueue = [];
+let popupBusy = false;
+
+function queuePopup(popup) {
+  popupQueue.push(popup);
+  processPopupQueue();
+}
+
+function processPopupQueue() {
+  if (popupBusy || popupQueue.length === 0) return;
+  popupBusy = true;
+
+  const { title, text, icon = '🏅' } = popupQueue.shift();
+  const popup = document.getElementById('achievementPopup');
+  document.getElementById('achievementTitle').textContent = title;
+  document.getElementById('achievementText').textContent = text;
+  popup.querySelector('.achievement-icon').textContent = icon;
+
+  popup.classList.remove('hidden');
+  setTimeout(() => {
+    popup.classList.add('hidden');
+    popupBusy = false;
+    setTimeout(processPopupQueue, 300);
+  }, 3000);
+}
+
+function showAchievement(title, text, icon) {
+  queuePopup({ title, text, icon });
+}
+
+// ================================
+// AWARD — ticket + node completion, achievement badges, "boss
+// moment" activity posts, and a certificate redirect on season completion
 // ================================
 
 async function awardNode(node) {
@@ -425,15 +463,43 @@ async function awardNode(node) {
   tickets[node.ticketReward] = (tickets[node.ticketReward] || 0) + 1;
 
   const completedNodes = { ...(studentData.completedNodes || {}), [node.nodeId]: true };
+  const checkData = { ...studentData, completedNodes };
 
-  await setDoc(studentRef, { tickets, completedNodes }, { merge: true });
+  const chapter = content.chapters[chapterIndex];
+  const chapterJustCompleted = isChapterComplete(chapter, checkData);
+  const seasonJustCompleted = content.chapters.every((ch) => isChapterComplete(ch, checkData));
+
+  const achievements = [...(studentData.achievements || [])];
+  let popupsQueued = 0;
+
+  const taskId = taskBadgeId(node.nodeId);
+  if (!achievements.includes(taskId)) {
+    achievements.push(taskId);
+    showAchievement(node.title, `Task completed — ${content.seasonName}`, NODE_TYPE_ICON[node.type]);
+    popupsQueued++;
+  }
+
+  const chId = chapterBadgeId(chapter.chapterId);
+  if (chapterJustCompleted && !achievements.includes(chId)) {
+    achievements.push(chId);
+    showAchievement(chapter.chapterTitle, `Chapter completed — ${content.seasonName}`, '🏁');
+    popupsQueued++;
+  }
+
+  const seId = seasonBadgeId(seasonId);
+  if (seasonJustCompleted && !achievements.includes(seId)) {
+    achievements.push(seId);
+    showAchievement(`${content.seasonName} Champion`, content.subtitle, '👑');
+    popupsQueued++;
+  }
+
+  await setDoc(studentRef, { tickets, completedNodes, achievements }, { merge: true });
 
   studentData.tickets = tickets;
   studentData.completedNodes = completedNodes;
+  studentData.achievements = achievements;
 
-  const chapter = content.chapters[chapterIndex];
-
-  if (isChapterComplete(chapter, studentData)) {
+  if (chapterJustCompleted) {
     logActivity({
       email, name, type: 'season',
       title: `Completed "${chapter.chapterTitle}" in ${content.seasonName}`,
@@ -441,12 +507,16 @@ async function awardNode(node) {
     });
   }
 
-  if (content.chapters.every((ch) => isChapterComplete(ch, studentData))) {
+  if (seasonJustCompleted) {
     logActivity({
       email, name, type: 'season',
       title: `Completed ${content.seasonName} — ${content.subtitle}`,
       icon: '👑'
     });
+
+    setTimeout(() => {
+      window.location.href = `season-completion.html?season=${seasonId}`;
+    }, Math.max(3000, popupsQueued * 3300));
   }
 
   renderChapter();

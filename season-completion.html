@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Season Certificate | HCDC Illumination Portal</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="certificate" id="certificate">
+
+  <div class="certificate-header">
+    <img src="assets/hcdc-logo.png" alt="HCDC Logo" class="logo">
+    <span class="certificate-seal" id="certificateSeal"></span>
+    <h1>Holy Cross of Davao College</h1>
+    <p>Religious Education Department</p>
+  </div>
+
+  <hr>
+
+  <h2 id="certTitle">Certificate of Season Completion</h2>
+
+  <p>This certifies that</p>
+
+  <h1 id="studentName"></h1>
+
+  <p>has successfully completed</p>
+
+  <h2 id="seasonTitle">Season</h2>
+  <p id="seasonSubtitleText"></p>
+
+  <p>through the HCDC Illumination Portal.</p>
+
+  <br>
+
+  <div class="certificate-details">
+    <p><strong>Instructor:</strong> Jornie Hinay</p>
+    <p><strong>Email:</strong> <span id="studentEmail"></span></p>
+    <p><strong>Date Completed:</strong> <span id="completionDate"></span></p>
+    <p><strong>Verification Code:</strong> <span id="verificationCode"></span></p>
+  </div>
+
+  <br>
+
+  <div id="qrContainer"></div>
+
+  <br><br>
+
+  <div class="signature">
+    <div class="signature-line"></div>
+    <p><strong>Jornie Hinay</strong></p>
+    <p>Religious Education Instructor</p>
+  </div>
+
+  <br>
+
+  <button id="downloadBtn">Download Certificate (PDF)</button>
+
+  <button id="classroomBtn">Submit to Google Classroom</button>
+
+  <button id="dashboardBtn">Back to Dashboard</button>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<script type="module" src="season-completion.js"></script>
+
+</body>
+</html>

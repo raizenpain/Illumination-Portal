@@ -315,6 +315,7 @@ import { db, doc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapsh
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
+import { resolveSeasonBadge } from './seasonBadges.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { loadGospelQuote } from './gospel.js';
 import { initTicketTrader } from './ticketTrader.js';
@@ -389,7 +390,7 @@ function renderBadges(achievements) {
   badgeContainer.innerHTML = '';
 
   achievements.forEach(id => {
-    const info = BADGE_INFO[id];
+    const info = BADGE_INFO[id] || resolveSeasonBadge(id);
     if (!info) return;
 
     const badge = document.createElement('div');

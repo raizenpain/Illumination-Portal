@@ -2335,6 +2335,12 @@ body.teacher-page {
   margin-bottom: 10px;
 }
 
+.certificate-seal {
+  display: block;
+  font-size: 30px;
+  margin-bottom: 4px;
+}
+
 .certificate-header h1 {
   color: #1D2233;
   margin: 0;
@@ -2353,6 +2359,35 @@ body.teacher-page {
   width: 250px;
   border-top: 2px solid black;
   margin: 0 auto 10px auto;
+}
+
+/* Season-themed certificates (season-completion.html) — same
+   dawn/destruction/restoration palette as season.html, applied to
+   the border + headings so each season's certificate feels distinct
+   while staying print/PDF-friendly (light background, no glows). */
+
+.certificate[data-theme="midterm"] {
+  border-color: #D4A94A;
+}
+
+.certificate[data-theme="midterm"] h2 {
+  color: #8A6D1F;
+}
+
+.certificate[data-theme="semifinal"] {
+  border-color: #8A1F2B;
+}
+
+.certificate[data-theme="semifinal"] h2 {
+  color: #6B1620;
+}
+
+.certificate[data-theme="final"] {
+  border-color: #B8860B;
+}
+
+.certificate[data-theme="final"] h2 {
+  color: #1E3A8A;
 }
 
 /* ================================

@@ -1752,6 +1752,13 @@ body.teacher-page {
   top: 24px;
 }
 
+.teacher-main-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
 @media (max-width: 900px) {
   .teacher-content-grid {
     grid-template-columns: 1fr;
@@ -1868,6 +1875,14 @@ body.teacher-page {
   margin: 0 0 20px 0;
 }
 
+.season-editor-nested h3 {
+  margin: 0 0 4px 0;
+  color: #D8FBFF;
+  font-family: 'Cinzel', serif;
+  font-size: 18px;
+  letter-spacing: 0.02em;
+}
+
 #releaseButtons {
   display: flex;
   flex-direction: column;
@@ -1954,6 +1969,38 @@ body.teacher-page {
 
 .puzzle-tab.active::before {
   content: "✦ ";
+}
+
+/* Season Path Editor — season tabs read as the "bigger" parent
+   category, chapter tabs stay at the normal .puzzle-tab size nested
+   underneath them */
+
+.season-editor-season-tabs .puzzle-tab {
+  padding: 13px 26px;
+  font-size: 15px;
+  border-radius: 12px;
+}
+
+/* Active tabs (both the season row and its chapter row) glow in that
+   season's own theme color — set as CSS vars by seasonEditor.js,
+   same palette as the student-facing season.html — instead of the
+   generic teal every other .puzzle-tab uses. */
+
+.season-editor-panel {
+  --season-editor-accent: #56B2BB;
+  --season-editor-accent-glow: rgba(86,178,187,0.5);
+}
+
+.season-editor-panel .puzzle-tab.active {
+  background: var(--season-editor-accent);
+  border-color: var(--season-editor-accent);
+  box-shadow: 0 0 14px var(--season-editor-accent-glow);
+}
+
+.season-editor-placeholder {
+  color: #9CA9C4;
+  font-size: 13.5px;
+  padding: 20px 4px;
 }
 
 /* Roster drill-down (Teacher -> Class -> Roster) */
@@ -2249,6 +2296,14 @@ body.teacher-page {
   width: auto;
   flex: 1;
   margin: 0;
+}
+
+.season-editor-actions .submit-quiz-btn:disabled,
+.season-editor-actions .dm-back-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .season-editor-status {
@@ -2653,8 +2708,34 @@ body.teacher-page {
 
 /* Artifact grid — all 30, grouped by tier */
 
+.artifact-tier-pair {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-top: 24px;
+}
+
+.artifact-tier-pair .artifact-tier-block {
+  margin-top: 0;
+}
+
+.artifact-tier-solo {
+  margin-top: 24px;
+}
+
 .artifact-tier-block {
   margin-top: 24px;
+}
+
+@media (max-width: 640px) {
+  .artifact-tier-pair {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .artifact-tier-pair .artifact-tier-block:last-child {
+    margin-top: 24px;
+  }
 }
 
 .artifact-tier-heading {

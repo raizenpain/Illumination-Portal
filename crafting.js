@@ -174,30 +174,47 @@ function artifactState(id, tier) {
   return tokens < cost ? { kind: 'need-tokens', cost } : { kind: 'buyable', cost };
 }
 
+// Tier 1+2 and Tier 3+4 pair up side by side (they're the "basic"
+// tiers students churn through fastest); Tier 5 stays its own
+// full-width row since there's only ever one to show at a time.
+const TIER_ROWS = [[1, 2], [3, 4], [5]];
+
 function renderGridArea() {
   const area = document.getElementById('craftingGridArea');
   area.innerHTML = '';
 
-  TIERS.forEach(({ tier, name: tierName, accent }) => {
-    const tierBlock = document.createElement('div');
-    tierBlock.className = 'artifact-tier-block';
-    tierBlock.style.setProperty('--tier-accent', accent);
+  TIER_ROWS.forEach((tierNumbers) => {
+    const row = document.createElement('div');
+    row.className = tierNumbers.length === 2 ? 'artifact-tier-pair' : 'artifact-tier-solo';
 
-    const heading = document.createElement('h4');
-    heading.className = 'artifact-tier-heading';
-    heading.textContent = `Tier ${tier} — ${tierName}`;
-    tierBlock.appendChild(heading);
-
-    const grid = document.createElement('div');
-    grid.className = 'artifact-grid';
-
-    ARTIFACTS[tier].forEach((a) => {
-      grid.appendChild(buildArtifactCard(a, tier));
+    tierNumbers.forEach((tierNumber) => {
+      const tierMeta = TIERS.find((t) => t.tier === tierNumber);
+      row.appendChild(buildTierBlock(tierMeta));
     });
 
-    tierBlock.appendChild(grid);
-    area.appendChild(tierBlock);
+    area.appendChild(row);
   });
+}
+
+function buildTierBlock({ tier, name: tierName, accent }) {
+  const tierBlock = document.createElement('div');
+  tierBlock.className = 'artifact-tier-block';
+  tierBlock.style.setProperty('--tier-accent', accent);
+
+  const heading = document.createElement('h4');
+  heading.className = 'artifact-tier-heading';
+  heading.textContent = `Tier ${tier} — ${tierName}`;
+  tierBlock.appendChild(heading);
+
+  const grid = document.createElement('div');
+  grid.className = 'artifact-grid';
+
+  ARTIFACTS[tier].forEach((a) => {
+    grid.appendChild(buildArtifactCard(a, tier));
+  });
+
+  tierBlock.appendChild(grid);
+  return tierBlock;
 }
 
 function buildArtifactCard(a, tier) {

@@ -35,55 +35,59 @@
         <div id="releaseButtons"></div>
       </div>
 
-      <div class="teacher-panel teacher-main">
-        <h2>📜 The Roster</h2>
-        <p id="rosterSubtitle">Choose a teacher to begin.</p>
+      <div class="teacher-main-stack">
 
-        <div id="teacherListView" class="roster-nav-grid"></div>
+        <div class="teacher-panel">
+          <h2>📜 The Roster</h2>
+          <p id="rosterSubtitle">Choose a teacher to begin.</p>
 
-        <div id="classListView" class="hidden">
-          <button type="button" class="dm-back-btn roster-back-btn" id="backToTeachers">&larr; Back to Teachers</button>
-          <div id="classListGrid" class="roster-nav-grid"></div>
-        </div>
+          <div id="teacherListView" class="roster-nav-grid"></div>
 
-        <div id="rosterView" class="hidden">
-          <div class="roster-view-actions">
-            <button type="button" class="dm-back-btn roster-back-btn" id="backToClasses">&larr; Back to Classes</button>
-            <button type="button" class="submit-quiz-btn roster-export-btn" id="exportCsvBtn">⬇ Export CSV</button>
+          <div id="classListView" class="hidden">
+            <button type="button" class="dm-back-btn roster-back-btn" id="backToTeachers">&larr; Back to Teachers</button>
+            <div id="classListGrid" class="roster-nav-grid"></div>
           </div>
 
-          <table id="studentTable" class="student-table">
-            <thead>
-              <tr>
-                <th>Name</th>
-                <th>Email</th>
-                <th>Puzzle 1</th>
-                <th>Puzzle 2</th>
-                <th>Puzzle 3</th>
-                <th>Rank</th>
-                <th></th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-      </div>
+          <div id="rosterView" class="hidden">
+            <div class="roster-view-actions">
+              <button type="button" class="dm-back-btn roster-back-btn" id="backToClasses">&larr; Back to Classes</button>
+              <button type="button" class="submit-quiz-btn roster-export-btn" id="exportCsvBtn">⬇ Export CSV</button>
+            </div>
 
-      <div class="teacher-panel" style="margin-top: 24px;">
-        <h2>🗺️ Season Path Editor</h2>
-        <p>Rewrite any season's chapters and tasks — titles, prompts, quiz questions, ticket rewards. These start as ReEd 101 coursepack placeholders; nothing here is permanent.</p>
-
-        <div id="seasonEditorTabs" class="puzzle-tabs"></div>
-        <div id="chapterEditorTabs" class="puzzle-tabs chapter-editor-tabs"></div>
-
-        <div id="nodeEditorList"></div>
-
-        <div class="season-editor-actions">
-          <button type="button" class="submit-quiz-btn" id="saveChapterBtn">Save Chapter</button>
-          <button type="button" class="dm-back-btn" id="resetChapterBtn">Reset to Default</button>
+            <table id="studentTable" class="student-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>Email</th>
+                  <th>Puzzle 1</th>
+                  <th>Puzzle 2</th>
+                  <th>Puzzle 3</th>
+                  <th>Rank</th>
+                  <th></th>
+                </tr>
+              </thead>
+              <tbody></tbody>
+            </table>
+          </div>
         </div>
 
-        <p class="season-editor-status" id="seasonEditorStatus"></p>
+        <div class="teacher-panel season-editor-panel">
+          <h2>🗺️ Season Path Editor</h2>
+          <p>Rewrite any season's chapters and tasks — titles, prompts, quiz questions, ticket rewards. These start as ReEd 101 coursepack placeholders; nothing here is permanent.</p>
+
+          <div id="seasonEditorTabs" class="puzzle-tabs season-editor-season-tabs"></div>
+          <div id="chapterEditorTabs" class="puzzle-tabs chapter-editor-tabs"></div>
+
+          <div id="nodeEditorList"></div>
+
+          <div class="season-editor-actions">
+            <button type="button" class="submit-quiz-btn" id="saveChapterBtn">Save Chapter</button>
+            <button type="button" class="dm-back-btn" id="resetChapterBtn">Reset to Default</button>
+          </div>
+
+          <p class="season-editor-status" id="seasonEditorStatus"></p>
+        </div>
+
       </div>
 
     </div>

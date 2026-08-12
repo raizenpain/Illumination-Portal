@@ -27,12 +27,21 @@ const TICKET_OPTIONS = [
 
 const NODE_TYPE_LABEL = { quiz: '📝 Quiz', task: '🎯 Task', journal: '📖 Journal', recitation: '🗣️ Recitation' };
 
-let seasonTabsEl, chapterTabsEl, nodeListEl, statusEl;
+// Same palette as the student-facing season.html theme, so the
+// active-tab glow here matches what students actually see per season.
+const SEASON_ACCENTS = {
+  midterm: { solid: '#E8C468', glow: 'rgba(232,196,104,0.5)' },
+  semifinal: { solid: '#C64545', glow: 'rgba(198,69,69,0.5)' },
+  final: { solid: '#FBBF24', glow: 'rgba(251,191,36,0.5)' }
+};
+
+let seasonTabsEl, chapterTabsEl, nodeListEl, statusEl, panelEl;
+let saveBtn, resetBtn;
 
 const overridesCache = {};
 const mergedCache = {};
 let currentSeasonId = SEASON_IDS[0];
-let currentChapterIndex = 0;
+let currentChapterIndex = -1;
 let draftChapter = null;
 
 export function initSeasonEditor() {
@@ -42,11 +51,27 @@ export function initSeasonEditor() {
   chapterTabsEl = document.getElementById('chapterEditorTabs');
   nodeListEl = document.getElementById('nodeEditorList');
   statusEl = document.getElementById('seasonEditorStatus');
+  panelEl = document.querySelector('.season-editor-panel');
+  saveBtn = document.getElementById('saveChapterBtn');
+  resetBtn = document.getElementById('resetChapterBtn');
 
-  document.getElementById('saveChapterBtn').onclick = saveChapter;
-  document.getElementById('resetChapterBtn').onclick = resetChapter;
+  saveBtn.onclick = saveChapter;
+  resetBtn.onclick = resetChapter;
+  setActionButtonsEnabled(false);
 
   selectSeason(SEASON_IDS[0]);
+}
+
+function applySeasonAccent(seasonId) {
+  if (!panelEl) return;
+  const accent = SEASON_ACCENTS[seasonId] || { solid: '#56B2BB', glow: 'rgba(86,178,187,0.5)' };
+  panelEl.style.setProperty('--season-editor-accent', accent.solid);
+  panelEl.style.setProperty('--season-editor-accent-glow', accent.glow);
+}
+
+function setActionButtonsEnabled(enabled) {
+  saveBtn.disabled = !enabled;
+  resetBtn.disabled = !enabled;
 }
 
 async function loadSeasonOverride(seasonId) {
@@ -60,14 +85,19 @@ async function loadSeasonOverride(seasonId) {
 
 async function selectSeason(seasonId) {
   currentSeasonId = seasonId;
-  currentChapterIndex = 0;
+  currentChapterIndex = -1; // require an explicit chapter click before showing its content
+  draftChapter = null;
   statusEl.textContent = 'Loading…';
 
   const override = await loadSeasonOverride(seasonId);
   mergedCache[seasonId] = mergeSeasonContent(seasonId, override);
 
+  applySeasonAccent(seasonId);
   renderSeasonTabs();
-  selectChapter(0);
+  renderChapterTabs();
+  renderNodeEditor();
+  setActionButtonsEnabled(false);
+  statusEl.textContent = '';
 }
 
 function renderSeasonTabs() {
@@ -101,11 +131,20 @@ function selectChapter(i) {
   draftChapter = JSON.parse(JSON.stringify(mergedCache[currentSeasonId].chapters[i]));
   renderChapterTabs();
   renderNodeEditor();
+  setActionButtonsEnabled(true);
   statusEl.textContent = '';
 }
 
 function renderNodeEditor() {
   nodeListEl.innerHTML = '';
+
+  if (!draftChapter) {
+    const placeholder = document.createElement('p');
+    placeholder.className = 'season-editor-placeholder';
+    placeholder.textContent = 'Choose a chapter above to view and edit its tasks.';
+    nodeListEl.appendChild(placeholder);
+    return;
+  }
 
   const chapterCard = document.createElement('div');
   chapterCard.className = 'node-editor-card';

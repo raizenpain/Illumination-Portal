@@ -1,0 +1,279 @@
+// ============================================
+// ARTIFACT CRAFTING — Crafting Status chain view + the 30-artifact
+// grid, nested together in one panel per dashboard placement (main
+// column, above Recent Activity).
+//
+// Purchase rule: tiers 1-4 artifacts OUTSIDE the student's chosen
+// Legendary chain are free-order collectibles (token cost only).
+// Artifacts INSIDE the chosen chain must be bought tier1->2->3->4 in
+// order for that specific chain — already-owned items (e.g. bought
+// before choosing this chain) already count, per the source spec's
+// "extra items... contribute if the student switches" note. Tier 5
+// is never purchased directly; it auto-unlocks once all 4 chain
+// prerequisites are owned.
+// ============================================
+
+import { db, doc, setDoc } from './firebase.js';
+import { logActivity } from './activity.js';
+import {
+  TOKEN_COST_BY_TIER, TIERS, ARTIFACTS, CRAFTING_CHAINS,
+  artifactIconPath, chainForTier5
+} from './artifacts.js';
+
+let email = null;
+let name = null;
+let studentData = null;
+
+export function initCrafting({ email: e, name: n, studentData: data, prelimDone }) {
+  const wrap = document.getElementById('craftingWrap');
+  if (!wrap) return;
+
+  email = e;
+  name = n;
+  studentData = data;
+
+  const overlay = document.getElementById('craftingLockOverlay');
+
+  if (prelimDone) {
+    wrap.classList.remove('is-locked');
+    overlay.classList.add('hidden');
+  } else {
+    // Render for real even while locked — the CSS blur needs actual
+    // content behind it to create the "indistinct shapes" preview
+    // effect the spec asks for, not an empty box with a lock icon.
+    wrap.classList.add('is-locked');
+    overlay.classList.remove('hidden');
+  }
+
+  renderCrafting();
+}
+
+function ownedList() {
+  return studentData.ownedArtifacts || [];
+}
+
+function isOwned(id) {
+  return ownedList().includes(id);
+}
+
+function renderCrafting() {
+  renderChainArea();
+  renderGridArea();
+}
+
+// ================================
+// CHAIN AREA — legendary picker, or the 5-node chain progress view
+// ================================
+
+function renderChainArea() {
+  const area = document.getElementById('craftingChainArea');
+  const chosen = studentData.chosenLegendaryChain;
+
+  if (!chosen) {
+    area.innerHTML = `<p class="section-subtitle">Choose the Legendary Artifact you want to forge — the tickets/tokens you already have carry over.</p>`;
+
+    const grid = document.createElement('div');
+    grid.className = 'legendary-picker-grid';
+
+    CRAFTING_CHAINS.forEach((chainInfo) => {
+      const btn = document.createElement('button');
+      btn.type = 'button';
+      btn.className = 'legendary-pick-btn';
+      btn.innerHTML = `
+        <img src="${artifactIconPath(chainInfo.tier5Id)}" alt="${chainInfo.tier5Name}">
+        <span>${chainInfo.tier5Name}</span>
+      `;
+      btn.onclick = () => chooseChain(chainInfo.tier5Id);
+      grid.appendChild(btn);
+    });
+
+    area.appendChild(grid);
+    return;
+  }
+
+  const chainInfo = chainForTier5(chosen);
+  const fullChain = [...chainInfo.chain, chosen]; // 4 prerequisites + the legendary itself
+
+  area.innerHTML = `
+    <div class="crafting-chain-header">
+      <span class="section-subtitle">Pursuing: <strong>${chainInfo.tier5Name}</strong></span>
+      <button type="button" class="back-btn crafting-change-btn" id="craftingChangeBtn">Change Target</button>
+    </div>
+  `;
+
+  const row = document.createElement('div');
+  row.className = 'crafting-chain-row';
+
+  fullChain.forEach((id, i) => {
+    const owned = isOwned(id);
+    const node = document.createElement('div');
+    node.className = `crafting-chain-node ${owned ? 'state-owned' : 'state-pending'}`;
+    node.innerHTML = `
+      <div class="crafting-chain-icon-frame">
+        <img src="${artifactIconPath(id)}" alt="${findArtifactName(id)}">
+      </div>
+      <span class="crafting-chain-label">${findArtifactName(id)}</span>
+    `;
+    row.appendChild(node);
+
+    if (i < fullChain.length - 1) {
+      const connector = document.createElement('div');
+      connector.className = `crafting-chain-connector${owned ? ' is-lit' : ''}`;
+      row.appendChild(connector);
+    }
+  });
+
+  area.appendChild(row);
+
+  document.getElementById('craftingChangeBtn').onclick = () => {
+    if (!confirm(`Change your target Legendary Artifact away from ${chainInfo.tier5Name}? Any artifacts you already own are kept — chain order will just apply to your new target instead.`)) return;
+    chooseChain(null);
+  };
+}
+
+function findArtifactName(id) {
+  for (const tierArtifacts of Object.values(ARTIFACTS)) {
+    const match = tierArtifacts.find((a) => a.id === id);
+    if (match) return match.name;
+  }
+  return id;
+}
+
+async function chooseChain(tier5Id) {
+  await setDoc(doc(db, 'students', email), { chosenLegendaryChain: tier5Id }, { merge: true });
+  studentData.chosenLegendaryChain = tier5Id;
+  await checkTier5AutoUnlock();
+  renderCrafting();
+}
+
+// ================================
+// GRID AREA — all 30 artifacts, grouped by tier
+// ================================
+
+function artifactState(id, tier) {
+  if (isOwned(id)) return { kind: 'owned' };
+
+  if (tier === 5) {
+    return studentData.chosenLegendaryChain === id
+      ? { kind: 'tier5-pending' }
+      : { kind: 'tier5-other' };
+  }
+
+  const chosen = studentData.chosenLegendaryChain;
+  const chainInfo = chosen ? chainForTier5(chosen) : null;
+  const chainIndex = chainInfo ? chainInfo.chain.indexOf(id) : -1;
+
+  if (chainIndex > 0) {
+    const priorOwned = chainInfo.chain.slice(0, chainIndex).every((cid) => isOwned(cid));
+    if (!priorOwned) return { kind: 'chain-locked' };
+  }
+
+  const cost = TOKEN_COST_BY_TIER[tier];
+  const tokens = studentData.unlockTokens || 0;
+
+  return tokens < cost ? { kind: 'need-tokens', cost } : { kind: 'buyable', cost };
+}
+
+function renderGridArea() {
+  const area = document.getElementById('craftingGridArea');
+  area.innerHTML = '';
+
+  TIERS.forEach(({ tier, name: tierName, accent }) => {
+    const tierBlock = document.createElement('div');
+    tierBlock.className = 'artifact-tier-block';
+    tierBlock.style.setProperty('--tier-accent', accent);
+
+    const heading = document.createElement('h4');
+    heading.className = 'artifact-tier-heading';
+    heading.textContent = `Tier ${tier} — ${tierName}`;
+    tierBlock.appendChild(heading);
+
+    const grid = document.createElement('div');
+    grid.className = 'artifact-grid';
+
+    ARTIFACTS[tier].forEach((a) => {
+      grid.appendChild(buildArtifactCard(a, tier));
+    });
+
+    tierBlock.appendChild(grid);
+    area.appendChild(tierBlock);
+  });
+}
+
+function buildArtifactCard(a, tier) {
+  const state = artifactState(a.id, tier);
+
+  const card = document.createElement('div');
+  card.className = `artifact-card state-${state.kind}`;
+
+  let statusHtml = '';
+  if (state.kind === 'owned') {
+    statusHtml = `<span class="artifact-status-badge">✓ Owned</span>`;
+  } else if (state.kind === 'tier5-pending') {
+    statusHtml = `<span class="artifact-status-badge">🔒 Complete the chain</span>`;
+  } else if (state.kind === 'tier5-other') {
+    statusHtml = `<span class="artifact-status-badge">🔒 Not your target</span>`;
+  } else if (state.kind === 'chain-locked') {
+    statusHtml = `<span class="artifact-status-badge">🔒 Unlock earlier tier first</span>`;
+  } else if (state.kind === 'need-tokens') {
+    statusHtml = `<span class="artifact-status-badge">Need ${state.cost}🪙</span>`;
+  } else if (state.kind === 'buyable') {
+    statusHtml = `<button type="button" class="submit-quiz-btn artifact-buy-btn" data-artifact-id="${a.id}" data-tier="${tier}">Buy · ${state.cost}🪙</button>`;
+  }
+
+  card.innerHTML = `
+    <div class="artifact-icon-frame">
+      <img src="${artifactIconPath(a.id)}" alt="${a.name}">
+    </div>
+    <div class="artifact-name">${a.name}</div>
+    ${statusHtml}
+  `;
+
+  const buyBtn = card.querySelector('.artifact-buy-btn');
+  if (buyBtn) {
+    buyBtn.onclick = () => purchaseArtifact(a.id, tier);
+  }
+
+  return card;
+}
+
+async function purchaseArtifact(id, tier) {
+  const state = artifactState(id, tier);
+  if (state.kind !== 'buyable') return;
+
+  const unlockTokens = (studentData.unlockTokens || 0) - state.cost;
+  const ownedArtifacts = [...ownedList(), id];
+
+  try {
+    await setDoc(doc(db, 'students', email), { unlockTokens, ownedArtifacts }, { merge: true });
+    studentData.unlockTokens = unlockTokens;
+    studentData.ownedArtifacts = ownedArtifacts;
+    await checkTier5AutoUnlock();
+  } catch (err) {
+    console.error('Artifact purchase failed:', err);
+  }
+
+  renderCrafting();
+}
+
+async function checkTier5AutoUnlock() {
+  const chosen = studentData.chosenLegendaryChain;
+  if (!chosen || isOwned(chosen)) return;
+
+  const chainInfo = chainForTier5(chosen);
+  if (!chainInfo) return;
+
+  const allOwned = chainInfo.chain.every((id) => isOwned(id));
+  if (!allOwned) return;
+
+  const ownedArtifacts = [...ownedList(), chosen];
+
+  await setDoc(doc(db, 'students', email), { ownedArtifacts }, { merge: true });
+  studentData.ownedArtifacts = ownedArtifacts;
+
+  logActivity({
+    email, name, type: 'artifact',
+    title: `Forged the Legendary ${chainInfo.tier5Name}!`,
+    icon: '🏆'
+  });
+}

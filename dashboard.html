@@ -152,6 +152,25 @@
         </div>
       </section>
 
+      <section class="craft-section">
+        <div class="section-title">
+          <span class="section-kicker">Artifact Forge</span>
+          <h2>Crafting Status</h2>
+          <p class="section-subtitle">Trade tokens for relics and forge a Legendary</p>
+        </div>
+
+        <div class="locked-blur-wrap" id="craftingWrap">
+          <div class="locked-blur-target" id="craftingTarget">
+            <div id="craftingChainArea"></div>
+            <div id="craftingGridArea"></div>
+          </div>
+          <div class="locked-blur-overlay hidden" id="craftingLockOverlay">
+            <span class="locked-blur-icon">🔒</span>
+            <p>Complete Prelim Season to reveal</p>
+          </div>
+        </div>
+      </section>
+
       <section class="activity-section">
         <div class="section-title">
           <span class="section-kicker">Timeline</span>
@@ -299,6 +318,7 @@ import { SEASON_CONTENT } from './seasonContent.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { loadGospelQuote } from './gospel.js';
 import { initTicketTrader } from './ticketTrader.js';
+import { initCrafting } from './crafting.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -349,6 +369,7 @@ async function loadStudentCard() {
     setupSemifinalAndFinalCards(data);
     setupReflectionSymbol(data);
     initTicketTrader({ email, studentData: data, prelimDone: isSeasonPreviewAdmin || prelimSeasonDone(data) });
+    initCrafting({ email, name: data.name || name, studentData: data, prelimDone: isSeasonPreviewAdmin || prelimSeasonDone(data) });
 
   } catch (err) {
     console.error('Failed to load student card:', err);

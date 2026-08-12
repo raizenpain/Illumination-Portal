@@ -206,12 +206,75 @@
         <div id="badgeContainer" class="badge-grid">
           <p>No achievements yet.</p>
         </div>
+
+        <hr class="badge-section-divider">
+
+        <div class="ticket-trader-nested">
+          <h4>🎫 Ticket Trader</h4>
+          <p class="section-subtitle">Trade tickets for Artifact Unlock Tokens</p>
+
+          <div class="locked-blur-wrap" id="ticketTraderWrap">
+            <div class="locked-blur-target" id="ticketTraderTarget">
+              <div class="ticket-wallet" id="ticketWallet"></div>
+              <button type="button" class="submit-quiz-btn" id="openTicketTraderBtn">Open Trader</button>
+            </div>
+            <div class="locked-blur-overlay hidden" id="ticketTraderLockOverlay">
+              <span class="locked-blur-icon">🔒</span>
+              <p>Complete Prelim Season to reveal</p>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
 
   </div>
 
+</div>
+
+<div id="ticketTraderModal" class="achievement-popup hidden">
+  <div class="achievement-box ticket-trader-box">
+    <h2>🎫 Ticket Trader</h2>
+    <p class="reflection-hint">Trade your tickets for Artifact Unlock Tokens, spendable on artifacts once crafting opens.</p>
+
+    <div class="ticket-wallet" id="traderModalWallet"></div>
+
+    <div class="trade-row">
+      <div class="trade-row-label">Trade the <strong>same 3 tickets</strong></div>
+      <div class="trade-row-flow">
+        <select class="trade-select" id="sameThreeSelect"></select>
+        <span class="trade-arrow">&rarr;</span>
+        <span class="trade-output">🪙 x1</span>
+        <button type="button" class="submit-quiz-btn trade-btn" id="sameThreeTradeBtn">Trade</button>
+      </div>
+    </div>
+
+    <div class="trade-row">
+      <div class="trade-row-label">Trade <strong>any 4 tickets</strong> (mixed, no Scrap)</div>
+      <div class="trade-row-flow">
+        <span class="trade-input" id="anyFourInputLabel">0/4</span>
+        <span class="trade-arrow">&rarr;</span>
+        <span class="trade-output">🪙 x1</span>
+        <button type="button" class="submit-quiz-btn trade-btn" id="anyFourTradeBtn">Trade</button>
+      </div>
+    </div>
+
+    <div class="trade-row">
+      <div class="trade-row-label">Trade <strong>6 Scrap tickets</strong> — the catch-up path</div>
+      <div class="trade-row-flow">
+        <span class="trade-input" id="sixScrapInputLabel">♻️ 0/6</span>
+        <span class="trade-arrow">&rarr;</span>
+        <span class="trade-output">🪙 x1</span>
+        <button type="button" class="submit-quiz-btn trade-btn" id="sixScrapTradeBtn">Trade</button>
+      </div>
+    </div>
+
+    <p class="puzzle-status" id="ticketTraderStatus"></p>
+
+    <div class="reflection-modal-actions">
+      <button class="back-btn" id="ticketTraderCloseBtn">Close</button>
+    </div>
+  </div>
 </div>
 
 <div id="reflectionModal" class="achievement-popup hidden">
@@ -235,6 +298,7 @@ import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { loadGospelQuote } from './gospel.js';
+import { initTicketTrader } from './ticketTrader.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -284,6 +348,7 @@ async function loadStudentCard() {
     setupMidtermCard(data);
     setupSemifinalAndFinalCards(data);
     setupReflectionSymbol(data);
+    initTicketTrader({ email, studentData: data, prelimDone: isSeasonPreviewAdmin || prelimSeasonDone(data) });
 
   } catch (err) {
     console.error('Failed to load student card:', err);

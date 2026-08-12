@@ -2223,6 +2223,167 @@ body.teacher-page {
 }
 
 /* ================================
+   TICKET TRADER (nested under Milestones/Achievements)
+================================ */
+
+.badge-section-divider {
+  border: none;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  margin: 22px 0 18px;
+}
+
+.ticket-trader-nested h4 {
+  margin: 0 0 4px 0;
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  color: #D8FBFF;
+}
+
+.ticket-wallet {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 12px 0 16px;
+}
+
+.ticket-wallet .ticket-slot {
+  border-color: rgba(86,178,187,0.35);
+}
+
+.ticket-slot-token {
+  border-color: rgba(251,191,36,0.4) !important;
+  background: rgba(251,191,36,0.08);
+}
+
+.ticket-trader-open-btn,
+#openTicketTraderBtn {
+  width: auto;
+  padding: 10px 22px;
+  font-size: 13px;
+}
+
+/* Generic locked/blurred preview wrapper — reused for the artifact
+   grid + crafting status in a later pass. Wrap the content to hide in
+   .locked-blur-target, add .is-locked to the outer wrap to blur it and
+   show the overlay label. */
+
+.locked-blur-wrap {
+  position: relative;
+}
+
+.locked-blur-wrap.is-locked .locked-blur-target {
+  filter: blur(6px);
+  pointer-events: none;
+  user-select: none;
+}
+
+.locked-blur-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  text-align: center;
+  padding: 12px;
+  background: rgba(10,15,34,0.4);
+  border-radius: 14px;
+}
+
+.locked-blur-overlay.hidden {
+  display: none;
+}
+
+.locked-blur-icon {
+  font-size: 22px;
+  filter: drop-shadow(0 0 6px rgba(127,212,220,0.5));
+}
+
+.locked-blur-overlay p {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #D7E3F0;
+}
+
+/* Ticket Trader modal */
+
+.ticket-trader-box {
+  width: min(460px, calc(100% - 32px));
+  text-align: left;
+}
+
+.ticket-trader-box .puzzle-status {
+  color: #D7E3F0;
+}
+
+.ticket-trader-box .reflection-hint {
+  color: #9FDDE3;
+}
+
+.trade-row {
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 12px 14px;
+  margin-top: 12px;
+}
+
+.trade-row-label {
+  font-size: 13px;
+  color: #9CA9C4;
+  margin-bottom: 10px;
+}
+
+.trade-row-label strong {
+  color: #D8FBFF;
+}
+
+.trade-row-flow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.trade-select {
+  flex: 1 1 160px;
+  background: rgba(255,255,255,0.05);
+  color: #D7E3F0;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.trade-input {
+  flex: 1 1 auto;
+  font-size: 13px;
+  font-weight: 600;
+  color: #D7E3F0;
+}
+
+.trade-arrow {
+  color: #56B2BB;
+  font-size: 16px;
+}
+
+.trade-output {
+  font-size: 13px;
+  font-weight: 700;
+  color: #FBBF24;
+  white-space: nowrap;
+}
+
+.trade-btn {
+  width: auto;
+  margin: 0;
+  padding: 9px 16px;
+  font-size: 12.5px;
+}
+
+/* ================================
    ACHIEVEMENT POPUP
 ================================ */
 

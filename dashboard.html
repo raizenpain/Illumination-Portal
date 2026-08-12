@@ -81,119 +81,131 @@
     </div>
   </div>
 
-  <section class="community-section">
-    <div class="section-title">
-      <span class="section-kicker is-live">Live Feed</span>
-      <h2>Community Activity</h2>
-      <p class="section-subtitle">See what fellow seekers are accomplishing right now</p>
+  <div class="dashboard-body">
+
+    <div class="dashboard-main">
+
+      <section class="puzzle-section">
+        <div class="section-title">
+          <span class="section-kicker">Formation Journey</span>
+          <h2>Prelim Season</h2>
+          <p class="section-subtitle">Complete each formation milestone</p>
+        </div>
+
+        <div class="puzzle-grid">
+
+          <div class="puzzle-card" id="puzzle1Btn">
+            <div class="puzzle-icon-chip"><span class="puzzle-icon">🧩</span></div>
+            <h3>Puzzle 1</h3>
+            <p>The Cross</p>
+            <span class="status-badge">Loading...</span>
+          </div>
+
+          <div class="puzzle-card" id="puzzle2Btn">
+            <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
+            <h3>Puzzle 2</h3>
+            <p>The Spirituality</p>
+            <span class="status-badge">Loading...</span>
+          </div>
+
+          <div class="puzzle-card" id="puzzle3Btn">
+            <button class="reflection-symbol locked" id="reflectionSymbol" title="Finish all three puzzles to unlock">🔒</button>
+            <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
+            <h3>Puzzle 3</h3>
+            <p>The Vocation</p>
+            <span class="status-badge">Loading...</span>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="puzzle-section">
+        <div class="section-title">
+          <span class="section-kicker">What's Next</span>
+          <h2>Upcoming Seasons</h2>
+          <p class="section-subtitle">Unlocks after you complete Prelim Season</p>
+        </div>
+
+        <div class="puzzle-grid">
+
+          <div class="puzzle-card state-locked" id="midtermSeasonBtn">
+            <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
+            <h3>Midterm Season</h3>
+            <p>Coming soon</p>
+            <span class="status-badge status-locked">Locked</span>
+          </div>
+
+          <div class="puzzle-card state-locked" id="semifinalSeasonBtn">
+            <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
+            <h3>SemiFinal Season</h3>
+            <p>Coming soon</p>
+            <span class="status-badge status-locked">Locked</span>
+          </div>
+
+          <div class="puzzle-card state-locked" id="finalSeasonBtn">
+            <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
+            <h3>Final Season</h3>
+            <p>Coming soon</p>
+            <span class="status-badge status-locked">Locked</span>
+          </div>
+
+        </div>
+      </section>
+
+      <section class="activity-section">
+        <div class="section-title">
+          <span class="section-kicker">Timeline</span>
+          <h2>Recent Activity</h2>
+          <p class="section-subtitle">Your latest formation progress</p>
+        </div>
+
+        <div class="activity-card">
+          <div class="activity-item">
+            <div class="activity-icon">🎉</div>
+            <div>
+              <strong>Illumination Portal Ready</strong>
+              <p>Your HCDC formation profile is active.</p>
+            </div>
+          </div>
+
+          <div class="activity-item">
+            <div class="activity-icon">🎯</div>
+            <div>
+              <strong>Next Goal</strong>
+              <p>Complete Puzzle 1 to unlock the next milestone.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
     </div>
 
-    <div class="activity-card community-feed" id="communityFeed">
-      <p class="community-feed-empty">Loading activity…</p>
-    </div>
-  </section>
+    <div class="dashboard-sidebar">
 
-<div class="badge-section">
-  <span class="section-kicker">Milestones</span>
-  <h3>Achievements</h3>
-  <p class="section-subtitle">Badges you've earned so far</p>
-  <div id="badgeContainer" class="badge-grid">
-    <p>No achievements yet.</p>
+      <section class="community-section">
+        <div class="section-title">
+          <span class="section-kicker is-live">Live Feed</span>
+          <h2>Community Activity</h2>
+          <p class="section-subtitle">See what fellow seekers are accomplishing right now</p>
+        </div>
+
+        <div class="activity-card community-feed" id="communityFeed">
+          <p class="community-feed-empty">Loading activity…</p>
+        </div>
+      </section>
+
+      <div class="badge-section">
+        <span class="section-kicker">Milestones</span>
+        <h3>Achievements</h3>
+        <p class="section-subtitle">Badges you've earned so far</p>
+        <div id="badgeContainer" class="badge-grid">
+          <p>No achievements yet.</p>
+        </div>
+      </div>
+
+    </div>
+
   </div>
-</div>
-
-  <section class="puzzle-section">
-    <div class="section-title">
-      <span class="section-kicker">Formation Journey</span>
-      <h2>Prelim Season</h2>
-      <p class="section-subtitle">Complete each formation milestone</p>
-    </div>
-
-    <div class="puzzle-grid">
-
-      <div class="puzzle-card" id="puzzle1Btn">
-        <div class="puzzle-icon-chip"><span class="puzzle-icon">🧩</span></div>
-        <h3>Puzzle 1</h3>
-        <p>The Cross</p>
-        <span class="status-badge">Loading...</span>
-      </div>
-
-      <div class="puzzle-card" id="puzzle2Btn">
-        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
-        <h3>Puzzle 2</h3>
-        <p>The Spirituality</p>
-        <span class="status-badge">Loading...</span>
-      </div>
-
-      <div class="puzzle-card" id="puzzle3Btn">
-        <button class="reflection-symbol locked" id="reflectionSymbol" title="Finish all three puzzles to unlock">🔒</button>
-        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
-        <h3>Puzzle 3</h3>
-        <p>The Vocation</p>
-        <span class="status-badge">Loading...</span>
-      </div>
-
-    </div>
-  </section>
-
-  <section class="puzzle-section">
-    <div class="section-title">
-      <span class="section-kicker">What's Next</span>
-      <h2>Upcoming Seasons</h2>
-      <p class="section-subtitle">Unlocks after you complete Prelim Season</p>
-    </div>
-
-    <div class="puzzle-grid">
-
-      <div class="puzzle-card state-locked" id="midtermSeasonBtn">
-        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
-        <h3>Midterm Season</h3>
-        <p>Coming soon</p>
-        <span class="status-badge status-locked">Locked</span>
-      </div>
-
-      <div class="puzzle-card state-locked" id="semifinalSeasonBtn">
-        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
-        <h3>SemiFinal Season</h3>
-        <p>Coming soon</p>
-        <span class="status-badge status-locked">Locked</span>
-      </div>
-
-      <div class="puzzle-card state-locked" id="finalSeasonBtn">
-        <div class="puzzle-icon-chip"><span class="puzzle-icon">🔒</span></div>
-        <h3>Final Season</h3>
-        <p>Coming soon</p>
-        <span class="status-badge status-locked">Locked</span>
-      </div>
-
-    </div>
-  </section>
-
-  <section class="activity-section">
-    <div class="section-title">
-      <span class="section-kicker">Timeline</span>
-      <h2>Recent Activity</h2>
-      <p class="section-subtitle">Your latest formation progress</p>
-    </div>
-
-    <div class="activity-card">
-      <div class="activity-item">
-        <div class="activity-icon">🎉</div>
-        <div>
-          <strong>Illumination Portal Ready</strong>
-          <p>Your HCDC formation profile is active.</p>
-        </div>
-      </div>
-
-      <div class="activity-item">
-        <div class="activity-icon">🎯</div>
-        <div>
-          <strong>Next Goal</strong>
-          <p>Complete Puzzle 1 to unlock the next milestone.</p>
-        </div>
-      </div>
-    </div>
-  </section>
 
 </div>
 

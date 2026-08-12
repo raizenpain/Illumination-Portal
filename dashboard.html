@@ -180,6 +180,11 @@
 
     </div>
 
+    <div class="fantasy-divider" aria-hidden="true">
+      <span class="fantasy-divider-sigil">✦</span>
+      <span class="fantasy-divider-fill"></span>
+    </div>
+
     <div class="dashboard-sidebar">
 
       <section class="community-section">
@@ -509,6 +514,52 @@ function loadCommunityFeed() {
 loadStudentCard();
 loadGospel();
 loadCommunityFeed();
+
+// ================================
+// FANTASY DIVIDER SCROLL LIGHT — the rune-line fills from empty at
+// the top of the page to fully lit at the bottom, and eases smoothly
+// toward wherever the user has scrolled to (in either direction).
+// ================================
+const fantasyDivider = document.querySelector('.fantasy-divider');
+
+if (fantasyDivider) {
+  let targetFill = 0;
+  let currentFill = 0;
+  let dividerRafId = null;
+
+  const computeTargetFill = () => {
+    const scrollRange = document.documentElement.scrollHeight - window.innerHeight;
+    targetFill = scrollRange > 0 ? Math.min(1, Math.max(0, window.scrollY / scrollRange)) : 0;
+  };
+
+  const animateDividerFill = () => {
+    currentFill += (targetFill - currentFill) * 0.12;
+
+    if (Math.abs(targetFill - currentFill) < 0.001) {
+      currentFill = targetFill;
+      fantasyDivider.style.setProperty('--fill', currentFill);
+      dividerRafId = null;
+      return;
+    }
+
+    fantasyDivider.style.setProperty('--fill', currentFill);
+    dividerRafId = requestAnimationFrame(animateDividerFill);
+  };
+
+  const requestDividerUpdate = () => {
+    computeTargetFill();
+    if (dividerRafId === null) {
+      dividerRafId = requestAnimationFrame(animateDividerFill);
+    }
+  };
+
+  computeTargetFill();
+  currentFill = targetFill;
+  fantasyDivider.style.setProperty('--fill', currentFill);
+
+  window.addEventListener('scroll', requestDividerUpdate, { passive: true });
+  window.addEventListener('resize', requestDividerUpdate);
+}
 
 ['semifinalSeasonBtn', 'finalSeasonBtn'].forEach((id) => {
   const card = document.getElementById(id);

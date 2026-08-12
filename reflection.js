@@ -1,6 +1,7 @@
 import { db, doc, getDoc, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
+import { containsBannedWord } from './contentFilter.js';
 
 // ================================
 // SETTINGS — adjust freely
@@ -62,6 +63,11 @@ async function handleSubmit() {
 
   if (text.length < MIN_LENGTH) {
     statusEl.textContent = `Please write a bit more — ${MIN_LENGTH - text.length} characters to go.`;
+    return;
+  }
+
+  if (containsBannedWord(text)) {
+    statusEl.textContent = "That reflection contains language that isn't allowed here — please rewrite it.";
     return;
   }
 

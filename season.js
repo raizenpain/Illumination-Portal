@@ -4,6 +4,7 @@ import { SEASON_CONTENT, mergeSeasonContent } from './seasonContent.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
+import { containsBannedWord } from './contentFilter.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -380,7 +381,12 @@ function renderTextModal(node, { minLength }) {
       return;
     }
 
-    await awardNode(node);
+    if (containsBannedWord(text)) {
+      hint.textContent = "That response contains language that isn't allowed here — please rewrite it.";
+      return;
+    }
+
+    await awardNode(node, text);
     closeNodeModal();
   };
 }
@@ -456,7 +462,7 @@ function showAchievement(title, text, icon) {
 // moment" activity posts, and a certificate redirect on season completion
 // ================================
 
-async function awardNode(node) {
+async function awardNode(node, submissionText) {
   const studentRef = doc(db, 'students', email);
 
   const tickets = { ...(studentData.tickets || {}) };
@@ -464,6 +470,11 @@ async function awardNode(node) {
 
   const completedNodes = { ...(studentData.completedNodes || {}), [node.nodeId]: true };
   const checkData = { ...studentData, completedNodes };
+
+  const nodeSubmissions = { ...(studentData.nodeSubmissions || {}) };
+  if (submissionText) {
+    nodeSubmissions[node.nodeId] = submissionText;
+  }
 
   const chapter = content.chapters[chapterIndex];
   const chapterJustCompleted = isChapterComplete(chapter, checkData);
@@ -493,11 +504,12 @@ async function awardNode(node) {
     popupsQueued++;
   }
 
-  await setDoc(studentRef, { tickets, completedNodes, achievements }, { merge: true });
+  await setDoc(studentRef, { tickets, completedNodes, achievements, nodeSubmissions }, { merge: true });
 
   studentData.tickets = tickets;
   studentData.completedNodes = completedNodes;
   studentData.achievements = achievements;
+  studentData.nodeSubmissions = nodeSubmissions;
 
   if (chapterJustCompleted) {
     logActivity({

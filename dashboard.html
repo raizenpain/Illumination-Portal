@@ -320,6 +320,7 @@ import { ADMIN_EMAILS } from './admins.js';
 import { loadGospelQuote } from './gospel.js';
 import { initTicketTrader } from './ticketTrader.js';
 import { initCrafting } from './crafting.js';
+import { containsBannedWord } from './contentFilter.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -744,6 +745,11 @@ async function saveReflectionEdit() {
 
   if (text.length < REFLECTION_MIN_LENGTH) {
     reflectionModalHint.textContent = `Please write a bit more — ${REFLECTION_MIN_LENGTH - text.length} characters to go.`;
+    return;
+  }
+
+  if (containsBannedWord(text)) {
+    reflectionModalHint.textContent = "That reflection contains language that isn't allowed here — please rewrite it.";
     return;
   }
 

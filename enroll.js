@@ -1,6 +1,7 @@
 import { db, doc, getDoc, setDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { ADMIN_EMAILS } from './admins.js';
+import { CLASS_OFFERINGS } from './classOfferings.js';
 
 const { email, name } = requireLogin();
 
@@ -11,6 +12,16 @@ if (ADMIN_EMAILS.includes(email)) {
 const studentNameEl = document.getElementById('studentName');
 if (studentNameEl) {
   studentNameEl.textContent = name;
+}
+
+const sectionSelectEl = document.getElementById('sectionSelect');
+if (sectionSelectEl) {
+  CLASS_OFFERINGS.forEach((offering) => {
+    const opt = document.createElement('option');
+    opt.value = offering;
+    opt.textContent = offering;
+    sectionSelectEl.appendChild(opt);
+  });
 }
 
 // Generate a unique HCDC Student ID

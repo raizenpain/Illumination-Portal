@@ -94,6 +94,43 @@
 
   </div>
 
+  <div id="studentContextMenu" class="context-menu hidden">
+    <button type="button" class="context-menu-item" id="ctxDelete">🗑️ Delete Student</button>
+    <button type="button" class="context-menu-item" id="ctxReassign">🔄 Re-assign Class</button>
+    <button type="button" class="context-menu-item" id="ctxGift">🎁 Gift Tickets</button>
+  </div>
+
+  <div id="reassignModal" class="achievement-popup hidden">
+    <div class="achievement-box roster-action-box">
+      <h2>🔄 Re-assign Class</h2>
+      <p class="reflection-hint" id="reassignStudentLabel"></p>
+      <div id="reassignTeacherWrap" class="hidden">
+        <label class="node-editor-label" for="reassignTeacherSelect">Teacher</label>
+        <select class="node-editor-input" id="reassignTeacherSelect"></select>
+      </div>
+      <label class="node-editor-label" for="reassignSectionSelect">Class Offering</label>
+      <select class="node-editor-input" id="reassignSectionSelect"></select>
+      <div class="reflection-modal-actions">
+        <button class="back-btn" id="reassignCancelBtn">Cancel</button>
+        <button class="submit-quiz-btn" id="reassignConfirmBtn">Move Student</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="giftTicketsModal" class="achievement-popup hidden">
+    <div class="achievement-box roster-action-box">
+      <h2>🎁 Gift Tickets</h2>
+      <p class="reflection-hint" id="giftStudentLabel"></p>
+      <select class="node-editor-input" id="giftTicketSelect"></select>
+      <label class="node-editor-label" for="giftQuantityInput">Quantity</label>
+      <input type="number" class="node-editor-input" id="giftQuantityInput" value="1" min="1" max="50">
+      <div class="reflection-modal-actions">
+        <button class="back-btn" id="giftCancelBtn">Cancel</button>
+        <button class="submit-quiz-btn" id="giftConfirmBtn">Gift Tickets</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module" src="teacher.js"></script>
 
 </body>

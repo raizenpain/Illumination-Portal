@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Student Review | HCDC Illumination Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="teacher-page">
+
+  <div class="teacher-container">
+
+    <div class="teacher-header">
+      <div class="teacher-crest">
+        <span class="teacher-crest-icon">👁️</span>
+        <div>
+          <span class="info-label">Illumination Portal</span>
+          <h1>Student Review</h1>
+          <p id="studentHeaderInfo">Loading…</p>
+        </div>
+      </div>
+      <button class="dm-back-btn" onclick="window.location.href='teacher.html'">&larr; Back to Roster</button>
+    </div>
+
+    <div class="teacher-panel">
+      <h2>📋 Profile</h2>
+      <div id="profileGrid" class="student-view-profile-grid"></div>
+    </div>
+
+    <div class="teacher-panel" style="margin-top: 24px;">
+      <h2>🧩 Prelim Progress</h2>
+      <div id="prelimProgress"></div>
+    </div>
+
+    <div class="teacher-panel" style="margin-top: 24px;">
+      <h2>🗺️ Season Progress</h2>
+      <div id="seasonProgress"></div>
+    </div>
+
+    <div class="teacher-panel" style="margin-top: 24px;">
+      <h2>📝 Written Submissions</h2>
+      <p>Review journal, recitation, and reflection responses for anything off-topic, nonsensical, or inappropriate — a word-list filter catches obvious profanity at submit time, but judgment calls like these need a human read.</p>
+      <div id="submissionsList"></div>
+    </div>
+
+  </div>
+
+  <script type="module" src="student-view.js"></script>
+
+</body>
+</html>

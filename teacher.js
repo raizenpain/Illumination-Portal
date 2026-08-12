@@ -14,6 +14,7 @@ import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
 import { ADMIN_EMAILS, ADMINS } from './admins.js';
 import { initSeasonEditor } from './seasonEditor.js';
+import { CLASS_OFFERINGS } from './classOfferings.js';
 
 const UNASSIGNED_KEY = '__unassigned__';
 
@@ -256,18 +257,232 @@ if (user) {
         <td><span class="rank-chip" data-rank="${data.rank || 'Seeker'}">${data.rank || 'Seeker'}</span></td>
       `;
 
+      row.title = 'Click to review this student — right-click for more actions';
+      row.onclick = () => {
+        window.location.href = `student-view.html?student=${encodeURIComponent(data.email || data._docId)}`;
+      };
+      row.oncontextmenu = (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+        openContextMenu(event, data, section);
+      };
+
       const actionCell = document.createElement('td');
       const deleteBtn = document.createElement('button');
       deleteBtn.type = 'button';
       deleteBtn.className = 'roster-delete-btn';
       deleteBtn.title = 'Remove this student';
       deleteBtn.textContent = '🗑️';
-      deleteBtn.onclick = () => deleteStudent(data, section);
+      deleteBtn.onclick = (event) => {
+        event.stopPropagation();
+        deleteStudent(data, section);
+      };
       actionCell.appendChild(deleteBtn);
       row.appendChild(actionCell);
 
       tableBody.appendChild(row);
     });
+  }
+
+  // ================================
+  // ROSTER ROW CONTEXT MENU — delete / re-assign class / gift tickets
+  // ================================
+
+  const contextMenu = document.getElementById('studentContextMenu');
+  let contextMenuStudent = null;
+  let contextMenuSection = null;
+
+  const GIFT_TICKET_OPTIONS = [
+    ['quiz_ticket', '📝 Sigil of Insight'],
+    ['task_ticket', '🎯 Seal of Diligence'],
+    ['journal_ticket', '📖 Scroll of Reflection'],
+    ['recitation_ticket', "🗣️ Herald's Voice"],
+    ['scrap_ticket', '♻️ Ember Shard']
+  ];
+
+  function openContextMenu(event, data, section) {
+    contextMenuStudent = data;
+    contextMenuSection = section;
+
+    contextMenu.classList.remove('hidden');
+
+    const menuWidth = 200;
+    const menuHeight = 160;
+    contextMenu.style.left = `${Math.min(event.clientX, window.innerWidth - menuWidth - 10)}px`;
+    contextMenu.style.top = `${Math.min(event.clientY, window.innerHeight - menuHeight - 10)}px`;
+  }
+
+  function closeContextMenu() {
+    contextMenu.classList.add('hidden');
+  }
+
+  document.addEventListener('click', closeContextMenu);
+  document.addEventListener('contextmenu', (event) => {
+    if (!contextMenu.contains(event.target)) closeContextMenu();
+  });
+
+  document.getElementById('ctxDelete').onclick = () => {
+    closeContextMenu();
+    if (contextMenuStudent) deleteStudent(contextMenuStudent, contextMenuSection);
+  };
+
+  document.getElementById('ctxReassign').onclick = () => {
+    closeContextMenu();
+    if (contextMenuStudent) openReassignModal(contextMenuStudent, contextMenuSection);
+  };
+
+  document.getElementById('ctxGift').onclick = () => {
+    closeContextMenu();
+    if (contextMenuStudent) openGiftModal(contextMenuStudent);
+  };
+
+  // --- Re-assign Class ---
+  // Section (class offering) and teacher are independent choices a
+  // student makes at enroll.html/teacher-select.html — there's no
+  // fixed "this teacher's sections" list, so both dropdowns here draw
+  // from the same fixed master list (classOfferings.js) / ADMINS
+  // roster instead of whatever happens to already exist among
+  // currently-enrolled students, which can be empty in a small class.
+
+  function openReassignModal(data, section) {
+    const modal = document.getElementById('reassignModal');
+    const label = document.getElementById('reassignStudentLabel');
+    const teacherWrap = document.getElementById('reassignTeacherWrap');
+    const teacherSelect = document.getElementById('reassignTeacherSelect');
+    const sectionSelect = document.getElementById('reassignSectionSelect');
+
+    sectionSelect.innerHTML = '';
+    CLASS_OFFERINGS.forEach((offering) => {
+      const opt = document.createElement('option');
+      opt.value = offering;
+      opt.textContent = offering;
+      sectionSelect.appendChild(opt);
+    });
+
+    if (currentTeacher.isRealTeacher) {
+      // Same teacher, different class offering — the common case.
+      label.textContent = `Move ${data.name || data.email} out of "${section}" into:`;
+      teacherWrap.classList.add('hidden');
+    } else {
+      // Unassigned students have no teacher to "stay the same" with —
+      // let the admin pick one along with the class offering.
+      label.textContent = `Assign ${data.name || data.email} to a teacher and class:`;
+      teacherWrap.classList.remove('hidden');
+
+      teacherSelect.innerHTML = '';
+      ADMINS.forEach((admin) => {
+        const opt = document.createElement('option');
+        opt.value = JSON.stringify({ teacherEmail: admin.email, teacherName: admin.name });
+        opt.textContent = admin.name;
+        teacherSelect.appendChild(opt);
+      });
+    }
+
+    modal.classList.remove('hidden');
+
+    document.getElementById('reassignConfirmBtn').onclick = () => {
+      const target = currentTeacher.isRealTeacher
+        ? { teacherEmail: currentTeacher.email, teacherName: currentTeacher.name, section: sectionSelect.value }
+        : { ...JSON.parse(teacherSelect.value), section: sectionSelect.value };
+
+      if (target.teacherEmail === currentTeacher.email && target.section === section) {
+        alert('Please choose a different class offering.');
+        return;
+      }
+
+      handleReassignConfirm(data, section, target, modal);
+    };
+    document.getElementById('reassignCancelBtn').onclick = () => {
+      modal.classList.add('hidden');
+    };
+  }
+
+  async function handleReassignConfirm(data, oldSection, target, modal) {
+    try {
+      await setDoc(doc(db, 'students', data._docId), {
+        teacherEmail: target.teacherEmail,
+        teacherName: target.teacherName,
+        section: target.section
+      }, { merge: true });
+
+      const oldGroup = teacherGroups[currentTeacher.email];
+      const oldList = oldGroup.bySection[oldSection];
+      const index = oldList.indexOf(data);
+      if (index !== -1) oldList.splice(index, 1);
+
+      data.teacherEmail = target.teacherEmail;
+      data.teacherName = target.teacherName;
+      data.section = target.section;
+
+      if (!teacherGroups[target.teacherEmail]) {
+        teacherGroups[target.teacherEmail] = { name: target.teacherName, bySection: {} };
+      }
+      if (!teacherGroups[target.teacherEmail].bySection[target.section]) {
+        teacherGroups[target.teacherEmail].bySection[target.section] = [];
+      }
+      teacherGroups[target.teacherEmail].bySection[target.section].push(data);
+
+      modal.classList.add('hidden');
+
+      if (oldList.length === 0) {
+        delete oldGroup.bySection[oldSection];
+        showClassList(currentTeacher.email);
+      } else {
+        showRoster(oldSection);
+      }
+
+    } catch (err) {
+      console.error('Failed to reassign student:', err);
+      alert('Something went wrong while re-assigning this student. Please try again.');
+    }
+  }
+
+  // --- Gift Tickets ---
+
+  function openGiftModal(data) {
+    const modal = document.getElementById('giftTicketsModal');
+    const label = document.getElementById('giftStudentLabel');
+    const select = document.getElementById('giftTicketSelect');
+    const qtyInput = document.getElementById('giftQuantityInput');
+
+    label.textContent = `Gift tickets to ${data.name || data.email}:`;
+
+    select.innerHTML = '';
+    GIFT_TICKET_OPTIONS.forEach(([value, text]) => {
+      const opt = document.createElement('option');
+      opt.value = value;
+      opt.textContent = text;
+      select.appendChild(opt);
+    });
+    qtyInput.value = 1;
+
+    modal.classList.remove('hidden');
+
+    document.getElementById('giftConfirmBtn').onclick = () => {
+      handleGiftConfirm(data, select.value, parseInt(qtyInput.value) || 1, modal);
+    };
+    document.getElementById('giftCancelBtn').onclick = () => {
+      modal.classList.add('hidden');
+    };
+  }
+
+  async function handleGiftConfirm(data, ticketType, quantity, modal) {
+    const safeQuantity = Math.max(1, Math.min(50, quantity));
+
+    try {
+      const snap = await getDoc(doc(db, 'students', data._docId));
+      const currentTickets = (snap.exists() ? snap.data().tickets : null) || {};
+      const tickets = { ...currentTickets, [ticketType]: (currentTickets[ticketType] || 0) + safeQuantity };
+
+      await setDoc(doc(db, 'students', data._docId), { tickets }, { merge: true });
+
+      modal.classList.add('hidden');
+      alert(`Gifted ${safeQuantity}x to ${data.name || data.email}.`);
+
+    } catch (err) {
+      console.error('Failed to gift tickets:', err);
+      alert('Something went wrong while gifting tickets. Please try again.');
+    }
   }
 
   async function deleteStudent(data, section) {

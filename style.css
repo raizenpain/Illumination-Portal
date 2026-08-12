@@ -2172,6 +2172,144 @@ body.teacher-page {
   border-color: rgba(138,31,43,0.6);
 }
 
+.student-table tbody tr {
+  cursor: pointer;
+}
+
+/* Right-click menu on a roster row */
+
+.context-menu {
+  position: fixed;
+  z-index: 10000;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1.5px solid rgba(86,178,187,0.3);
+  border-radius: 12px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.5);
+  padding: 6px;
+  min-width: 190px;
+}
+
+.context-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: transparent;
+  border: none;
+  color: #D7E3F0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-family: 'Cinzel', serif;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.context-menu-item:hover {
+  background: rgba(86,178,187,0.15);
+  color: white;
+}
+
+/* Re-assign Class / Gift Tickets modals */
+
+.roster-action-box {
+  width: min(380px, calc(100% - 32px));
+  text-align: left;
+}
+
+.roster-action-box .reflection-hint {
+  color: #9FDDE3;
+}
+
+.roster-action-box select,
+.roster-action-box input {
+  margin-top: 8px;
+}
+
+/* ================================
+   STUDENT REVIEW (student-view.html)
+================================ */
+
+.student-view-profile-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 14px;
+}
+
+.student-view-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.student-view-field-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #7C8AAE;
+}
+
+.student-view-field-value {
+  font-size: 14px;
+  font-weight: 600;
+  color: #D7E3F0;
+}
+
+.student-view-progress-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 14px;
+  color: #D7E3F0;
+}
+
+.student-view-progress-row:last-child {
+  border-bottom: none;
+}
+
+.student-view-submission-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.student-view-submission-card:last-child {
+  margin-bottom: 0;
+}
+
+.student-view-submission-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.student-view-submission-header strong {
+  color: #D8FBFF;
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+}
+
+.student-view-submission-header span {
+  font-size: 12px;
+  color: #7C8AAE;
+  white-space: nowrap;
+}
+
+.student-view-submission-text {
+  margin: 0;
+  color: #D7E3F0;
+  font-size: 13.5px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
 /* ================================
    SEASON PATH EDITOR (Dungeon Master console)
 ================================ */

@@ -30,6 +30,8 @@ await setDoc(studentRef, {
 
 }
 
+const teacherName = data.teacherName || 'Jornie Hinay';
+
 document.getElementById('studentName').textContent = name;
 document.getElementById('studentEmail').textContent = email;
 
@@ -38,6 +40,9 @@ new Date().toLocaleString();
 
 document.getElementById('verificationCode').textContent =
 verificationCode;
+
+document.getElementById('instructorName').textContent = teacherName;
+document.getElementById('signatureName').textContent = teacherName;
 
 // Generate QR Code
 const qr = document.createElement('img');

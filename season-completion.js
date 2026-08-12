@@ -53,10 +53,14 @@ async function loadCertificate() {
     await setDoc(studentRef, { [codeField]: verificationCode }, { merge: true });
   }
 
+  const teacherName = data.teacherName || 'Jornie Hinay';
+
   document.getElementById('studentName').textContent = data.name || name;
   document.getElementById('studentEmail').textContent = email;
   document.getElementById('completionDate').textContent = new Date().toLocaleString();
   document.getElementById('verificationCode').textContent = verificationCode;
+  document.getElementById('instructorName').textContent = teacherName;
+  document.getElementById('signatureName').textContent = teacherName;
 
   const qr = document.createElement('img');
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${verificationCode}`;

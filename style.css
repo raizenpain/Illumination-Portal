@@ -2126,6 +2126,140 @@ body.teacher-page {
 }
 
 /* ================================
+   SEASON PATH EDITOR (Dungeon Master console)
+================================ */
+
+.chapter-editor-tabs {
+  margin-top: -8px;
+}
+
+.node-editor-card {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 14px;
+  padding: 16px 18px;
+  margin-bottom: 14px;
+}
+
+.node-editor-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.node-editor-type-badge {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #9FDDE3;
+}
+
+.node-editor-id {
+  font-size: 11px;
+  color: #5B667D;
+  font-family: monospace;
+}
+
+.node-editor-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: #9CA9C4;
+  margin: 10px 0 5px;
+}
+
+.node-editor-input,
+.node-editor-textarea {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(255,255,255,0.05);
+  color: #D7E3F0;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 9px 11px;
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.node-editor-input:focus,
+.node-editor-textarea:focus {
+  outline: none;
+  border-color: #56B2BB;
+}
+
+.node-editor-textarea {
+  min-height: 60px;
+  resize: vertical;
+}
+
+.node-editor-questions {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed rgba(255,255,255,0.12);
+}
+
+.node-editor-question {
+  background: rgba(0,0,0,0.15);
+  border-radius: 10px;
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.node-editor-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.node-editor-choice {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.node-editor-choice input[type="radio"] {
+  accent-color: #56B2BB;
+  flex-shrink: 0;
+}
+
+.node-editor-choice .node-editor-input {
+  padding: 7px 10px;
+  font-size: 12.5px;
+}
+
+.node-editor-add-q,
+.node-editor-remove-q {
+  margin: 8px 0 0 0;
+  padding: 7px 14px;
+  font-size: 12px;
+}
+
+.season-editor-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 6px;
+}
+
+.season-editor-actions .submit-quiz-btn,
+.season-editor-actions .dm-back-btn {
+  width: auto;
+  flex: 1;
+  margin: 0;
+}
+
+.season-editor-status {
+  min-height: 18px;
+  margin: 12px 0 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: #9FDDE3;
+}
+
+/* ================================
    CERTIFICATE
 ================================ */
 

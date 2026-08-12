@@ -13,6 +13,7 @@ import { requireAdmin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
 import { ADMIN_EMAILS, ADMINS } from './admins.js';
+import { initSeasonEditor } from './seasonEditor.js';
 
 const UNASSIGNED_KEY = '__unassigned__';
 
@@ -359,4 +360,5 @@ if (user) {
   renderTabs();
   loadReleasedPieces();
   loadStudents();
+  initSeasonEditor();
 }

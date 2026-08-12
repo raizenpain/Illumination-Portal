@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Season Path | HCDC Illumination Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cinzel+Decorative:wght@700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="season-page">
+
+  <div class="season-shell" id="seasonShell">
+
+    <header class="season-header">
+      <button class="dm-back-btn" onclick="window.location.href='dashboard.html'">&larr; Dashboard</button>
+      <div class="season-header-title">
+        <span class="info-label" id="seasonModuleLabel">Module</span>
+        <h1 id="seasonName">Season</h1>
+        <p id="seasonSubtitle">Subtitle</p>
+      </div>
+    </header>
+
+    <div class="ticket-bar" id="ticketBar"></div>
+
+    <div class="chapter-banner-row">
+      <div class="chapter-banner">
+        <h2 id="chapterTitle">Chapter</h2>
+        <p id="chapterBasedOn"></p>
+      </div>
+
+      <div class="chapter-nav">
+        <button type="button" class="chapter-nav-btn" id="prevChapterBtn" title="Previous Chapter">&larr;</button>
+        <span class="chapter-progress-label" id="chapterProgress">Chapter 1 of 1</span>
+        <button type="button" class="chapter-nav-btn" id="nextChapterBtn" title="Next Chapter">&rarr;</button>
+      </div>
+    </div>
+
+    <div class="season-path-wrap">
+      <div class="season-path" id="seasonPath"></div>
+    </div>
+
+  </div>
+
+  <div id="nodeModal" class="achievement-popup hidden">
+    <div class="achievement-box season-node-box" id="nodeModalBox"></div>
+  </div>
+
+  <script type="module" src="season.js"></script>
+
+</body>
+</html>

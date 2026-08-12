@@ -232,6 +232,7 @@
 import { db, doc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
+import { SEASON_CONTENT } from './seasonContent.js';
 import { loadGospelQuote } from './gospel.js';
 
 const { email, name } = requireLogin();
@@ -279,6 +280,7 @@ async function loadStudentCard() {
     renderBadges(data.achievements || []);
     renderPuzzleCards(data);
     setupMidtermCard(data);
+    setupSemifinalAndFinalCards(data);
     setupReflectionSymbol(data);
 
   } catch (err) {
@@ -364,22 +366,62 @@ function prelimSeasonDone(data) {
   return Object.values(PUZZLE_CONFIG).every((config) => !!data[config.completedField]);
 }
 
-function setupMidtermCard(data) {
-  const card = document.getElementById('midtermSeasonBtn');
+// A season is "complete" once every node in every chapter is in the
+// student's completedNodes map — derived, not stored, same style as
+// prelimSeasonDone() above. Uses the JS defaults (not admin overrides)
+// since node ids are what matter here, not their current text.
+function isSeasonComplete(seasonId, data) {
+  const content = SEASON_CONTENT[seasonId];
+  if (!content) return false;
+  const completed = data.completedNodes || {};
+  return content.chapters.every((ch) => ch.nodes.every((n) => !!completed[n.nodeId]));
+}
+
+function renderUnlockedSeasonCard(seasonId, cardId, data) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+
+  const icon = card.querySelector('.puzzle-icon');
+  const label = card.querySelector('p');
+  const badge = card.querySelector('.status-badge');
+  const content = SEASON_CONTENT[seasonId];
+  const complete = isSeasonComplete(seasonId, data);
+
+  card.className = `puzzle-card ${complete ? 'state-completed' : 'state-available'}`;
+  badge.className = `status-badge ${complete ? 'status-completed' : 'status-available'}`;
+  icon.textContent = complete ? '✅' : '🗺️';
+  label.textContent = content.subtitle;
+  badge.textContent = complete ? 'Completed' : 'Enter the Path';
+  card.onclick = () => { window.location.href = `season.html?season=${seasonId}`; };
+}
+
+function renderLockedSeasonCard(cardId, message) {
+  const card = document.getElementById(cardId);
   if (!card) return;
 
   const icon = card.querySelector('.puzzle-icon');
   const label = card.querySelector('p');
   const badge = card.querySelector('.status-badge');
 
+  card.className = 'puzzle-card state-locked';
+  badge.className = 'status-badge status-locked';
+  icon.textContent = '🔒';
+  label.textContent = 'Coming soon';
+  badge.textContent = 'Locked';
+  card.onclick = () => alert(message);
+}
+
+function setupMidtermCard(data) {
+  if (!document.getElementById('midtermSeasonBtn')) return;
+
   if (data.midtermUnlocked) {
-    card.className = 'puzzle-card state-completed';
-    badge.className = 'status-badge status-completed';
-    icon.textContent = '✨';
-    label.textContent = 'Coming soon';
-    badge.textContent = 'Unlocked';
-    card.onclick = () => alert('Midterm Season puzzles are on the way — check back soon!');
+    renderUnlockedSeasonCard('midterm', 'midtermSeasonBtn', data);
   } else if (prelimSeasonDone(data)) {
+    const card = document.getElementById('midtermSeasonBtn');
+    const icon = card.querySelector('.puzzle-icon');
+    const label = card.querySelector('p');
+    const badge = card.querySelector('.status-badge');
+
     card.className = 'puzzle-card state-challenge';
     badge.className = 'status-badge status-challenge';
     icon.textContent = '📝';
@@ -387,12 +429,21 @@ function setupMidtermCard(data) {
     badge.textContent = 'Write Reflection';
     card.onclick = () => { window.location.href = 'reflection.html'; };
   } else {
-    card.className = 'puzzle-card state-locked';
-    badge.className = 'status-badge status-locked';
-    icon.textContent = '🔒';
-    label.textContent = 'Coming soon';
-    badge.textContent = 'Locked';
-    card.onclick = () => alert('Complete Prelim Season first to unlock this season.');
+    renderLockedSeasonCard('midtermSeasonBtn', 'Complete Prelim Season first to unlock this season.');
+  }
+}
+
+function setupSemifinalAndFinalCards(data) {
+  if (isSeasonComplete('midterm', data)) {
+    renderUnlockedSeasonCard('semifinal', 'semifinalSeasonBtn', data);
+  } else {
+    renderLockedSeasonCard('semifinalSeasonBtn', 'Complete Midterm Season first to unlock this season.');
+  }
+
+  if (isSeasonComplete('semifinal', data)) {
+    renderUnlockedSeasonCard('final', 'finalSeasonBtn', data);
+  } else {
+    renderLockedSeasonCard('finalSeasonBtn', 'Complete Semifinal Season first to unlock this season.');
   }
 }
 
@@ -560,13 +611,6 @@ if (fantasyDivider) {
   window.addEventListener('scroll', requestDividerUpdate, { passive: true });
   window.addEventListener('resize', requestDividerUpdate);
 }
-
-['semifinalSeasonBtn', 'finalSeasonBtn'].forEach((id) => {
-  const card = document.getElementById(id);
-  if (card) {
-    card.onclick = () => alert('Complete Prelim Season first to unlock this season.');
-  }
-});
 
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {

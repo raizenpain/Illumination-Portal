@@ -48,7 +48,7 @@ service cloud.firestore {
       allow create: if request.auth != null &&
                        request.resource.data.userId == request.auth.token.email &&
                        request.resource.data.keys().hasOnly(['userId', 'studentName', 'type', 'title', 'icon', 'timestamp']) &&
-                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge'];
+                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact'];
 
       // Immutable log — no edits or deletes
       allow update, delete: if false;

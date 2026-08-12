@@ -1,28 +1,30 @@
 // ============================================
 // TICKET TRADER — nested under the dashboard's Milestones panel.
 // Three trade options, per artifact-system.json:
-//   1. Same 3 tickets (one chosen type)      -> 1 Unlock Token
-//   2. Any 4 tickets (mixed, no Scrap)       -> 1 Unlock Token
-//   3. 6 Scrap tickets (catch-up path)       -> 1 Unlock Token
+//   1. Same 3 tickets (one chosen type)          -> 1 Unlock Token
+//   2. Any 4 tickets (mixed, no Ember Shards)    -> 1 Unlock Token
+//   3. 6 Ember Shards (catch-up path)            -> 1 Unlock Token
 //
-// Scrap is deliberately excluded from options 1 and 2 — it's meant to
-// be a worse, safety-net conversion rate (6-for-1) than the "real"
-// ticket types, so letting it slide into the same-3 trade at 3-for-1
-// would make the dedicated Scrap trade pointless.
+// Ember Shards (internal id: scrap_ticket) are deliberately excluded
+// from options 1 and 2 — they're meant to be a worse, safety-net
+// conversion rate (6-for-1) than the "real" ticket types, so letting
+// them slide into the same-3 trade at 3-for-1 would make the
+// dedicated Ember Shard trade pointless.
 //
 // Tokens are a single fungible balance (unlockTokens on the student
 // doc) spendable on any artifact later — there's no per-artifact
-// earmarking, even for the Scrap trade's "student's choice" framing.
+// earmarking, even for the Ember Shard trade's "student's choice"
+// framing.
 // ============================================
 
 import { db, doc, setDoc } from './firebase.js';
 
 const TICKET_INFO = {
-  quiz_ticket: { icon: '📝', label: 'Quiz' },
-  task_ticket: { icon: '🎯', label: 'Task' },
-  journal_ticket: { icon: '📖', label: 'Journal' },
-  recitation_ticket: { icon: '🗣️', label: 'Recitation' },
-  scrap_ticket: { icon: '♻️', label: 'Scrap' }
+  quiz_ticket: { icon: '📝', label: 'Sigil of Insight' },
+  task_ticket: { icon: '🎯', label: 'Seal of Diligence' },
+  journal_ticket: { icon: '📖', label: 'Scroll of Reflection' },
+  recitation_ticket: { icon: '🗣️', label: "Herald's Voice" },
+  scrap_ticket: { icon: '♻️', label: 'Ember Shard' }
 };
 
 const TRADEABLE_TYPES = ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket'];
@@ -117,7 +119,7 @@ function renderTraderModal() {
   sameThreeBtn.onclick = () => {
     const deduction = { quiz_ticket: 0, task_ticket: 0, journal_ticket: 0, recitation_ticket: 0, scrap_ticket: 0 };
     deduction[select.value] = 3;
-    handleTrade(deduction, `${TICKET_INFO[select.value].label} Ticket x3`);
+    handleTrade(deduction, `${TICKET_INFO[select.value].label} x3`);
   };
 
   // --- Any 4 ---
@@ -141,7 +143,7 @@ function renderTraderModal() {
   sixScrapBtn.onclick = () => {
     handleTrade(
       { quiz_ticket: 0, task_ticket: 0, journal_ticket: 0, recitation_ticket: 0, scrap_ticket: 6 },
-      '6 Scrap Tickets'
+      '6 Ember Shards'
     );
   };
 }

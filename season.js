@@ -11,11 +11,11 @@ const params = new URLSearchParams(window.location.search);
 const seasonId = params.get('season');
 
 const TICKET_INFO = {
-  quiz_ticket: { icon: '📝', label: 'Quiz' },
-  task_ticket: { icon: '🎯', label: 'Task' },
-  journal_ticket: { icon: '📖', label: 'Journal' },
-  recitation_ticket: { icon: '🗣️', label: 'Recitation' },
-  scrap_ticket: { icon: '♻️', label: 'Scrap' }
+  quiz_ticket: { icon: '📝', label: 'Sigil of Insight' },
+  task_ticket: { icon: '🎯', label: 'Seal of Diligence' },
+  journal_ticket: { icon: '📖', label: 'Scroll of Reflection' },
+  recitation_ticket: { icon: '🗣️', label: "Herald's Voice" },
+  scrap_ticket: { icon: '♻️', label: 'Ember Shard' }
 };
 
 const NODE_TYPE_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️' };

@@ -19,10 +19,10 @@ import { SEASON_ORDER, SEASON_CONTENT, mergeSeasonContent } from './seasonConten
 const SEASON_IDS = SEASON_ORDER.filter((id) => id !== 'prelim');
 
 const TICKET_OPTIONS = [
-  ['quiz_ticket', '📝 Quiz Ticket'],
-  ['task_ticket', '🎯 Task Ticket'],
-  ['journal_ticket', '📖 Journal Ticket'],
-  ['recitation_ticket', '🗣️ Recitation Ticket']
+  ['quiz_ticket', '📝 Sigil of Insight'],
+  ['task_ticket', '🎯 Seal of Diligence'],
+  ['journal_ticket', '📖 Scroll of Reflection'],
+  ['recitation_ticket', "🗣️ Herald's Voice"]
 ];
 
 const NODE_TYPE_LABEL = { quiz: '📝 Quiz', task: '🎯 Task', journal: '📖 Journal', recitation: '🗣️ Recitation' };

@@ -12,7 +12,7 @@
 // it's flavor text here, not an automated grade change.
 // ============================================
 
-export const TOKEN_COST_BY_TIER = { 1: 1, 2: 2, 3: 3, 4: 4 };
+export const TOKEN_COST_BY_TIER = { 1: 1, 2: 4, 3: 6, 4: 8 };
 
 export const TIERS = [
   { tier: 1, name: 'Common Artifacts', accent: '#9CA9C4' },

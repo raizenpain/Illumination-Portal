@@ -207,7 +207,7 @@ function buildTierBlock({ tier, name: tierName, accent }) {
   tierBlock.appendChild(heading);
 
   const grid = document.createElement('div');
-  grid.className = 'artifact-grid';
+  grid.className = tier < 5 ? 'artifact-grid artifact-grid-compact' : 'artifact-grid artifact-grid-tier5';
 
   ARTIFACTS[tier].forEach((a) => {
     grid.appendChild(buildArtifactCard(a, tier));
@@ -221,7 +221,7 @@ function buildArtifactCard(a, tier) {
   const state = artifactState(a.id, tier);
 
   const card = document.createElement('div');
-  card.className = `artifact-card state-${state.kind}`;
+  card.className = `artifact-card state-${state.kind}${tier === 5 ? ' artifact-card-tier5' : ''}`;
 
   let statusHtml = '';
   if (state.kind === 'owned') {

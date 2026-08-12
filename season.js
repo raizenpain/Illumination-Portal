@@ -1,9 +1,11 @@
 import { db, doc, getDoc, setDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { SEASON_CONTENT, mergeSeasonContent } from './seasonContent.js';
+import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
 
 const { email, name } = requireLogin();
+const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
 
 const params = new URLSearchParams(window.location.search);
 const seasonId = params.get('season');
@@ -87,6 +89,7 @@ async function init() {
 // ================================
 
 function isSeasonUnlocked(id, data) {
+  if (isSeasonPreviewAdmin) return true; // Dungeon Master accounts can preview any season for testing
   if (id === 'midterm') return !!data.midtermUnlocked;
   if (id === 'semifinal') return isSeasonComplete('midterm', data);
   if (id === 'final') return isSeasonComplete('semifinal', data);

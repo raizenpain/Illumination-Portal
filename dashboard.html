@@ -233,9 +233,11 @@ import { db, doc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapsh
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
+import { ADMIN_EMAILS } from './admins.js';
 import { loadGospelQuote } from './gospel.js';
 
 const { email, name } = requireLogin();
+const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
 
 const studentRef = doc(db, 'students', email);
 let studentData = {};
@@ -414,7 +416,7 @@ function renderLockedSeasonCard(cardId, message) {
 function setupMidtermCard(data) {
   if (!document.getElementById('midtermSeasonBtn')) return;
 
-  if (data.midtermUnlocked) {
+  if (data.midtermUnlocked || isSeasonPreviewAdmin) {
     renderUnlockedSeasonCard('midterm', 'midtermSeasonBtn', data);
   } else if (prelimSeasonDone(data)) {
     const card = document.getElementById('midtermSeasonBtn');
@@ -434,13 +436,13 @@ function setupMidtermCard(data) {
 }
 
 function setupSemifinalAndFinalCards(data) {
-  if (isSeasonComplete('midterm', data)) {
+  if (isSeasonPreviewAdmin || isSeasonComplete('midterm', data)) {
     renderUnlockedSeasonCard('semifinal', 'semifinalSeasonBtn', data);
   } else {
     renderLockedSeasonCard('semifinalSeasonBtn', 'Complete Midterm Season first to unlock this season.');
   }
 
-  if (isSeasonComplete('semifinal', data)) {
+  if (isSeasonPreviewAdmin || isSeasonComplete('semifinal', data)) {
     renderUnlockedSeasonCard('final', 'finalSeasonBtn', data);
   } else {
     renderLockedSeasonCard('finalSeasonBtn', 'Complete Semifinal Season first to unlock this season.');

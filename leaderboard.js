@@ -32,7 +32,7 @@
 // re-entering on a later day starts earning again.
 // ============================================
 
-import { db, doc, setDoc, updateDoc, increment, collection, getDocs } from './firebase.js';
+import { db, doc, setDoc, increment, runTransaction, collection, getDocs } from './firebase.js';
 import { RANK_ICON as RANK_TIER_ICON } from './rank.js';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
@@ -143,14 +143,25 @@ async function awardTop5Reward(info) {
   if (info.lastTop5RewardDate === today) return;
 
   try {
-    await updateDoc(doc(db, 'students', info.email), {
-      unlockTokens: increment(TOP5_REWARD.unlockTokens),
-      'tickets.scrap_ticket': increment(TOP5_REWARD.scrap_ticket),
-      'tickets.quiz_ticket': increment(TOP5_REWARD.quiz_ticket),
-      'tickets.task_ticket': increment(TOP5_REWARD.task_ticket),
-      'tickets.journal_ticket': increment(TOP5_REWARD.journal_ticket),
-      'tickets.recitation_ticket': increment(TOP5_REWARD.recitation_ticket),
-      lastTop5RewardDate: today
+    const studentRef = doc(db, 'students', info.email);
+
+    // Re-checks lastTop5RewardDate against the LIVE record inside the
+    // transaction -- two tabs opened/refreshed at once both seeing the
+    // cached "not today yet" value would otherwise both award a bonus.
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(studentRef);
+      const live = snap.data() || {};
+      if (live.lastTop5RewardDate === today) return;
+
+      tx.update(studentRef, {
+        unlockTokens: increment(TOP5_REWARD.unlockTokens),
+        'tickets.scrap_ticket': increment(TOP5_REWARD.scrap_ticket),
+        'tickets.quiz_ticket': increment(TOP5_REWARD.quiz_ticket),
+        'tickets.task_ticket': increment(TOP5_REWARD.task_ticket),
+        'tickets.journal_ticket': increment(TOP5_REWARD.journal_ticket),
+        'tickets.recitation_ticket': increment(TOP5_REWARD.recitation_ticket),
+        lastTop5RewardDate: today
+      });
     });
   } catch (err) {
     console.error('Failed to award Top 5 reward:', err);

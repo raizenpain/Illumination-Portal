@@ -337,6 +337,13 @@ function buildQuestionRow(nodeIndex, qIndex, onChange) {
   removeBtn.className = 'back-btn node-editor-remove-q';
   removeBtn.textContent = 'Remove Question';
   removeBtn.onclick = () => {
+    // A quiz with zero questions auto-passes on the student side (every
+    // check over an empty array trivially succeeds) — never allow the
+    // last question to be removed.
+    if (draftChapter.nodes[nodeIndex].questions.length <= 1) {
+      alert('A quiz needs at least one question — add a replacement before removing this one.');
+      return;
+    }
     draftChapter.nodes[nodeIndex].questions.splice(qIndex, 1);
     onChange();
   };

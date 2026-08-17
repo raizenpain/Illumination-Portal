@@ -1,4 +1,4 @@
-import { db, doc, getDoc, setDoc, updateDoc, increment } from './firebase.js';
+import { db, doc, getDoc, setDoc, updateDoc, increment, arrayUnion } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
@@ -223,10 +223,13 @@ async function handleCodeSubmit() {
   try {
     const studentRef = doc(db, 'students', email);
 
+    // arrayUnion, not the whole uploadedPieces array — two devices/tabs
+    // redeeming different codes for the same puzzle at nearly the same
+    // moment must both land, not have the second overwrite the first.
     await setDoc(studentRef, {
       name,
       email,
-      [config.piecesField]: uploadedPieces
+      [config.piecesField]: arrayUnion(pieceNumber)
     }, { merge: true });
 
     const snap = await getDoc(studentRef);

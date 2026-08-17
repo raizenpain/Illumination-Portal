@@ -48,10 +48,15 @@ service cloud.firestore {
     match /leaderboard/{studentId} {
       allow read: if request.auth != null;
 
-      allow write: if request.auth != null &&
+      allow create, update: if request.auth != null &&
                       request.auth.token.email == studentId &&
                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                       request.resource.data.keys().hasOnly(['name', 'progressPercent', 'createdAt', 'rank', 'starsEarned', 'mistakeCount']);
+
+      // Admins can remove a leaderboard entry (e.g. after deleting the
+      // matching student record) so it doesn't linger in the public
+      // Top 5 forever, frozen at its last-known pace.
+      allow delete: if isAdmin();
     }
 
     // Settings collection — puzzle piece release status
@@ -68,10 +73,17 @@ service cloud.firestore {
       // Any signed-in student can read the live feed
       allow read: if request.auth != null;
 
-      // A student may only log activity about themselves, with the
-      // exact shape the feed expects — no spoofing another student,
-      // no arbitrary extra fields
+      // A student may only log activity about themselves (userId must
+      // be their own auth email — that's the real attribution), with
+      // the exact shape the feed expects and no arbitrary extra fields.
+      // studentName is a display string only, deliberately NOT cross-
+      // checked against students/{id}.name: that field is frozen at
+      // enrollment while a student's live Google display name (what
+      // every logActivity() call actually passes) can change over the
+      // semester, so an exact-match rule would eventually reject
+      // legitimate posts, not just spoofed ones.
       allow create: if request.auth != null &&
+                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                        request.resource.data.userId == request.auth.token.email &&
                        request.resource.data.keys().hasOnly(['userId', 'studentName', 'type', 'title', 'icon', 'timestamp']) &&
                        request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact'];

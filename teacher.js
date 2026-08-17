@@ -498,6 +498,10 @@ if (user) {
     try {
       await deleteDoc(doc(db, 'students', data._docId));
 
+      // Also remove their public leaderboard entry, if any -- otherwise
+      // it lingers in the Top 5 forever, frozen at its last-known pace.
+      deleteDoc(doc(db, 'leaderboard', data._docId)).catch(() => {});
+
       const list = teacherGroups[currentTeacher.email].bySection[section];
       const index = list.indexOf(data);
       if (index !== -1) list.splice(index, 1);

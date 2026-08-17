@@ -13,7 +13,7 @@
 // prerequisites are owned.
 // ============================================
 
-import { db, doc, setDoc } from './firebase.js';
+import { db, doc, setDoc, updateDoc, arrayUnion, runTransaction } from './firebase.js';
 import { logActivity } from './activity.js';
 import {
   TIERS, ARTIFACTS, CRAFTING_CHAINS,
@@ -261,28 +261,64 @@ function buildArtifactCard(a, tier) {
 
   const buyBtn = card.querySelector('.artifact-buy-btn');
   if (buyBtn) {
+    buyBtn.disabled = purchasing;
     buyBtn.onclick = () => purchaseArtifact(a.id, tier);
   }
 
   return card;
 }
 
+let purchasing = false;
+
 async function purchaseArtifact(id, tier) {
+  if (purchasing) return;
+
   const state = artifactState(id, tier);
   if (state.kind !== 'buyable') return;
 
-  const unlockTokens = (studentData.unlockTokens || 0) - state.cost;
-  const ownedArtifacts = [...ownedList(), id];
+  purchasing = true;
+  renderCrafting();
+
+  let insufficientTokens = false;
 
   try {
-    await setDoc(doc(db, 'students', email), { unlockTokens, ownedArtifacts }, { merge: true });
-    studentData.unlockTokens = unlockTokens;
-    studentData.ownedArtifacts = ownedArtifacts;
+    const studentRef = doc(db, 'students', email);
+    let finalTokens = null;
+    let finalOwned = null;
+
+    // Reads the LIVE token balance/owned list inside the transaction,
+    // not the cached studentData this panel loaded with — otherwise
+    // two purchases (or a purchase racing a ticket trade) in different
+    // tabs could clobber each other's whole-object write.
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(studentRef);
+      const data = snap.data() || {};
+      const liveTokens = data.unlockTokens || 0;
+      const liveOwned = data.ownedArtifacts || [];
+
+      if (liveOwned.includes(id)) {
+        finalTokens = liveTokens;
+        finalOwned = liveOwned;
+        return;
+      }
+      if (liveTokens < state.cost) {
+        insufficientTokens = true;
+        throw new Error('insufficient-tokens');
+      }
+
+      finalTokens = liveTokens - state.cost;
+      finalOwned = [...liveOwned, id];
+      tx.update(studentRef, { unlockTokens: finalTokens, ownedArtifacts: finalOwned });
+    });
+
+    studentData.unlockTokens = finalTokens;
+    studentData.ownedArtifacts = finalOwned;
     await checkTier5AutoUnlock();
   } catch (err) {
-    console.error('Artifact purchase failed:', err);
+    if (!insufficientTokens) console.error('Artifact purchase failed:', err);
   }
 
+  purchasing = false;
   renderCrafting();
 }
 
@@ -300,7 +336,7 @@ async function checkTier5AutoUnlock() {
 
   const ownedArtifacts = [...ownedList(), chosen];
 
-  await setDoc(doc(db, 'students', email), { ownedArtifacts }, { merge: true });
+  await updateDoc(doc(db, 'students', email), { ownedArtifacts: arrayUnion(chosen) });
   studentData.ownedArtifacts = ownedArtifacts;
 
   logActivity({

@@ -338,7 +338,7 @@
 </div>
 
 <script type="module">
-import { db, doc, getDoc, updateDoc, increment, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
+import { db, doc, getDoc, updateDoc, increment, runTransaction, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
@@ -375,12 +375,27 @@ async function awardDailyVisitShard(data) {
   if (data.lastVisitRewardDate === today) return;
 
   try {
-    await updateDoc(studentRef, {
-      'tickets.scrap_ticket': increment(1),
-      lastVisitRewardDate: today
+    let awarded = false;
+
+    // Re-checks lastVisitRewardDate against the LIVE record inside the
+    // transaction -- two tabs opened/refreshed at once both seeing the
+    // cached "not today yet" value would otherwise both award a shard.
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(studentRef);
+      const live = snap.data() || {};
+      if (live.lastVisitRewardDate === today) return;
+
+      tx.update(studentRef, {
+        'tickets.scrap_ticket': increment(1),
+        lastVisitRewardDate: today
+      });
+      awarded = true;
     });
-    data.tickets = { ...(data.tickets || {}), scrap_ticket: (data.tickets?.scrap_ticket || 0) + 1 };
-    data.lastVisitRewardDate = today;
+
+    if (awarded) {
+      data.tickets = { ...(data.tickets || {}), scrap_ticket: (data.tickets?.scrap_ticket || 0) + 1 };
+      data.lastVisitRewardDate = today;
+    }
   } catch (err) {
     console.error('Failed to award daily visit Ember Shard:', err);
   }

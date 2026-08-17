@@ -1,4 +1,4 @@
-import { db, doc, getDoc, setDoc, updateDoc, increment } from './firebase.js';
+import { db, doc, getDoc, updateDoc, increment, arrayUnion } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { SEASON_CONTENT, mergeSeasonContent } from './seasonContent.js';
 import { CHAPTER_LESSONS } from './chapterLessons.js';
@@ -321,11 +321,18 @@ function renderQuizModal(node) {
   const submitBtn = document.createElement('button');
   submitBtn.className = 'submit-quiz-btn';
   submitBtn.textContent = 'Submit Answers';
-  submitBtn.onclick = () => handleQuizSubmit(displayNode, statusEl);
+  submitBtn.onclick = () => handleQuizSubmit(displayNode, statusEl, submitBtn);
   quizContainer.appendChild(submitBtn);
 }
 
-async function handleQuizSubmit(node, statusEl) {
+async function handleQuizSubmit(node, statusEl, submitBtn) {
+  if (submitBtn.disabled) return;
+
+  if (node.questions.length === 0) {
+    statusEl.textContent = 'This quiz has no questions yet — please let your teacher know.';
+    return;
+  }
+
   let allAnswered = true;
   let allCorrect = true;
 
@@ -339,6 +346,8 @@ async function handleQuizSubmit(node, statusEl) {
     statusEl.textContent = 'Please answer every question before submitting.';
     return;
   }
+
+  submitBtn.disabled = true;
 
   if (allCorrect) {
     statusEl.textContent = '🎉 Correct! Ticket awarded.';
@@ -406,7 +415,10 @@ function renderTextModal(node, { minLength }) {
     hint.textContent = "Pasting isn't allowed here — please write it yourself.";
   });
 
-  document.getElementById('seasonTextSubmitBtn').onclick = async () => {
+  const textSubmitBtn = document.getElementById('seasonTextSubmitBtn');
+  textSubmitBtn.onclick = async () => {
+    if (textSubmitBtn.disabled) return;
+
     const text = textarea.value.trim();
 
     if (text.length < minLength) {
@@ -432,6 +444,7 @@ function renderTextModal(node, { minLength }) {
       return;
     }
 
+    textSubmitBtn.disabled = true;
     await awardNode(node, text);
     closeNodeModal();
   };
@@ -557,14 +570,27 @@ const SEASON_COMPLETION_TOKEN_BONUS = { semifinal: 1, final: 1 };
 async function awardNode(node, submissionText) {
   const studentRef = doc(db, 'students', email);
 
+  // Local projection used only to DECIDE what just happened (chapter/
+  // season completion, which achievements are new, rank before/after)
+  // — never written to Firestore directly. The actual write below uses
+  // per-field increment()/arrayUnion() so a concurrent write from
+  // another tab (a trade, another node, etc.) can never clobber it.
+  const ticketDeltas = {};
+  const addTicketDelta = (type, amount) => {
+    ticketDeltas[type] = (ticketDeltas[type] || 0) + amount;
+  };
+
   const tickets = { ...(studentData.tickets || {}) };
   if (node.ticketReward) {
-    tickets[node.ticketReward] = (tickets[node.ticketReward] || 0) + ticketAmountFor(node);
+    const amount = ticketAmountFor(node);
+    tickets[node.ticketReward] = (tickets[node.ticketReward] || 0) + amount;
+    addTicketDelta(node.ticketReward, amount);
   }
   // Ember Shard — awarded on every node completion, regardless of
   // ticketReward, so even the no-ticket capstone chapters still feed
   // the Ember Shard catch-up trade. Always exactly 1, never scaled.
   tickets.scrap_ticket = (tickets.scrap_ticket || 0) + 1;
+  addTicketDelta('scrap_ticket', 1);
 
   const completedNodes = { ...(studentData.completedNodes || {}), [node.nodeId]: true };
   const checkData = { ...studentData, completedNodes };
@@ -582,6 +608,7 @@ async function awardNode(node, submissionText) {
   if (chapterJustCompleted && capstoneBonus) {
     ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket'].forEach((type) => {
       tickets[type] = (tickets[type] || 0) + capstoneBonus;
+      addTicketDelta(type, capstoneBonus);
     });
   }
 
@@ -589,11 +616,13 @@ async function awardNode(node, submissionText) {
   const rankAfter = getRankProgress(checkData);
 
   const achievements = [...(studentData.achievements || [])];
+  const newAchievementIds = [];
   let popupsQueued = 0;
 
   const taskId = taskBadgeId(node.nodeId);
   if (!achievements.includes(taskId)) {
     achievements.push(taskId);
+    newAchievementIds.push(taskId);
     showAchievement(node.title, `Task completed — ${content.seasonName}`, NODE_TYPE_ICON[node.type]);
     popupsQueued++;
   }
@@ -601,6 +630,7 @@ async function awardNode(node, submissionText) {
   const chId = chapterBadgeId(chapter.chapterId);
   if (chapterJustCompleted && !achievements.includes(chId)) {
     achievements.push(chId);
+    newAchievementIds.push(chId);
     showAchievement(chapter.chapterTitle, `Chapter completed — ${content.seasonName}`, '🏁');
     popupsQueued++;
 
@@ -612,20 +642,39 @@ async function awardNode(node, submissionText) {
   }
 
   let unlockTokens = studentData.unlockTokens || 0;
+  let unlockTokenDelta = 0;
 
   const seId = seasonBadgeId(seasonId);
   if (seasonJustCompleted && !achievements.includes(seId)) {
     achievements.push(seId);
+    newAchievementIds.push(seId);
     showAchievement(`${content.seasonName} Champion`, content.subtitle, '👑');
     popupsQueued++;
 
     const tokenBonus = SEASON_COMPLETION_TOKEN_BONUS[seasonId];
     if (tokenBonus) {
       unlockTokens += tokenBonus;
+      unlockTokenDelta += tokenBonus;
     }
   }
 
-  await setDoc(studentRef, { tickets, completedNodes, achievements, nodeSubmissions, unlockTokens }, { merge: true });
+  const update = {
+    [`completedNodes.${node.nodeId}`]: true
+  };
+  Object.entries(ticketDeltas).forEach(([type, amount]) => {
+    update[`tickets.${type}`] = increment(amount);
+  });
+  if (newAchievementIds.length > 0) {
+    update.achievements = arrayUnion(...newAchievementIds);
+  }
+  if (submissionText) {
+    update[`nodeSubmissions.${node.nodeId}`] = submissionText;
+  }
+  if (unlockTokenDelta > 0) {
+    update.unlockTokens = increment(unlockTokenDelta);
+  }
+
+  await updateDoc(studentRef, update);
 
   studentData.tickets = tickets;
   studentData.completedNodes = completedNodes;

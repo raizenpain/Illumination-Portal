@@ -1,8 +1,12 @@
 import { db, doc, setDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
-import { ADMINS } from './admins.js';
+import { ADMINS, ADMIN_EMAILS } from './admins.js';
 
 const { email } = requireLogin();
+
+if (ADMIN_EMAILS.includes(email)) {
+  window.location.href = 'teacher.html';
+}
 
 const grid = document.getElementById('teacherGrid');
 const status = document.getElementById('teacherSelectStatus');

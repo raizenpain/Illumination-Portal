@@ -17,7 +17,7 @@
 // framing.
 // ============================================
 
-import { db, doc, setDoc } from './firebase.js';
+import { db, doc, runTransaction } from './firebase.js';
 
 const SAME_COUNT = 12;
 const ANY_COUNT = 24;
@@ -183,39 +183,60 @@ function pickAnyFourDeduction(tickets) {
 
 async function handleTrade(deduction, label) {
   const statusEl = document.getElementById('ticketTraderStatus');
-  const tickets = { ...(modalStudentData.tickets || {}) };
-
-  const shortfall = Object.entries(deduction).find(([type, amount]) => amount > 0 && (tickets[type] || 0) < amount);
-  if (shortfall) {
-    statusEl.textContent = "You don't have enough tickets for that trade.";
-    return;
-  }
-
-  Object.entries(deduction).forEach(([type, amount]) => {
-    tickets[type] = (tickets[type] || 0) - amount;
-  });
-
-  const unlockTokens = (modalStudentData.unlockTokens || 0) + 1;
 
   setTradeRowsBusy(true);
   let succeeded = false;
+  let insufficientTickets = false;
+  let finalTickets = null;
+  let finalTokens = null;
 
   try {
-    await setDoc(doc(db, 'students', modalEmail), { tickets, unlockTokens }, { merge: true });
-    modalStudentData.tickets = tickets;
-    modalStudentData.unlockTokens = unlockTokens;
+    const studentRef = doc(db, 'students', modalEmail);
+
+    // Runs against the LIVE server balance, not the cached copy this
+    // modal loaded with — closes the race where a trade in one tab
+    // could otherwise be silently undone (or let through with a real
+    // shortfall) by a stale whole-object write from another tab.
+    await runTransaction(db, async (tx) => {
+      const snap = await tx.get(studentRef);
+      const liveTickets = { ...((snap.data() || {}).tickets || {}) };
+      const liveTokens = (snap.data() || {}).unlockTokens || 0;
+
+      const shortfall = Object.entries(deduction).some(
+        ([type, amount]) => amount > 0 && (liveTickets[type] || 0) < amount
+      );
+      if (shortfall) {
+        insufficientTickets = true;
+        throw new Error('insufficient-tickets');
+      }
+
+      Object.entries(deduction).forEach(([type, amount]) => {
+        liveTickets[type] = (liveTickets[type] || 0) - amount;
+      });
+
+      finalTickets = liveTickets;
+      finalTokens = liveTokens + 1;
+      tx.update(studentRef, { tickets: finalTickets, unlockTokens: finalTokens });
+    });
+
+    modalStudentData.tickets = finalTickets;
+    modalStudentData.unlockTokens = finalTokens;
     succeeded = true;
   } catch (err) {
-    console.error('Trade failed:', err);
+    if (!insufficientTickets) console.error('Trade failed:', err);
   }
 
   setTradeRowsBusy(false);
   renderTraderModal();
   renderWallet(modalSidebarWallet, modalStudentData);
 
-  statusEl.textContent = succeeded
-    ? `✅ Traded for 1 Artifact Unlock Token! (${label})`
-    : 'Something went wrong. Please try again.';
+  if (insufficientTickets) {
+    statusEl.textContent = "You don't have enough tickets for that trade anymore.";
+  } else {
+    statusEl.textContent = succeeded
+      ? `✅ Traded for 1 Artifact Unlock Token! (${label})`
+      : 'Something went wrong. Please try again.';
+  }
 }
 
 function setTradeRowsBusy(busy) {

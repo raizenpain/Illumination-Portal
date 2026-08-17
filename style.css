@@ -618,6 +618,44 @@ body {
   50% { opacity: 1; transform: translateY(-50%) scale(1.25); }
 }
 
+.task-count {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  font-size: 12px;
+  color: #9CA9C4;
+}
+
+.task-count strong {
+  color: #D7E3F0;
+  font-weight: 600;
+}
+
+.season-ticks {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+}
+
+.season-tick {
+  text-align: center;
+  padding: 7px 4px;
+  border-radius: 8px;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.08);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  color: #7C8AAE;
+  transition: border-color 0.4s ease, color 0.4s ease, background 0.4s ease;
+}
+
+.season-tick.done {
+  color: #FFE9B0;
+  border-color: rgba(251,191,36,0.5);
+  background: rgba(251,191,36,0.1);
+}
+
 /* Logo carousel */
 
 .logo-carousel {

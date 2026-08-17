@@ -57,6 +57,18 @@
           <div class="progress-fill" id="progressFill"></div>
         </div>
         <strong id="cardProgress">0%</strong>
+
+        <div class="task-count">
+          <span><strong id="tasksDone">0</strong> / <span id="tasksTotal">66</span> tasks done</span>
+          <span id="progressPhaseLabel">Prelim Season</span>
+        </div>
+
+        <div class="season-ticks">
+          <div class="season-tick" id="tickPrelim">Prelim</div>
+          <div class="season-tick" id="tickMidterm">Midterm</div>
+          <div class="season-tick" id="tickSemifinal">Semifinal</div>
+          <div class="season-tick" id="tickFinal">Final</div>
+        </div>
       </div>
 
       <div class="stats-divider"></div>
@@ -359,10 +371,17 @@ async function loadStudentCard() {
     rankEl.textContent = rank;
     rankEl.setAttribute('data-rank', rank);
 
-    const progress = calculateOverallProgress(data);
-    document.getElementById('cardProgress').textContent = progress + '%';
+    const progressInfo = calculateOverallProgress(data);
+    document.getElementById('cardProgress').textContent = progressInfo.percent + '%';
+    document.getElementById('tasksDone').textContent = progressInfo.done;
+    document.getElementById('tasksTotal').textContent = progressInfo.total;
+    document.getElementById('progressPhaseLabel').textContent = progressInfo.phaseLabel;
+    document.getElementById('tickPrelim').classList.toggle('done', progressInfo.prelimDone);
+    document.getElementById('tickMidterm').classList.toggle('done', progressInfo.midtermDone);
+    document.getElementById('tickSemifinal').classList.toggle('done', progressInfo.semifinalDone);
+    document.getElementById('tickFinal').classList.toggle('done', progressInfo.finalDone);
     requestAnimationFrame(() => {
-      document.getElementById('progressFill').style.width = progress + '%';
+      document.getElementById('progressFill').style.width = progressInfo.percent + '%';
     });
 
     renderBadges(data.achievements || []);
@@ -490,7 +509,27 @@ function calculateOverallProgress(data) {
     });
   });
 
-  return total > 0 ? Math.round((done / total) * 100) : 0;
+  const prelimDone = prelimSeasonDone(data);
+  const midtermDone = isSeasonComplete('midterm', data);
+  const semifinalDone = isSeasonComplete('semifinal', data);
+  const finalDone = isSeasonComplete('final', data);
+
+  let phaseLabel = 'Prelim Season';
+  if (finalDone) phaseLabel = 'All Seasons Complete';
+  else if (semifinalDone) phaseLabel = 'Final Season';
+  else if (midtermDone) phaseLabel = 'Semifinal Season';
+  else if (prelimDone) phaseLabel = 'Midterm Season';
+
+  return {
+    total,
+    done,
+    percent: total > 0 ? Math.round((done / total) * 100) : 0,
+    prelimDone,
+    midtermDone,
+    semifinalDone,
+    finalDone,
+    phaseLabel
+  };
 }
 
 function renderUnlockedSeasonCard(seasonId, cardId, data) {

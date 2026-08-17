@@ -41,7 +41,7 @@ export const SEASON_CONTENT = {
           },
           {
             nodeId: 'mt1_n2', type: 'task', title: 'Order Out of Chaos',
-            prompt: 'Diagram the seven days of creation and identify the recurring pattern the biblical authors used.',
+            prompt: 'Describe the seven days of creation in order, and explain the recurring pattern the biblical authors used to structure each day.',
             ticketReward: 'task_ticket'
           },
           {
@@ -220,8 +220,8 @@ export const SEASON_CONTENT = {
             ]
           },
           {
-            nodeId: 'sf3_n2', type: 'task', title: 'Group Presentation: Consequences of Evil',
-            prompt: 'Create a short video/drama presentation depicting the consequences of evil in society, with each member sharing a reflection.',
+            nodeId: 'sf3_n2', type: 'task', title: 'Consequences of Evil',
+            prompt: 'Describe three real-world consequences of evil in society today, and share your own reflection on what could be done about each one.',
             ticketReward: 'task_ticket'
           },
           {
@@ -354,8 +354,8 @@ export const SEASON_CONTENT = {
             ]
           },
           {
-            nodeId: 'sf6_n3', type: 'task', title: 'Chart the Spread of Sin',
-            prompt: "Create a simple timeline or chart tracing the spread of sin from the first murder (Gen 4:8) through the flood (Gen 7:1-22) to the Tower of Babel (Gen 11:1-9), showing what each story adds to the picture.",
+            nodeId: 'sf6_n3', type: 'task', title: 'Tracing the Spread of Sin',
+            prompt: "Trace the spread of sin from the first murder (Gen 4:8) through the flood (Gen 7:1-22) to the Tower of Babel (Gen 11:1-9), explaining in writing what each story adds to the picture.",
             ticketReward: 'task_ticket'
           },
           {
@@ -566,8 +566,8 @@ export const SEASON_CONTENT = {
             ticketReward: 'journal_ticket'
           },
           {
-            nodeId: 'fn3_n4', type: 'task', title: 'Bible Sharing: Five Great Events',
-            prompt: 'Form a Bible-sharing group and portray the Five Great Events of the Israelites (skit, retelling, or presentation).',
+            nodeId: 'fn3_n4', type: 'task', title: 'Retelling the Five Great Events',
+            prompt: 'Write your own retelling of the Five Great Events of the Israelites, in your own words.',
             ticketReward: 'task_ticket'
           },
           {

@@ -8,36 +8,36 @@
 
 export const PIECE_CODES = {
   puzzle1: { // The Cross
-    1: "CROSS-SAVING",
-    2: "CROSS-GLORY",
-    3: "CROSS-SACRIFICE",
-    4: "CROSS-TRIUMPH",
-    5: "CROSS-REDEEM",
-    6: "CROSS-SIGN",
-    7: "CROSS-STEWARD",
-    8: "CROSS-CONSERVE",
-    9: "CROSS-ECOLOGY"
+    1: "SAVING",
+    2: "GLORY",
+    3: "SACRIFICE",
+    4: "TRIUMPH",
+    5: "REDEEM",
+    6: "SIGN",
+    7: "STEWARD",
+    8: "CONSERVE",
+    9: "ECOLOGY"
   },
   puzzle2: { // The Spirituality
-    1: "SPIRIT-CREATOR",
-    2: "SPIRIT-IMAGE",
-    3: "SPIRIT-COCREATE",
-    4: "SPIRIT-TRUESTEWARD",
-    5: "SPIRIT-TRUST",
-    6: "SPIRIT-LIFESTYLE",
-    7: "SPIRIT-SIMPLE",
-    8: "SPIRIT-DISCIPLINE",
-    9: "SPIRIT-CORESP"
+    1: "CREATOR",
+    2: "IMAGE",
+    3: "COCREATE",
+    4: "TRUESTEWARD",
+    5: "TRUST",
+    6: "LIFESTYLE",
+    7: "SIMPLE",
+    8: "DISCIPLINE",
+    9: "CORESP"
   },
   puzzle3: { // The Vocation
-    1: "VOC-HAPPY",
-    2: "VOC-FREEDOM",
-    3: "VOC-LOVE",
-    4: "VOC-RESPONSIBLE",
-    5: "VOC-SELF",
-    6: "VOC-OTHERS",
-    7: "VOC-HISTORY",
-    8: "VOC-GOD",
-    9: "VOC-REVEAL"
+    1: "HAPPY",
+    2: "FREEDOM",
+    3: "LOVE",
+    4: "RESPONSIBLE",
+    5: "SELF",
+    6: "OTHERS",
+    7: "HISTORY",
+    8: "GOD",
+    9: "REVEAL"
   }
 };

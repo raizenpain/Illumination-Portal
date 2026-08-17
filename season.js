@@ -1,6 +1,7 @@
 import { db, doc, getDoc, setDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { SEASON_CONTENT, mergeSeasonContent } from './seasonContent.js';
+import { CHAPTER_LESSONS } from './chapterLessons.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
@@ -495,8 +496,9 @@ function processPopupQueue() {
     return;
   }
 
-  const { title, text, icon = '🏅' } = item;
+  const { heading = 'Achievement Unlocked!', title, text, icon = '🏅' } = item;
   const popup = document.getElementById('achievementPopup');
+  document.getElementById('achievementHeading').textContent = heading;
   document.getElementById('achievementTitle').textContent = title;
   document.getElementById('achievementText').textContent = text;
   popup.querySelector('.achievement-icon').textContent = icon;
@@ -511,6 +513,10 @@ function processPopupQueue() {
 
 function showAchievement(title, text, icon) {
   queuePopup({ title, text, icon });
+}
+
+function showLesson(lesson) {
+  queuePopup({ heading: '📖 Catechism Moment', title: lesson.title, text: lesson.text, icon: '✝️' });
 }
 
 function showStarPopup(info) {
@@ -597,6 +603,12 @@ async function awardNode(node, submissionText) {
     achievements.push(chId);
     showAchievement(chapter.chapterTitle, `Chapter completed — ${content.seasonName}`, '🏁');
     popupsQueued++;
+
+    const lesson = CHAPTER_LESSONS[chapter.chapterId];
+    if (lesson) {
+      showLesson(lesson);
+      popupsQueued++;
+    }
   }
 
   let unlockTokens = studentData.unlockTokens || 0;

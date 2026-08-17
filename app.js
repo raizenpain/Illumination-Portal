@@ -289,7 +289,8 @@ async function handleCodeSubmit() {
 
         await updateDoc(studentRef, {
           achievements,
-          [config.completedField]: true
+          [config.completedField]: true,
+          'tickets.scrap_ticket': increment(2)
         });
         showAchievement(comp.title, comp.text, comp.icon);
         popupsQueued++;

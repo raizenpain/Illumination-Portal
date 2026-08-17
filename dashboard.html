@@ -359,7 +359,7 @@ async function loadStudentCard() {
     rankEl.textContent = rank;
     rankEl.setAttribute('data-rank', rank);
 
-    const progress = data.puzzle1 ? Math.round((data.puzzle1.length / 9) * 100) : 0;
+    const progress = calculateOverallProgress(data);
     document.getElementById('cardProgress').textContent = progress + '%';
     requestAnimationFrame(() => {
       document.getElementById('progressFill').style.width = progress + '%';
@@ -465,6 +465,32 @@ function isSeasonComplete(seasonId, data) {
   if (!content) return false;
   const completed = data.completedNodes || {};
   return content.chapters.every((ch) => ch.nodes.every((n) => !!completed[n.nodeId]));
+}
+
+// Overall Level Progress — every puzzle piece (Prelim) and every
+// season node (Midterm/Semifinal/Final quizzes, tasks, journals,
+// recitations) counts as one equally-weighted unit, so this only
+// reaches 100% once everything from Prelim through Final is done.
+function calculateOverallProgress(data) {
+  let total = 0;
+  let done = 0;
+
+  Object.values(PUZZLE_CONFIG).forEach((config) => {
+    total += config.totalPieces;
+    done += (data[config.piecesField] || []).length;
+  });
+
+  const completedNodes = data.completedNodes || {};
+  ['midterm', 'semifinal', 'final'].forEach((seasonId) => {
+    SEASON_CONTENT[seasonId].chapters.forEach((chapter) => {
+      chapter.nodes.forEach((node) => {
+        total += 1;
+        if (completedNodes[node.nodeId]) done += 1;
+      });
+    });
+  });
+
+  return total > 0 ? Math.round((done / total) * 100) : 0;
 }
 
 function renderUnlockedSeasonCard(seasonId, cardId, data) {

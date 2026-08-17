@@ -22,8 +22,8 @@ const TICKET_INFO = {
   scrap_ticket: { icon: '♻️', label: 'Ember Shard' }
 };
 
-const NODE_TYPE_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️' };
-const NODE_TYPE_HEADING_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️' };
+const NODE_TYPE_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️', identification: '🔍' };
+const NODE_TYPE_HEADING_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️', identification: '🔍' };
 
 const seasonShell = document.getElementById('seasonShell');
 const seasonNameEl = document.getElementById('seasonName');
@@ -207,7 +207,7 @@ function renderTicketBar(chapter) {
 function openNodeModal(node) {
   nodeModal.classList.remove('hidden');
 
-  if (node.type === 'quiz') renderQuizModal(node);
+  if (node.type === 'quiz' || node.type === 'identification') renderQuizModal(node);
   else if (node.type === 'journal') renderTextModal(node, { minLength: 100 });
   else if (node.type === 'recitation') renderTextModal(node, { minLength: 40 });
   else if (node.type === 'task') renderTaskModal(node);
@@ -245,7 +245,7 @@ function renderQuizModal(node) {
   }
 
   nodeModalBox.innerHTML = `
-    <h2>${NODE_TYPE_HEADING_ICON.quiz} ${node.title}</h2>
+    <h2>${NODE_TYPE_HEADING_ICON[node.type]} ${node.title}</h2>
     <p class="reflection-hint">${node.prompt}</p>
     <div id="seasonQuizContainer"></div>
     <p id="seasonQuizStatus" class="puzzle-status"></p>
@@ -323,7 +323,7 @@ async function handleQuizSubmit(node, statusEl) {
 
 function renderQuizCooldown(node) {
   nodeModalBox.innerHTML = `
-    <h2>${NODE_TYPE_HEADING_ICON.quiz} ${node.title}</h2>
+    <h2>${NODE_TYPE_HEADING_ICON[node.type]} ${node.title}</h2>
     <p class="puzzle-status" id="seasonQuizCooldownText"></p>
     <div class="reflection-modal-actions">
       ${modalCloseButtonHtml()}
@@ -506,7 +506,9 @@ async function awardNode(node, submissionText) {
   const studentRef = doc(db, 'students', email);
 
   const tickets = { ...(studentData.tickets || {}) };
-  tickets[node.ticketReward] = (tickets[node.ticketReward] || 0) + 1;
+  if (node.ticketReward) {
+    tickets[node.ticketReward] = (tickets[node.ticketReward] || 0) + 1;
+  }
 
   const completedNodes = { ...(studentData.completedNodes || {}), [node.nodeId]: true };
   const checkData = { ...studentData, completedNodes };

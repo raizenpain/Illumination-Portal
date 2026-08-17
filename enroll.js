@@ -72,7 +72,9 @@ if (enrollBtn) {
 
       await setDoc(studentRef, payload, { merge: true });
 
-      window.location.href = 'teacher-select.html';
+      // Enrollment is now the LAST onboarding step (teacher is picked
+      // first), so this goes straight to the dashboard.
+      window.location.href = 'dashboard.html';
 
     } catch (err) {
       console.error('Failed to save student profile:', err);

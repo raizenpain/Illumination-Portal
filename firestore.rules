@@ -12,24 +12,65 @@ service cloud.firestore {
              ];
     }
 
+    // Every field a student's own record can legitimately hold, across
+    // every write path in the app (enrollment, teacher pick, puzzle
+    // pieces, puzzle-gate unlocks, season tickets/achievements/node
+    // progress, reflections, mistake tracking, crafting, trader,
+    // leaderboard reward timestamps, certificate codes). This doesn't
+    // stop a student from setting a legitimate field to a bogus VALUE
+    // via devtools (that needs server-side validation, e.g. Cloud
+    // Functions, to fully close) — it stops them injecting an entirely
+    // made-up field name. Keep this in sync whenever a new field is
+    // introduced, or that feature's write will start silently failing.
+    function studentSelfFields() {
+      return [
+        'name', 'email', 'section', 'studentId', 'createdAt',
+        'teacherName', 'teacherEmail',
+        'totalPieces', 'puzzle1', 'puzzle1Completed',
+        'puzzle2', 'puzzle2Completed', 'puzzle3', 'puzzle3Completed',
+        'puzzle2Unlocked', 'puzzle3Unlocked',
+        'achievements', 'completedNodes', 'nodeSubmissions',
+        'tickets', 'unlockTokens', 'mistakeCount',
+        'chosenLegendaryChain', 'ownedArtifacts',
+        'lastVisitRewardDate', 'lastTop5RewardDate',
+        'puzzle3Reflection', 'puzzle3ReflectionSubmittedAt', 'midtermUnlocked',
+        'semifinalReflection', 'semifinalUnlocked', 'semifinalReflectionSubmittedAt',
+        'finalReflection', 'finalUnlocked', 'finalReflectionSubmittedAt',
+        'apostleReflection', 'apostleUnlocked', 'apostleReflectionSubmittedAt',
+        'verificationCode', 'midtermVerificationCode',
+        'semifinalVerificationCode', 'finalVerificationCode'
+      ];
+    }
+
     // Students collection — doc ID is the student's email
     match /students/{studentId} {
       // A student can read their own record, and so can an admin (for the progress table)
       allow read: if request.auth != null &&
                      (request.auth.token.email == studentId || isAdmin());
 
-      // A student can create their own record — only on enrollment
+      // A student can create their own record — only on enrollment,
+      // and only using real field names (see studentSelfFields above).
       allow create: if request.auth != null &&
                        request.auth.token.email == studentId &&
-                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$');
+                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                       request.resource.data.keys().hasOnly(studentSelfFields());
 
-      // A student can freely update their OWN record (progress, tickets,
-      // artifacts, etc.) — never anyone else's. Admins can also update,
-      // but only the specific fields Gift Tickets and Re-assign Class
-      // actually touch — never progress, achievements, or artifacts.
+      // A student can freely update their OWN record's real fields
+      // (progress, tickets, artifacts, etc.) — never anyone else's,
+      // and never a made-up field name. Checks only the fields THIS
+      // write actually touches (diff/affectedKeys), not the whole
+      // resulting document — a stray legacy field left over on some
+      // student's doc from an earlier version of the app (nothing
+      // writes it anymore, but it's still sitting there) must never
+      // block that student from making any further progress. Admins
+      // can also update, but only the specific fields Gift Tickets
+      // and Re-assign Class actually touch — never progress,
+      // achievements, or artifacts.
       allow update: if request.auth != null &&
                        ((request.auth.token.email == studentId &&
-                         request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$')) ||
+                         request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                         request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(studentSelfFields())) ||
                         (isAdmin() &&
                          request.resource.data.diff(resource.data).affectedKeys()
                            .hasOnly(['teacherEmail', 'teacherName', 'section', 'tickets'])));

@@ -2500,6 +2500,15 @@ body.teacher-page {
   border-color: #56B2BB;
 }
 
+/* Same fix as .trade-select: the dropdown popup list is browser-
+   rendered and defaults to a white background with no style of its
+   own, so the light text inherited from .node-editor-input becomes
+   nearly invisible on it (Gift Tickets, Season Editor selects, etc). */
+.node-editor-input option {
+  background: #1D2233;
+  color: #D7E3F0;
+}
+
 .node-editor-textarea {
   min-height: 60px;
   resize: vertical;

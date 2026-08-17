@@ -424,7 +424,7 @@ export const SEASON_CONTENT = {
       {
         chapterId: 'semifinal_ch7',
         chapterTitle: 'The Comprehensive Exam',
-        basedOn: 'Reed 101 Semi-Final Exam — the human person and the call to faith, freedom and revelation, the nature of faith, and faith\'s relationship to reason and prayer',
+        basedOn: 'Comprehensive review — the human person and the call to faith, freedom and revelation, the nature of faith, and faith\'s relationship to reason and prayer',
         nodes: [
           {
             nodeId: 'sf7_n1', type: 'quiz', title: 'The Human Person and the Call to Faith',
@@ -925,7 +925,7 @@ export const SEASON_CONTENT = {
       {
         chapterId: 'final_ch11',
         chapterTitle: 'The Comprehensive Final Exam',
-        basedOn: 'Reed 101 Final Examination (Q51-100) — creation and stewardship, the Fall and human freedom, Abraham through the Exodus, covenant and kingdom, and exile through foreign rule',
+        basedOn: 'Comprehensive review — creation and stewardship, the Fall and human freedom, Abraham through the Exodus, covenant and kingdom, and exile through foreign rule',
         nodes: [
           {
             nodeId: 'fn11_n1', type: 'quiz', title: 'Creation, Exile, and the Divine Name',

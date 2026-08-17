@@ -505,13 +505,20 @@ body {
   animation: label-glow 3.4s ease-in-out infinite;
 }
 
+.progress-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
 #cardProgress {
   font-family: 'Cinzel', serif;
-  font-size: 15px;
-  letter-spacing: 0.03em;
-  color: #D8FBFF;
-  text-shadow: 0 0 8px rgba(127,212,220,0.6);
-  animation: label-glow 3.4s ease-in-out infinite;
+  font-weight: 700;
+  font-size: 28px;
+  letter-spacing: 0.02em;
+  color: #F2F6FC;
+  text-shadow: 0 0 14px rgba(127,212,220,0.3);
 }
 
 @keyframes label-glow {

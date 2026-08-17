@@ -372,61 +372,96 @@ export const SEASON_CONTENT = {
       },
       // Capstone chapter, deliberately last so it's locked behind every
       // other Semifinal chapter (chapters unlock strictly in order).
-      // Sourced from the REED 101 Semi-Final Exam form — quiz-only, no
-      // ticket reward, worth one star like any other chapter. Every
-      // correctIndex below is a PLACEHOLDER (0) — the real answer key
-      // isn't visible from a public form response, so these must be set
-      // per-question in the Season Path Editor (Dungeon Master console)
-      // before this chapter goes live for students.
+      // Sourced from the "Reed 101 Semi-Final.docx" answer-keyed exam
+      // (first 50 of its questions — the rest of that document is a
+      // differently-shaped matching section and an unmarked True/False
+      // section, neither of which fits this single-answer MC format).
+      // Quiz-only, no ticket reward, worth one star like any other
+      // chapter — every correctIndex here is real, taken directly from
+      // the document's red-highlighted answers.
       {
         chapterId: 'semifinal_ch7',
         chapterTitle: 'The Comprehensive Exam',
-        basedOn: 'REED 101 Semi-Final Exam — proofs of God\'s existence, faith and reason, the vocabulary of sin, symbols of the Fall, and the history of salvation',
+        basedOn: 'Reed 101 Semi-Final Exam — the human person and the call to faith, freedom and revelation, the nature of faith, and faith\'s relationship to reason and prayer',
         nodes: [
           {
-            nodeId: 'sf7_n1', type: 'quiz', title: 'Faith, Reason, and the Proofs of God',
-            prompt: 'Answer each question on faith, reason, and the classical arguments for God\'s existence.',
+            nodeId: 'sf7_n1', type: 'quiz', title: 'The Human Person and the Call to Faith',
+            prompt: 'Answer each question on the human person and why faith matters to a full human life.',
             questions: [
-              { text: "The principle 'to see is to believe' becoming a guiding philosophy is an example of:", choices: ["The scientific reduction of religion", "Dogmatic relativism", "Secularism", "None of the choices"], correctIndex: 0 },
-              { text: "Which proof concerns contingent beings requiring an efficient cause?", choices: ["The Proof from Motion", "The Proof from Degrees of Perfection", "The Proof from Efficient Cause", "The Proof from Necessary vs. Possible Being"], correctIndex: 0 },
-              { text: "What is the key difference between Atheism and Agnosticism?", choices: ["Atheism lacks belief in God; agnosticism doesn't take a position on God's existence", "Atheism denies God; agnosticism believes and follows religious practices", "Atheism recognizes God as supreme; agnosticism adores God as prime mover", "None of the choices"], correctIndex: 0 },
-              { text: "Which proof concerns the Most Perfect Being causing all perfection and goodness?", choices: ["The Proof from Motion", "The Proof from Degrees of Perfection", "The Proof from Efficient Cause", "The Proof from Necessary vs. Possible Being"], correctIndex: 0 },
-              { text: "Does society need religion to regulate behavior?", choices: ["True only", "False only", "True — religion inculcates virtues, solidarity, and purpose", "False — people's actions matter more than religion"], correctIndex: 0 },
-              { text: "Who developed the concept of the 'Totem' in relation to religion?", choices: ["Sigmund Freud", "St. Paul", "Émile Durkheim", "René Descartes"], correctIndex: 0 },
-              { text: "Without language, humans cannot fully open themselves to the world — this describes humanity as:", choices: ["True", "False", "Partially true", "Partially false"], correctIndex: 0 },
-              { text: "Who is associated with 'Faith and reason are like two wings on which the human spirit rises to the contemplation of truth'?", choices: ["St. John Paul II", "St. Thomas Aquinas", "Sigmund Freud", "Jeanne Knoelle"], correctIndex: 0 },
-              { text: "The classic 'coffee table' example — an infinite series of makers still requiring a First Maker — illustrates which proof?", choices: ["The Proof from Motion", "The Proof from Degrees of Perfection", "The Proof from Efficient Cause", "The Proof from Necessary vs. Possible Being"], correctIndex: 0 },
-              { text: "'Nothing can be both actual and potential in the same respect at the same time,' requiring a First Mover, describes which proof?", choices: ["The Proof from Motion", "The Proof from Degrees of Perfection", "The Proof from Efficient Cause", "The Proof from Necessary vs. Possible Being"], correctIndex: 0 }
+              { text: "It is necessary to study the holistic view of the human person and their faith life because __.", choices: ["The human being experiences God's reality through Faith.", "The human being experiences Life Completely", "The human being exercises freedom without limit", "The human being resolves to be good"], correctIndex: 0 },
+              { text: "What is the purpose of studying the lesson about Faith and Human being?", choices: ["To guarantee salvation and freedom", "To expose humanities limitations and responsibility", "To restore the calling that every person denied at first", "To provide a fundamental understanding of the human person"], correctIndex: 3 },
+              { text: "All statements are correct about human being except______.", choices: ["all human creature fully shares God's love", "the human being lives entirely in the context of freedom", "the human being shares equally the power of God", "the human being is always accountable for their action"], correctIndex: 2 },
+              { text: "It is a limitation of the current generation that causes human misery.", choices: ["It is a generation that promotes a \"cancel culture.\"", "It is a generation that prefers material over spiritual", "It is a generation that upholds individual preferences over the common good", "All options are correct"], correctIndex: 3 },
+              { text: "According to the Pastoral Constitution on the Church of the Modern World, it is the reason for human being's unhappiness.", choices: ["Rapid changes brought inequalities to the human condition", "Imbalances are punishment given to them by the universe", "God plans unhappy Life from the beginning of Life", "An imbalanced situation is God's curse on human beings"], correctIndex: 0 },
+              { text: "Gaudium et Spes is translated to English as _______.", choices: ["Pastoral Constitution on the Church of the Modern World", "Pastoral Constitution of the Vatican II", "Revelation and Faith", "Faith and Reason"], correctIndex: 0 },
+              { text: "What mode of existence is limited only to physical reality?", choices: ["Living level", "Physical level", "Surviving level", "Environmental level"], correctIndex: 2 },
+              { text: "Men and women affirm the divine pronouncement through ____.", choices: ["gift of Faith", "human effort", "human destiny", "gift of knowledge"], correctIndex: 0 },
+              { text: "What enables human beings to acknowledge the revealed truth fully?", choices: ["The human person thinks perfectly like his God", "The human person can recognize his God", "God possesses the human intellect", "All options are correct"], correctIndex: 1 },
+              { text: "What do the intellect and will demonstrate?", choices: ["The spiritual nature of the act", "The physical nature of the act", "The material nature of the act", "The societal nature of the act"], correctIndex: 0 }
             ]
           },
           {
-            nodeId: 'sf7_n2', type: 'quiz', title: 'Sin, Symbols, and the Fall',
-            prompt: 'Answer each question on the vocabulary of sin and the symbols of the Fall.',
+            nodeId: 'sf7_n2', type: 'quiz', title: 'Freedom and the Response of Faith',
+            prompt: 'Answer each question on human freedom and how faith responds to it.',
             questions: [
-              { text: "The name 'Adam' derives from a Hebrew word meaning:", choices: ["Soil", "Life", "Water", "Partner"], correctIndex: 0 },
-              { text: "A complete abandonment of one's profession of faith is called:", choices: ["Sin of Heresy", "Sin of Idolatry", "Sin of Hypocrisy", "Sin of Apostasy", "Sin of Blasphemy"], correctIndex: 0 },
-              { text: "Nakedness as a sign of disgrace takes on deeper meaning after the fall in Genesis 3:", choices: ["True", "False", "Partially true", "Partially false"], correctIndex: 0 },
-              { text: "A Christian doctrine that selects and rejects parts of the faith, creating distortion, is called:", choices: ["Sin of Heresy", "Sin of Idolatry", "Sin of Hypocrisy", "Sin of Apostasy", "Sin of Blasphemy"], correctIndex: 0 },
-              { text: "Breaking faith with God leading to breaking faith with others is shown especially in:", choices: ["The story of creation", "The story of Cain and Abel", "The story of the tower of Babel", "None of the choices"], correctIndex: 0 },
-              { text: "Situations or structures that cause or support evil are called:", choices: ["Personal Sin", "Global sin", "Social sin", "None of the choices"], correctIndex: 0 },
-              { text: "Evil flowing from human goodness used as an absolute, symbolized by the snake, describes:", choices: ["True", "False", "Partially true", "Partially false"], correctIndex: 0 },
-              { text: "Scandal committed against 'You shall not use God's name in vain' is called:", choices: ["Sin of Heresy", "Sin of Idolatry", "Sin of Hypocrisy", "Sin of Apostasy", "Sin of Blasphemy"], correctIndex: 0 },
-              { text: "The name 'Eve' derives from a Hebrew word meaning:", choices: ["Soil", "Life", "Water", "Partner"], correctIndex: 0 }
+              { text: "What do the intellect and will enable human beings to realize fully?", choices: ["Personal preference", "Option to do wrong", "Independence from God", "Freedom to do only what is right"], correctIndex: 3 },
+              { text: "Human freedom entails____.", choices: ["Responsibility", "Doing only what is good", "Avoidance of evil", "All options are correct"], correctIndex: 3 },
+              { text: "The following are responses of Faith except for _____.", choices: ["Lino trusts the advice of the counselor", "Sonny informs everybody to comply", "Maria obeys the teachings of the Church", "Jun believes the words of Jesus from the bible"], correctIndex: 1 },
+              { text: "All statements are correct about Faith except _______.", choices: ["Trusting", "Revealing", "Believing", "Obeying"], correctIndex: 1 },
+              { text: "Human freedom necessitates _____.", choices: ["Avoidance from evil", "Doing only what is good", "Freedom to do whatever one desires", "Both a & b"], correctIndex: 3 },
+              { text: "A person of Faith is more productive for the following reasons except for ______.", choices: ["He does only what is proper", "He limits only to what is good", "He acts responsibly", "He is free to do whatever he believes in"], correctIndex: 3 },
+              { text: "What does revelation mean?", choices: ["God's self-communication", "God's desire for salvation", "God intends to call everyone", "God's commitment to save"], correctIndex: 0 },
+              { text: "How does God reveal?", choices: ["by announcing his presence", "by hearing the cry of the poor", "by commanding humans to be true", "by responding to man's plea for salvation"], correctIndex: 0 },
+              { text: "A condition that allows the human being to perceive God's revelation.", choices: ["Trust", "Intellectual ability", "Physical health", "Economic stability"], correctIndex: 0 },
+              { text: "What does God desire for all men and women?", choices: ["Independence", "Intellectual freedom", "economic stability", "salvation"], correctIndex: 3 }
             ]
           },
           {
-            nodeId: 'sf7_n3', type: 'quiz', title: 'Voices of Faith and Salvation History',
-            prompt: 'Answer each question on the history of salvation and the theologians who shaped its understanding.',
+            nodeId: 'sf7_n3', type: 'quiz', title: 'The Nature and Characteristics of Faith',
+            prompt: 'Answer each question on what faith is and the qualities that define it.',
             questions: [
-              { text: "The Greek word for salvation, also linked to 'Reign of God,' is:", choices: ["salus", "salve", "Malkuth", "None of the choices"], correctIndex: 0 },
-              { text: "The Jewish apocalyptic writers' futuristic understanding of salvation dates to approximately:", choices: ["200 BCE-200 CE", "750-400 BCE", "4 BCE-30 CE", "30-100 CE"], correctIndex: 0 },
-              { text: "In ancient times, the snake was used for medicine especially in:", choices: ["Mesopotamia", "Egypt", "Persia", "Israel"], correctIndex: 0 },
-              { text: "Early Christian salvation, understood as both present and future, was recorded in the period:", choices: ["200 BCE-200 CE", "750-400 BCE", "4 BCE-30 CE", "30-100 CE"], correctIndex: 0 },
-              { text: "Who is the proponent of 'loving learning and desire for God'?", choices: ["St. John Paul II", "St. Thomas Aquinas", "Sigmund Freud", "Jeanne Knoelle"], correctIndex: 0 },
-              { text: "Who said, 'Our heart is restless until it rests in you'?", choices: ["St. Augustine", "St. Paul", "St. Thomas Aquinas", "St. John Paul II"], correctIndex: 0 },
-              { text: "God's Creation reflects Divine Goodness, and humans should not overstep into that domain:", choices: ["True", "False", "Partially true", "Partially false"], correctIndex: 0 },
-              { text: "Who explained why Genesis used the snake for evil and described the two dangers of goodness?", choices: ["St. Paul", "St. John Paul II", "St. Thomas Aquinas", "St. Augustine"], correctIndex: 0 },
-              { text: "The word 'Salvation' comes from the Latin word meaning 'sound or safe':", choices: ["salus", "salve", "Malkuth", "None of the choices"], correctIndex: 0 }
+              { text: "It is a condition in Life that hinders the expression of freedom.", choices: ["Poverty", "Greed", "Intellectual proficiency", "All options are correct"], correctIndex: 1 },
+              { text: "Which of the following statements is about Faith?", choices: ["Responding a disclosure", "Following one's instinct", "Unveiling one's personhood", "Divulging one's identity"], correctIndex: 0 },
+              { text: "It is the expression of Faith as an affair of the mind.", choices: ["Understanding", "Believing", "Obeying", "All options are correct"], correctIndex: 0 },
+              { text: "It is an expression of Faith as an affair of the hand.", choices: ["doing", "trusting", "believing", "comprehending"], correctIndex: 0 },
+              { text: "The characteristic of Faith that God infuses.", choices: ["certainty", "grace", "independence", "self-sufficiency"], correctIndex: 1 },
+              { text: "Faith as a human act requires ____.", choices: ["God's grace", "Human independence", "Intellectual ability", "All options are correct"], correctIndex: 0 },
+              { text: "Faith is certain because _____.", choices: ["It comes from God", "The person perceives it correctly", "The indicators can never be wrong", "All options are wrong"], correctIndex: 0 },
+              { text: "It is a characteristic of Christian prayer that leads the believer to Life here-after.", choices: ["Biblical", "Eschatological", "Ecclesiological", "Christological"], correctIndex: 1 },
+              { text: "Which of the following is correct about God's Revelation?", choices: ["It is within the capacity of the person to understand and interpret its meaning", "It requires the person's intellectual proficiency to perceive", "Only the learned can comprehend", "Only the wise can detect"], correctIndex: 0 },
+              { text: "We must believe in Divine revelation because ___________.", choices: ["God cannot deceive us", "The unbelievers suffer death", "God punishes the unbelievers", "We cannot fathom the truth of revelation"], correctIndex: 0 }
+            ]
+          },
+          {
+            nodeId: 'sf7_n4', type: 'quiz', title: 'Revelation to All Humanity',
+            prompt: 'Answer each question on how and why God reveals himself to humanity.',
+            questions: [
+              { text: "Which of the following belongs to the Christian revelation?", choices: ["God revealed himself through nature", "God revealed himself through Buddha", "God revealed himself through Mohamad", "God revealed himself through Jesus Christ"], correctIndex: 3 },
+              { text: "It is a process by which God took the first step to let human beings know who he is and what he does.", choices: ["Faith", "Inspiration", "Revelation", "Religion"], correctIndex: 2 },
+              { text: "To whom did God reveal himself?", choices: ["To all humanity", "To his chosen ones only", "To those who believe only", "To those who have not yet encountered him only"], correctIndex: 0 },
+              { text: "It is a requirement for anyone to perceive God", choices: ["Faith", "Freewill", "Wisdom", "Knowledge"], correctIndex: 0 },
+              { text: "Why did God reveal himself?", choices: ["To let people know of his existence", "To let people experience his might", "To integrate with humanity", "To offer salvation"], correctIndex: 3 },
+              { text: "Which is correct about divine revelation?", choices: ["It is an initiative of man", "It is an initiative of God", "It is the influence of the Holy Spirit", "It is a joint initiative of God and man"], correctIndex: 1 },
+              { text: "It is a gift from God that turns anyone who embraces it into a believer.", choices: ["Faith", "Grace", "Miracle", "Revelation"], correctIndex: 0 },
+              { text: "Which of the following is correct?", choices: ["The heart is enough for a person to live with God's self-communication", "God's self-communication is understood through the mind", "The mind is not essential to anyone who trusts in God", "None of the options are correct"], correctIndex: 1 },
+              { text: "It is a free assent to the entirety of God's revealed truth.", choices: ["Faith", "Grace", "Prayer", "Revelation"], correctIndex: 0 },
+              { text: "It is a necessity for anyone to have Faith.", choices: ["Grace", "Prayer", "Inspiration", "Illumination"], correctIndex: 0 }
+            ]
+          },
+          {
+            nodeId: 'sf7_n5', type: 'quiz', title: 'Faith, Reason, and a Life of Prayer',
+            prompt: 'Answer each question on the relationship between faith and reason, and on prayer.',
+            questions: [
+              { text: "Which of the following is correct?", choices: ["The human intellect is not essential to anyone who believes in God", "It is through the human will alone that the person believes in God", "Believing is an act of the intellect", "All options are wrong"], correctIndex: 2 },
+              { text: "Our faith is certain because _________________.", choices: ["The certainty of the divine is greater than what the natural reason provides", "Nothing can obscure the revealed truths", "It is the divine who provides", "All options are correct"], correctIndex: 3 },
+              { text: "Which of the following is correct?", choices: ["Faith is from God", "Faith and reason go together", "God endowed the human mind with reason", "All options are correct"], correctIndex: 3 },
+              { text: "It is a factor that hinders some people to recognize God.", choices: ["Lack of Faith", "Lack of reason", "Insufficient conscience", "All options are correct"], correctIndex: 0 },
+              { text: "Why does Faith always triumph over reason?", choices: ["God empowers human reason with Faith", "God gives human beings the reason to believe Him", "Human reason is unbeatable in all circumstances of Life", "God reveals mysteries and instills Faith in the light of reason"], correctIndex: 3 },
+              { text: "The following statements are correct about Faith except for ___.", choices: ["Faith is a Grace", "Faith is responding", "Faith is a gift", "Faith perfects the human act"], correctIndex: 3 },
+              { text: "Whom of the following is an existential atheist?", choices: ["Konie trusts to savor a perfect life after she dies", "Marco believes that Life's meaning depends on his capacity to provide", "Kathy appeals to the holy other to avoid despair", "Sheila believes that Life in its perfection is yet to come"], correctIndex: 1 },
+              { text: "The following describes the nature of the Christian Faith except for ____.", choices: ["Faith is a living process.", "Faith is an expression of our love of God.", "Faith is a response to God's invitation to love.", "Faith is man's independent decision to keep a way of Life"], correctIndex: 3 },
+              { text: "The Catechism of the Catholic Church describes prayer as ____.", choices: ["Human response to God's Revelation", "God's gift, a Covenant, and a communion", "The answer that gives to all the struggles of man's existence", "The living and liberating action of man to the beautiful works of God"], correctIndex: 1 },
+              { text: "How does one form a habit of prayer?", choices: ["By constant repetition or practice", "By recognizing God's presence in his Life", "By acknowledging God is the source of everything", "By disposing oneself to the atmosphere of communing with God"], correctIndex: 0 }
             ]
           }
         ]

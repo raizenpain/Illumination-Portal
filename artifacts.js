@@ -12,7 +12,21 @@
 // it's flavor text here, not an automated grade change.
 // ============================================
 
-export const TOKEN_COST_BY_TIER = { 1: 1, 2: 4, 3: 6, 4: 8 };
+export const TOKEN_COST_BY_TIER = { 1: 4, 2: 7, 3: 9, 4: 11 };
+
+// The Divine Regalia chain got its own bumped costs (not just tier
+// default + 3) at the user's request — everything else uses the tier
+// default above.
+export const TOKEN_COST_OVERRIDES = {
+  orb_of_destruction: 5,
+  iron_talon: 9,
+  ceremonial_robe: 12,
+  crippling_crossbow: 16
+};
+
+export function tokenCostFor(id, tier) {
+  return TOKEN_COST_OVERRIDES[id] ?? TOKEN_COST_BY_TIER[tier];
+}
 
 export const TIERS = [
   { tier: 1, name: 'Common Artifacts', accent: '#9CA9C4' },

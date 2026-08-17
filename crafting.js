@@ -16,8 +16,8 @@
 import { db, doc, setDoc } from './firebase.js';
 import { logActivity } from './activity.js';
 import {
-  TOKEN_COST_BY_TIER, TIERS, ARTIFACTS, CRAFTING_CHAINS,
-  artifactIconPath, chainForTier5
+  TIERS, ARTIFACTS, CRAFTING_CHAINS,
+  artifactIconPath, chainForTier5, tokenCostFor
 } from './artifacts.js';
 import { getRankProgress } from './rank.js';
 
@@ -179,7 +179,7 @@ function artifactState(id, tier) {
     if (!priorOwned) return { kind: 'chain-locked' };
   }
 
-  const cost = TOKEN_COST_BY_TIER[tier];
+  const cost = tokenCostFor(id, tier);
   const tokens = studentData.unlockTokens || 0;
 
   return tokens < cost ? { kind: 'need-tokens', cost } : { kind: 'buyable', cost };

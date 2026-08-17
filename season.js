@@ -4,7 +4,7 @@ import { SEASON_CONTENT, mergeSeasonContent } from './seasonContent.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
-import { containsBannedWord } from './contentFilter.js';
+import { containsBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
 import { getRankProgress, getSeasonStars, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 
@@ -210,7 +210,7 @@ function openNodeModal(node) {
   if (node.type === 'quiz' || node.type === 'identification') renderQuizModal(node);
   else if (node.type === 'journal') renderTextModal(node, { minLength: 100 });
   else if (node.type === 'recitation') renderTextModal(node, { minLength: 40 });
-  else if (node.type === 'task') renderTaskModal(node);
+  else if (node.type === 'task') renderTextModal(node, { minLength: 100 });
 }
 
 function closeNodeModal() {
@@ -388,6 +388,16 @@ function renderTextModal(node, { minLength }) {
       return;
     }
 
+    if (looksLikeGibberish(text)) {
+      hint.textContent = "That doesn't look like a real written response — please write in complete sentences.";
+      return;
+    }
+
+    if (isOffTopic(text, node.prompt, node.title)) {
+      hint.textContent = "Your response doesn't seem to address the question — make sure you're actually answering what's asked.";
+      return;
+    }
+
     await awardNode(node, text);
     closeNodeModal();
   };
@@ -402,25 +412,6 @@ function blockPasteInto(textarea, onBlocked) {
   textarea.addEventListener('paste', block);
   textarea.addEventListener('drop', block);
   textarea.addEventListener('contextmenu', (event) => event.preventDefault());
-}
-
-// --- Task (simple confirmation) ---
-
-function renderTaskModal(node) {
-  nodeModalBox.innerHTML = `
-    <h2>${NODE_TYPE_HEADING_ICON.task} ${node.title}</h2>
-    <p class="reflection-hint">${node.prompt}</p>
-    <div class="reflection-modal-actions">
-      ${modalCloseButtonHtml()}
-      <button class="submit-quiz-btn" id="seasonTaskCompleteBtn">Mark Complete</button>
-    </div>
-  `;
-  wireCloseButton();
-
-  document.getElementById('seasonTaskCompleteBtn').onclick = async () => {
-    await awardNode(node);
-    closeNodeModal();
-  };
 }
 
 // ================================

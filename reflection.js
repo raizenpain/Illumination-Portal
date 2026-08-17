@@ -1,7 +1,7 @@
 import { db, doc, getDoc, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
-import { containsBannedWord } from './contentFilter.js';
+import { containsBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
 import { getRankProgress, getSeasonStars, isSeasonChaptersComplete, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 
@@ -142,6 +142,16 @@ async function handleSubmit() {
 
   if (containsBannedWord(text)) {
     statusEl.textContent = "That reflection contains language that isn't allowed here — please rewrite it.";
+    return;
+  }
+
+  if (looksLikeGibberish(text)) {
+    statusEl.textContent = "That doesn't look like a real written reflection — please write in complete sentences.";
+    return;
+  }
+
+  if (isOffTopic(text, gate.placeholder, gate.title)) {
+    statusEl.textContent = "Your reflection doesn't seem to address the prompt — make sure you're actually reflecting on what's asked.";
     return;
   }
 

@@ -380,7 +380,13 @@ async function awardDailyVisitShard(data) {
     // Re-checks lastVisitRewardDate against the LIVE record inside the
     // transaction -- two tabs opened/refreshed at once both seeing the
     // cached "not today yet" value would otherwise both award a shard.
+    // `awarded` is reset at the top of the callback, not just declared
+    // outside it -- Firestore can silently retry this callback on
+    // contention, and without the reset a stale `true` from an aborted
+    // attempt could leak into the local cache update below even though
+    // that attempt never actually committed.
     await runTransaction(db, async (tx) => {
+      awarded = false;
       const snap = await tx.get(studentRef);
       const live = snap.data() || {};
       if (live.lastVisitRewardDate === today) return;

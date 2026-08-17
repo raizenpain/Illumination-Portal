@@ -238,11 +238,29 @@ function isQuizOnCooldown(node) {
   return end > Date.now();
 }
 
+// Fisher-Yates — used to reshuffle question order on every render, so
+// two students (or the same student retrying after a cooldown) don't
+// see item 1 land on the same question, discouraging "the answer to
+// number 3 is B" answer-sharing.
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 function renderQuizModal(node) {
   if (isQuizOnCooldown(node)) {
     renderQuizCooldown(node);
     return;
   }
+
+  // A shuffled-order copy, not node.questions directly — awardNode()
+  // and the cooldown helpers only ever read nodeId/ticketReward/type/
+  // title, so this shallow copy flows through them safely.
+  const displayNode = { ...node, questions: shuffleArray(node.questions) };
 
   nodeModalBox.innerHTML = `
     <h2>${NODE_TYPE_HEADING_ICON[node.type]} ${node.title}</h2>
@@ -258,7 +276,7 @@ function renderQuizModal(node) {
   const quizContainer = document.getElementById('seasonQuizContainer');
   const statusEl = document.getElementById('seasonQuizStatus');
 
-  node.questions.forEach((q, index) => {
+  displayNode.questions.forEach((q, index) => {
     const qDiv = document.createElement('div');
     qDiv.className = 'quiz-question';
 
@@ -291,7 +309,7 @@ function renderQuizModal(node) {
   const submitBtn = document.createElement('button');
   submitBtn.className = 'submit-quiz-btn';
   submitBtn.textContent = 'Submit Answers';
-  submitBtn.onclick = () => handleQuizSubmit(node, statusEl);
+  submitBtn.onclick = () => handleQuizSubmit(displayNode, statusEl);
   quizContainer.appendChild(submitBtn);
 }
 

@@ -27,6 +27,21 @@ const GATE_INFO = {
 const gateInfo = GATE_INFO[gate];
 const questions = CHALLENGES[gate];
 
+// Reshuffled on every renderQuiz() call — read by handleSubmit() too,
+// so an attempt is always graded against the order actually shown,
+// discouraging "the answer to number 3 is B" answer-sharing between
+// students who'd otherwise see the same fixed order.
+let displayQuestions = [];
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
 if (!gateInfo || !questions) {
   titleEl.textContent = 'Challenge Not Found';
   statusEl.textContent = 'This challenge link is invalid.';
@@ -65,8 +80,9 @@ function showAlreadyUnlocked() {
 function renderQuiz() {
   subtitleEl.textContent = 'Answer all questions correctly to unlock';
   quizContainer.innerHTML = '';
+  displayQuestions = shuffleArray(questions);
 
-  questions.forEach((q, index) => {
+  displayQuestions.forEach((q, index) => {
     const qDiv = document.createElement('div');
     qDiv.className = 'quiz-question';
 
@@ -109,7 +125,7 @@ async function handleSubmit() {
   let allCorrect = true;
   let allAnswered = true;
 
-  questions.forEach((q, index) => {
+  displayQuestions.forEach((q, index) => {
     const selected = document.querySelector(`input[name="question-${index}"]:checked`);
     if (!selected) {
       allAnswered = false;

@@ -13,6 +13,7 @@ body {
   max-width: 1400px;
   margin: 40px auto;
   padding: 0 20px;
+  box-sizing: border-box;
 }
 
 .dashboard-body {
@@ -1280,11 +1281,13 @@ body.puzzle-page {
 
 .code-entry {
   display: flex;
+  flex-wrap: wrap;
   gap: 10px;
 }
 
 .code-input {
   flex: 1;
+  min-width: 0;
   padding: 13px 16px;
   border: 1.5px solid rgba(127,212,220,0.3);
   border-radius: 12px;
@@ -3232,6 +3235,7 @@ body.teacher-page {
 
 @media (max-width: 700px) {
   .portal-header {
+    position: static;
     flex-direction: column;
     gap: 15px;
     text-align: center;

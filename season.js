@@ -95,8 +95,8 @@ async function init() {
 function isSeasonUnlocked(id, data) {
   if (isSeasonPreviewAdmin) return true; // Dungeon Master accounts can preview any season for testing
   if (id === 'midterm') return !!data.midtermUnlocked;
-  if (id === 'semifinal') return isSeasonComplete('midterm', data);
-  if (id === 'final') return isSeasonComplete('semifinal', data);
+  if (id === 'semifinal') return isSeasonComplete('midterm', data) && !!data.semifinalUnlocked;
+  if (id === 'final') return isSeasonComplete('semifinal', data) && !!data.finalUnlocked;
   return false;
 }
 

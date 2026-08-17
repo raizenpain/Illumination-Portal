@@ -563,8 +563,10 @@ body {
 
 .rank-stars {
   display: flex;
+  flex-wrap: wrap;
   justify-content: center;
   gap: 3px;
+  max-width: 150px;
 }
 
 .rank-star {

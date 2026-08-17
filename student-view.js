@@ -160,13 +160,22 @@ function renderSubmissions(data) {
 
   const items = [];
 
-  if (data.puzzle3Reflection) {
-    items.push({
-      title: 'Prelim Reflection',
-      meta: data.puzzle3ReflectionSubmittedAt ? new Date(data.puzzle3ReflectionSubmittedAt).toLocaleDateString() : '',
-      text: data.puzzle3Reflection
-    });
-  }
+  const REFLECTIONS = [
+    { title: 'Prelim Reflection', textField: 'puzzle3Reflection', timestampField: 'puzzle3ReflectionSubmittedAt' },
+    { title: 'Midterm Reflection', textField: 'semifinalReflection', timestampField: 'semifinalReflectionSubmittedAt' },
+    { title: 'Semifinal Reflection', textField: 'finalReflection', timestampField: 'finalReflectionSubmittedAt' },
+    { title: 'Final Reflection', textField: 'apostleReflection', timestampField: 'apostleReflectionSubmittedAt' }
+  ];
+
+  REFLECTIONS.forEach((r) => {
+    if (data[r.textField]) {
+      items.push({
+        title: r.title,
+        meta: data[r.timestampField] ? new Date(data[r.timestampField]).toLocaleDateString() : '',
+        text: data[r.textField]
+      });
+    }
+  });
 
   Object.entries(data.nodeSubmissions || {}).forEach(([nodeId, text]) => {
     const found = findNode(nodeId);

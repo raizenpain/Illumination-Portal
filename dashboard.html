@@ -555,6 +555,14 @@ function renderUnlockedSeasonCard(seasonId, cardId, data) {
   const content = SEASON_CONTENT[seasonId];
   const complete = isSeasonComplete(seasonId, data);
 
+  // Final has one more capstone step after its own chapters are done —
+  // the reflection that fills Apostle's last real star — before it
+  // counts as fully "Completed".
+  if (seasonId === 'final' && complete && !data.apostleUnlocked && !isSeasonPreviewAdmin) {
+    renderReflectionChallengeCard(cardId, 'apostle');
+    return;
+  }
+
   card.className = `puzzle-card ${complete ? 'state-completed' : 'state-available'}`;
   badge.className = `status-badge ${complete ? 'status-completed' : 'status-available'}`;
   icon.textContent = complete ? '✅' : '🗺️';
@@ -579,37 +587,47 @@ function renderLockedSeasonCard(cardId, message) {
   card.onclick = () => alert(message);
 }
 
+function renderReflectionChallengeCard(cardId, gateKey) {
+  const card = document.getElementById(cardId);
+  if (!card) return;
+
+  const icon = card.querySelector('.puzzle-icon');
+  const label = card.querySelector('p');
+  const badge = card.querySelector('.status-badge');
+
+  card.className = 'puzzle-card state-challenge';
+  badge.className = 'status-badge status-challenge';
+  icon.textContent = '📝';
+  label.textContent = 'Write your reflection';
+  badge.textContent = 'Write Reflection';
+  card.onclick = () => { window.location.href = `reflection.html?gate=${gateKey}`; };
+}
+
 function setupMidtermCard(data) {
   if (!document.getElementById('midtermSeasonBtn')) return;
 
   if (data.midtermUnlocked || isSeasonPreviewAdmin) {
     renderUnlockedSeasonCard('midterm', 'midtermSeasonBtn', data);
   } else if (prelimSeasonDone(data)) {
-    const card = document.getElementById('midtermSeasonBtn');
-    const icon = card.querySelector('.puzzle-icon');
-    const label = card.querySelector('p');
-    const badge = card.querySelector('.status-badge');
-
-    card.className = 'puzzle-card state-challenge';
-    badge.className = 'status-badge status-challenge';
-    icon.textContent = '📝';
-    label.textContent = 'Write your reflection';
-    badge.textContent = 'Write Reflection';
-    card.onclick = () => { window.location.href = 'reflection.html'; };
+    renderReflectionChallengeCard('midtermSeasonBtn', 'midterm');
   } else {
     renderLockedSeasonCard('midtermSeasonBtn', 'Complete Prelim Season first to unlock this season.');
   }
 }
 
 function setupSemifinalAndFinalCards(data) {
-  if (isSeasonPreviewAdmin || isSeasonComplete('midterm', data)) {
+  if (isSeasonPreviewAdmin || data.semifinalUnlocked) {
     renderUnlockedSeasonCard('semifinal', 'semifinalSeasonBtn', data);
+  } else if (isSeasonComplete('midterm', data)) {
+    renderReflectionChallengeCard('semifinalSeasonBtn', 'semifinal');
   } else {
     renderLockedSeasonCard('semifinalSeasonBtn', 'Complete Midterm Season first to unlock this season.');
   }
 
-  if (isSeasonPreviewAdmin || isSeasonComplete('semifinal', data)) {
+  if (isSeasonPreviewAdmin || data.finalUnlocked) {
     renderUnlockedSeasonCard('final', 'finalSeasonBtn', data);
+  } else if (isSeasonComplete('semifinal', data)) {
+    renderReflectionChallengeCard('finalSeasonBtn', 'final');
   } else {
     renderLockedSeasonCard('finalSeasonBtn', 'Complete Semifinal Season first to unlock this season.');
   }

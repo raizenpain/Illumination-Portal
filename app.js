@@ -1,4 +1,4 @@
-import { db, doc, getDoc, setDoc, updateDoc } from './firebase.js';
+import { db, doc, getDoc, setDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
@@ -346,6 +346,7 @@ function cooldownKey() {
 function registerFailedAttempt() {
   const current = parseInt(localStorage.getItem(attemptsKey()) || '0') + 1;
   localStorage.setItem(attemptsKey(), current);
+  recordMistake();
 
   if (current >= MAX_ATTEMPTS) {
     const cooldownEnd = Date.now() + COOLDOWN_SECONDS * 1000;
@@ -355,6 +356,15 @@ function registerFailedAttempt() {
     const remaining = MAX_ATTEMPTS - current;
     if (status) status.textContent = `Not quite right — try again! (${remaining} attempt${remaining === 1 ? '' : 's'} left before a short cooldown)`;
   }
+}
+
+// Feeds the "no mistakes" leaderboard filter (see leaderboard.js) — a
+// running count on the student's own record, never reset, never shown
+// to the student directly. Fire-and-forget: a failed write here should
+// never block the retry/cooldown flow the student is actually waiting on.
+function recordMistake() {
+  updateDoc(doc(db, 'students', email), { mistakeCount: increment(1) })
+    .catch((err) => console.error('Failed to record mistake:', err));
 }
 
 function clearAttempts() {

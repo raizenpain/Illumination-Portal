@@ -1,4 +1,4 @@
-import { db, doc, getDoc, updateDoc } from './firebase.js';
+import { db, doc, getDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { CHALLENGES } from './questions.js';
 import { logActivity } from './activity.js';
@@ -40,6 +40,15 @@ function shuffleArray(arr) {
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
+}
+
+// Feeds the "no mistakes" leaderboard filter (see leaderboard.js) — a
+// running count on the student's own record, never reset, never shown
+// to the student directly. Fire-and-forget: a failed write here should
+// never block the retry/cooldown flow the student is actually waiting on.
+function recordMistake() {
+  updateDoc(doc(db, 'students', email), { mistakeCount: increment(1) })
+    .catch((err) => console.error('Failed to record mistake:', err));
 }
 
 if (!gateInfo || !questions) {
@@ -190,6 +199,7 @@ function cooldownKey() {
 function registerFailedAttempt() {
   const current = parseInt(localStorage.getItem(attemptsKey()) || '0') + 1;
   localStorage.setItem(attemptsKey(), current);
+  recordMistake();
 
   if (current >= MAX_ATTEMPTS) {
     const cooldownEnd = Date.now() + COOLDOWN_SECONDS * 1000;

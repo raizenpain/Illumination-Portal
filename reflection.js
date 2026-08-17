@@ -1,4 +1,4 @@
-import { db, doc, getDoc, updateDoc } from './firebase.js';
+import { db, doc, getDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { containsBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
@@ -85,6 +85,15 @@ const statusEl = document.getElementById('reflectionStatus');
 const studentRef = doc(db, 'students', email);
 let studentData = {};
 
+// Feeds the "no mistakes" leaderboard filter (see leaderboard.js) — a
+// running count on the student's own record, never reset, never shown
+// to the student directly. Fire-and-forget: a failed write here should
+// never block the retry flow the student is actually waiting on.
+function recordMistake() {
+  updateDoc(studentRef, { mistakeCount: increment(1) })
+    .catch((err) => console.error('Failed to record mistake:', err));
+}
+
 if (!gate) {
   titleEl.textContent = 'Reflection Not Found';
   statusEl.textContent = 'This reflection link is invalid.';
@@ -142,16 +151,19 @@ async function handleSubmit() {
 
   if (containsBannedWord(text)) {
     statusEl.textContent = "That reflection contains language that isn't allowed here — please rewrite it.";
+    recordMistake();
     return;
   }
 
   if (looksLikeGibberish(text)) {
     statusEl.textContent = "That doesn't look like a real written reflection — please write in complete sentences.";
+    recordMistake();
     return;
   }
 
   if (isOffTopic(text, gate.placeholder, gate.title)) {
     statusEl.textContent = "Your reflection doesn't seem to address the prompt — make sure you're actually reflecting on what's asked.";
+    recordMistake();
     return;
   }
 

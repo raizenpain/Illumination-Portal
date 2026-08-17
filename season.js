@@ -1,4 +1,4 @@
-import { db, doc, getDoc, setDoc } from './firebase.js';
+import { db, doc, getDoc, setDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { SEASON_CONTENT, mergeSeasonContent } from './seasonContent.js';
 import { ADMIN_EMAILS } from './admins.js';
@@ -251,6 +251,15 @@ function shuffleArray(arr) {
   return a;
 }
 
+// Feeds the "no mistakes" leaderboard filter (see leaderboard.js) — a
+// running count on the student's own record, never reset, never shown
+// to the student directly. Fire-and-forget: a failed write here should
+// never block the retry/cooldown flow the student is actually waiting on.
+function recordMistake() {
+  updateDoc(doc(db, 'students', email), { mistakeCount: increment(1) })
+    .catch((err) => console.error('Failed to record mistake:', err));
+}
+
 function renderQuizModal(node) {
   if (isQuizOnCooldown(node)) {
     renderQuizCooldown(node);
@@ -333,6 +342,7 @@ async function handleQuizSubmit(node, statusEl) {
     await awardNode(node);
     setTimeout(closeNodeModal, 1200);
   } else {
+    recordMistake();
     const cooldownEnd = Date.now() + 30 * 1000;
     localStorage.setItem(quizCooldownKey(node), cooldownEnd);
     renderQuizCooldown(node);
@@ -403,16 +413,19 @@ function renderTextModal(node, { minLength }) {
 
     if (containsBannedWord(text)) {
       hint.textContent = "That response contains language that isn't allowed here — please rewrite it.";
+      recordMistake();
       return;
     }
 
     if (looksLikeGibberish(text)) {
       hint.textContent = "That doesn't look like a real written response — please write in complete sentences.";
+      recordMistake();
       return;
     }
 
     if (isOffTopic(text, node.prompt, node.title)) {
       hint.textContent = "Your response doesn't seem to address the question — make sure you're actually answering what's asked.";
+      recordMistake();
       return;
     }
 

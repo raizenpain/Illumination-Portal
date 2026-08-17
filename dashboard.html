@@ -417,7 +417,16 @@ async function loadStudentCard() {
     setupReflectionSymbol(data);
     initTicketTrader({ email, studentData: data, prelimDone: isSeasonPreviewAdmin || prelimSeasonDone(data) });
     initCrafting({ email, name: data.name || name, studentData: data, prelimDone: isSeasonPreviewAdmin || prelimSeasonDone(data) });
-    initLeaderboard({ email, name: data.name || name, progressPercent: progressInfo.percent, createdAt: data.createdAt });
+    initLeaderboard({
+      email,
+      name: data.name || name,
+      progressPercent: progressInfo.percent,
+      createdAt: data.createdAt,
+      rank: rankInfo.rank,
+      starsEarned: rankInfo.stars.filter(Boolean).length,
+      starsTarget: rankInfo.stars.length,
+      mistakeCount: data.mistakeCount || 0
+    });
 
   } catch (err) {
     console.error('Failed to load student card:', err);

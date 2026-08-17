@@ -40,17 +40,18 @@ service cloud.firestore {
     }
 
     // Leaderboard collection — doc ID is the student's email. Public,
-    // slim summary (name + progress rate) so every student can see
+    // slim summary (name, rank, star count) so every student can see
     // community-wide rankings without gaining read access to the full
     // students collection (email, section, teacher, tickets, etc. stay
-    // private there).
+    // private there). progressPercent is stored too, purely to sort by
+    // pace — it's never rendered, only rank + stars are shown.
     match /leaderboard/{studentId} {
       allow read: if request.auth != null;
 
       allow write: if request.auth != null &&
                       request.auth.token.email == studentId &&
                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
-                      request.resource.data.keys().hasOnly(['name', 'progressPercent', 'createdAt']);
+                      request.resource.data.keys().hasOnly(['name', 'progressPercent', 'createdAt', 'rank', 'starsEarned', 'mistakeCount']);
     }
 
     // Settings collection — puzzle piece release status

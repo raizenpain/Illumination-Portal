@@ -2868,6 +2868,15 @@ body.teacher-page {
   font-family: inherit;
 }
 
+/* The dropdown popup list is browser-rendered, not styled by the rule
+   above — without an explicit background it defaults to white, and the
+   light text color inherited from .trade-select becomes near-invisible
+   on it (except the one option the browser auto-highlights). */
+.trade-select option {
+  background: #1D2233;
+  color: #D7E3F0;
+}
+
 .trade-input {
   flex: 1 1 auto;
   font-size: 13px;

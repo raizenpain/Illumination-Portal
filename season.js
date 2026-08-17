@@ -177,9 +177,11 @@ function renderTicketBar(chapter) {
   Object.keys(TICKET_INFO).forEach((key) => { required[key] = 0; current[key] = 0; });
 
   chapter.nodes.forEach((node) => {
-    required[node.ticketReward] = (required[node.ticketReward] || 0) + 1;
+    if (!node.ticketReward) return;
+    const amount = ticketAmountFor(node);
+    required[node.ticketReward] = (required[node.ticketReward] || 0) + amount;
     if (completedNodes[node.nodeId]) {
-      current[node.ticketReward] = (current[node.ticketReward] || 0) + 1;
+      current[node.ticketReward] = (current[node.ticketReward] || 0) + amount;
     }
   });
 

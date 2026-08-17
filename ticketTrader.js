@@ -1,15 +1,15 @@
 // ============================================
 // TICKET TRADER — nested under the dashboard's Milestones panel.
 // Three trade options, per artifact-system.json:
-//   1. Same 3 tickets (one chosen type)          -> 1 Unlock Token
-//   2. Any 4 tickets (mixed, no Ember Shards)    -> 1 Unlock Token
-//   3. 6 Ember Shards (catch-up path)            -> 1 Unlock Token
+//   1. Same SAME_COUNT tickets (one chosen type)        -> 1 Unlock Token
+//   2. Any ANY_COUNT tickets (mixed, no Ember Shards)    -> 1 Unlock Token
+//   3. SCRAP_COUNT Ember Shards (catch-up path)          -> 1 Unlock Token
 //
-// Ember Shards (internal id: scrap_ticket) are deliberately excluded
-// from options 1 and 2 — they're meant to be a worse, safety-net
-// conversion rate (6-for-1) than the "real" ticket types, so letting
-// them slide into the same-3 trade at 3-for-1 would make the
-// dedicated Ember Shard trade pointless.
+// Ember Shards (internal id: scrap_ticket) are earned automatically
+// on every season node completion (see awardNode() in season.js) —
+// they're deliberately excluded from options 1 and 2, and need a much
+// steeper count (SCRAP_COUNT) than the "real" ticket types, since a
+// student racks them up passively just by doing anything at all.
 //
 // Tokens are a single fungible balance (unlockTokens on the student
 // doc) spendable on any artifact later — there's no per-artifact
@@ -18,6 +18,10 @@
 // ============================================
 
 import { db, doc, setDoc } from './firebase.js';
+
+const SAME_COUNT = 12;
+const ANY_COUNT = 24;
+const SCRAP_COUNT = 45;
 
 const TICKET_INFO = {
   quiz_ticket: { icon: '📝', label: 'Sigil of Insight' },
@@ -112,43 +116,43 @@ function renderTraderModal() {
   select.value = previousSelection;
 
   const sameThreeBtn = document.getElementById('sameThreeTradeBtn');
-  const updateSameThreeBtn = () => { sameThreeBtn.disabled = (tickets[select.value] || 0) < 3; };
+  const updateSameThreeBtn = () => { sameThreeBtn.disabled = (tickets[select.value] || 0) < SAME_COUNT; };
   select.onchange = updateSameThreeBtn;
   updateSameThreeBtn();
 
   sameThreeBtn.onclick = () => {
     const deduction = { quiz_ticket: 0, task_ticket: 0, journal_ticket: 0, recitation_ticket: 0, scrap_ticket: 0 };
-    deduction[select.value] = 3;
-    handleTrade(deduction, `${TICKET_INFO[select.value].label} x3`);
+    deduction[select.value] = SAME_COUNT;
+    handleTrade(deduction, `${TICKET_INFO[select.value].label} x${SAME_COUNT}`);
   };
 
-  // --- Any 4 ---
+  // --- Any ANY_COUNT ---
   const nonScrapTotal = TRADEABLE_TYPES.reduce((sum, t) => sum + (tickets[t] || 0), 0);
-  document.getElementById('anyFourInputLabel').textContent = `${Math.min(nonScrapTotal, 4)}/4`;
+  document.getElementById('anyFourInputLabel').textContent = `${Math.min(nonScrapTotal, ANY_COUNT)}/${ANY_COUNT}`;
 
   const anyFourBtn = document.getElementById('anyFourTradeBtn');
-  anyFourBtn.disabled = nonScrapTotal < 4;
+  anyFourBtn.disabled = nonScrapTotal < ANY_COUNT;
   anyFourBtn.onclick = () => {
     const deduction = pickAnyFourDeduction(tickets);
     if (!deduction) return;
-    handleTrade(deduction, 'Any 4 tickets');
+    handleTrade(deduction, `Any ${ANY_COUNT} tickets`);
   };
 
-  // --- Six Scrap ---
+  // --- Scrap ---
   const scrapCount = tickets.scrap_ticket || 0;
-  document.getElementById('sixScrapInputLabel').textContent = `♻️ ${Math.min(scrapCount, 6)}/6`;
+  document.getElementById('sixScrapInputLabel').textContent = `♻️ ${Math.min(scrapCount, SCRAP_COUNT)}/${SCRAP_COUNT}`;
 
   const sixScrapBtn = document.getElementById('sixScrapTradeBtn');
-  sixScrapBtn.disabled = scrapCount < 6;
+  sixScrapBtn.disabled = scrapCount < SCRAP_COUNT;
   sixScrapBtn.onclick = () => {
     handleTrade(
-      { quiz_ticket: 0, task_ticket: 0, journal_ticket: 0, recitation_ticket: 0, scrap_ticket: 6 },
-      '6 Ember Shards'
+      { quiz_ticket: 0, task_ticket: 0, journal_ticket: 0, recitation_ticket: 0, scrap_ticket: SCRAP_COUNT },
+      `${SCRAP_COUNT} Ember Shards`
     );
   };
 }
 
-// Spreads the 4-ticket cost across as many different types as
+// Spreads the ANY_COUNT cost across as many different types as
 // possible before doubling up on any one type — matches the "rewards
 // well-rounded participation" rationale from the source spec.
 function pickAnyFourDeduction(tickets) {
@@ -156,7 +160,7 @@ function pickAnyFourDeduction(tickets) {
   TRADEABLE_TYPES.forEach((t) => { remaining[t] = tickets[t] || 0; });
 
   const deduction = { quiz_ticket: 0, task_ticket: 0, journal_ticket: 0, recitation_ticket: 0, scrap_ticket: 0 };
-  let need = 4;
+  let need = ANY_COUNT;
 
   while (need > 0) {
     let takenThisPass = false;

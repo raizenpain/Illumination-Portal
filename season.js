@@ -531,6 +531,10 @@ async function awardNode(node, submissionText) {
   if (node.ticketReward) {
     tickets[node.ticketReward] = (tickets[node.ticketReward] || 0) + 1;
   }
+  // Ember Shard — awarded on every node completion, regardless of
+  // ticketReward, so even the no-ticket capstone chapters still feed
+  // the Ember Shard catch-up trade.
+  tickets.scrap_ticket = (tickets.scrap_ticket || 0) + 1;
 
   const completedNodes = { ...(studentData.completedNodes || {}), [node.nodeId]: true };
   const checkData = { ...studentData, completedNodes };

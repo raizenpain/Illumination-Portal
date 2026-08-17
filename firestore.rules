@@ -18,14 +18,21 @@ service cloud.firestore {
       allow read: if request.auth != null &&
                      (request.auth.token.email == studentId || isAdmin());
 
-      // A student can only write to their OWN record — never anyone
-      // else's. Admins can also write (Gift Tickets, Re-assign Class
-      // from the Dungeon Master roster), same trust level they
-      // already have for read/delete on this collection.
-      allow write: if request.auth != null &&
-                      ((request.auth.token.email == studentId &&
-                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$')) ||
-                       isAdmin());
+      // A student can create their own record — only on enrollment
+      allow create: if request.auth != null &&
+                       request.auth.token.email == studentId &&
+                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$');
+
+      // A student can freely update their OWN record (progress, tickets,
+      // artifacts, etc.) — never anyone else's. Admins can also update,
+      // but only the specific fields Gift Tickets and Re-assign Class
+      // actually touch — never progress, achievements, or artifacts.
+      allow update: if request.auth != null &&
+                       ((request.auth.token.email == studentId &&
+                         request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$')) ||
+                        (isAdmin() &&
+                         request.resource.data.diff(resource.data).affectedKeys()
+                           .hasOnly(['teacherEmail', 'teacherName', 'section', 'tickets'])));
 
       // Admins can delete a student record (e.g. a student who enrolled
       // under the wrong teacher/class offering) — but not edit progress

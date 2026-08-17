@@ -231,6 +231,18 @@
         <div class="activity-card community-feed" id="communityFeed">
           <p class="community-feed-empty">Loading activity…</p>
         </div>
+
+        <hr class="badge-section-divider">
+
+        <div class="badge-section">
+          <span class="section-kicker">Rankings</span>
+          <h3>🏆 Top 5 Hall of Fame</h3>
+          <p class="section-subtitle">Most progress per day, community-wide</p>
+
+          <div class="activity-card top-students-list" id="topStudentsList">
+            <p class="community-feed-empty">Loading rankings…</p>
+          </div>
+        </div>
       </section>
 
       <div class="badge-section">
@@ -335,6 +347,7 @@ import { ADMIN_EMAILS } from './admins.js';
 import { loadGospelQuote } from './gospel.js';
 import { initTicketTrader } from './ticketTrader.js';
 import { initCrafting } from './crafting.js';
+import { initLeaderboard } from './leaderboard.js';
 import { containsBannedWord } from './contentFilter.js';
 import { getRankProgress } from './rank.js';
 
@@ -404,6 +417,7 @@ async function loadStudentCard() {
     setupReflectionSymbol(data);
     initTicketTrader({ email, studentData: data, prelimDone: isSeasonPreviewAdmin || prelimSeasonDone(data) });
     initCrafting({ email, name: data.name || name, studentData: data, prelimDone: isSeasonPreviewAdmin || prelimSeasonDone(data) });
+    initLeaderboard({ email, name: data.name || name, progressPercent: progressInfo.percent, createdAt: data.createdAt });
 
   } catch (err) {
     console.error('Failed to load student card:', err);

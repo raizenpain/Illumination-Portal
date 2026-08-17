@@ -39,6 +39,20 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Leaderboard collection — doc ID is the student's email. Public,
+    // slim summary (name + progress rate) so every student can see
+    // community-wide rankings without gaining read access to the full
+    // students collection (email, section, teacher, tickets, etc. stay
+    // private there).
+    match /leaderboard/{studentId} {
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null &&
+                      request.auth.token.email == studentId &&
+                      request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                      request.resource.data.keys().hasOnly(['name', 'progressPercent', 'createdAt']);
+    }
+
     // Settings collection — puzzle piece release status
     match /settings/{settingId} {
       // Any signed-in student can check which pieces are released

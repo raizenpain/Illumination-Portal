@@ -407,19 +407,23 @@ async function loadStudentCard() {
     const data = snapshot.exists() ? snapshot.data() : {};
     studentData = data;
 
-    // Safety net for anyone who lands here mid-onboarding (e.g. via a
-    // bookmark) instead of through the normal login.html routing.
-    // Teacher is picked first, then class schedule (enrollment).
-    if (!data.teacherName) {
-      window.location.href = 'teacher-select.html';
-      return;
-    }
-    if (!data.studentId) {
-      window.location.href = 'enroll.html';
-      return;
-    }
+    // Safety net for a STUDENT who lands here mid-onboarding (e.g. via
+    // a bookmark) instead of through the normal login.html routing.
+    // Teacher is picked first, then class schedule (enrollment). Admins
+    // never have a student record at all, so this must never apply to
+    // them -- they're here to preview the dashboard, not onboard.
+    if (!isSeasonPreviewAdmin) {
+      if (!data.teacherName) {
+        window.location.href = 'teacher-select.html';
+        return;
+      }
+      if (!data.studentId) {
+        window.location.href = 'enroll.html';
+        return;
+      }
 
-    await awardDailyVisitShard(data);
+      await awardDailyVisitShard(data);
+    }
 
     document.getElementById('cardName').textContent = data.name || name;
     document.getElementById('cardSection').textContent = data.section || 'Not Assigned';

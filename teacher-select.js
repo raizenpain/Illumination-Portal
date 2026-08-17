@@ -37,7 +37,9 @@ async function selectTeacher(teacher) {
       teacherEmail: teacher.email
     }, { merge: true });
 
-    window.location.href = 'dashboard.html';
+    // Teacher is now picked first, so the next onboarding step is
+    // enrollment (class schedule) — not the dashboard directly.
+    window.location.href = 'enroll.html';
 
   } catch (err) {
     console.error('Failed to save teacher assignment:', err);

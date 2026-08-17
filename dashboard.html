@@ -392,10 +392,15 @@ async function loadStudentCard() {
     const data = snapshot.exists() ? snapshot.data() : {};
     studentData = data;
 
-    // Anyone who enrolled before the teacher-selection step existed (or
-    // landed here directly via a bookmark) gets sent there once.
-    if (data.studentId && !data.teacherName) {
+    // Safety net for anyone who lands here mid-onboarding (e.g. via a
+    // bookmark) instead of through the normal login.html routing.
+    // Teacher is picked first, then class schedule (enrollment).
+    if (!data.teacherName) {
       window.location.href = 'teacher-select.html';
+      return;
+    }
+    if (!data.studentId) {
+      window.location.href = 'enroll.html';
       return;
     }
 

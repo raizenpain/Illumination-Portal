@@ -47,7 +47,11 @@ if (enrollBtn) {
     try {
       const studentRef = doc(db, 'students', email);
       const snap = await getDoc(studentRef);
-      const alreadyEnrolled = snap.exists();
+      // Teacher-select now runs BEFORE this page, so the record already
+      // exists (with just teacherName/teacherEmail) by the time a brand
+      // new student gets here — "already enrolled" has to mean "already
+      // has a studentId", not just "the doc exists".
+      const alreadyEnrolled = snap.exists() && !!snap.data().studentId;
 
       const payload = {
         name,

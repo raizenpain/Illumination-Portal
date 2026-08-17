@@ -60,16 +60,15 @@
         }
 
         // Returning students (already enrolled) go straight to their
-        // dashboard instead of back through the enrollment form. Anyone
-        // who enrolled before the teacher-selection step existed gets
-        // sent there once before reaching the dashboard.
+        // dashboard instead of back through onboarding. New students pick
+        // their teacher first, then their class schedule (enrollment).
         const snap = await getDoc(doc(db, 'students', user.email));
         const data = snap.exists() ? snap.data() : null;
 
-        if (!data || !data.studentId) {
-          window.location.href = 'enroll.html';
-        } else if (!data.teacherName) {
+        if (!data || !data.teacherName) {
           window.location.href = 'teacher-select.html';
+        } else if (!data.studentId) {
+          window.location.href = 'enroll.html';
         } else {
           window.location.href = 'dashboard.html';
         }

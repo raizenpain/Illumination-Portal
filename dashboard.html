@@ -338,7 +338,7 @@
 </div>
 
 <script type="module">
-import { db, doc, getDoc, updateDoc, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
+import { db, doc, getDoc, updateDoc, increment, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
@@ -367,6 +367,25 @@ const BADGE_INFO = {
   formation_champion: { icon: '🏆', title: 'Formation Champion', sub: 'Completed all puzzles' }
 };
 
+// One Ember Shard per calendar day (UTC), the first time a student
+// opens the dashboard that day — not per refresh/visit, otherwise a
+// student could just mash F5 to farm unlimited Unlock Tokens.
+async function awardDailyVisitShard(data) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (data.lastVisitRewardDate === today) return;
+
+  try {
+    await updateDoc(studentRef, {
+      'tickets.scrap_ticket': increment(1),
+      lastVisitRewardDate: today
+    });
+    data.tickets = { ...(data.tickets || {}), scrap_ticket: (data.tickets?.scrap_ticket || 0) + 1 };
+    data.lastVisitRewardDate = today;
+  } catch (err) {
+    console.error('Failed to award daily visit Ember Shard:', err);
+  }
+}
+
 async function loadStudentCard() {
   try {
     const snapshot = await getDoc(studentRef);
@@ -379,6 +398,8 @@ async function loadStudentCard() {
       window.location.href = 'teacher-select.html';
       return;
     }
+
+    await awardDailyVisitShard(data);
 
     document.getElementById('cardName').textContent = data.name || name;
     document.getElementById('cardSection').textContent = data.section || 'Not Assigned';

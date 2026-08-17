@@ -524,16 +524,38 @@ function showRankPopup(info) {
 // moment" activity posts, and a certificate redirect on season completion
 // ================================
 
+// Per-node ticket amount, scaled by season (and, in Semifinal, by
+// whether the node is a quiz/identification vs a written response —
+// they share the ticketReward field, quiz_ticket, so that's what
+// distinguishes them here).
+function ticketAmountFor(node) {
+  if (seasonId === 'midterm') return 3;
+  if (seasonId === 'semifinal') return node.ticketReward === 'quiz_ticket' ? 5 : 3;
+  if (seasonId === 'final') return 5;
+  return 1;
+}
+
+// The Semifinal and Final comprehensive-exam capstone chapters award
+// no per-node tickets (see their nodes' missing ticketReward) — instead
+// they pay out a one-time bonus of every ticket type on full-chapter
+// completion, handled below via chapterJustCompleted.
+const CAPSTONE_BONUS = { semifinal_ch7: 2, final_ch11: 8 };
+
+// Finishing the ENTIRE Semifinal or Final season is worth an Artifact
+// Unlock Token outright, on top of whatever tickets/tokens the
+// student earned along the way. Prelim/Midterm deliberately excluded.
+const SEASON_COMPLETION_TOKEN_BONUS = { semifinal: 1, final: 1 };
+
 async function awardNode(node, submissionText) {
   const studentRef = doc(db, 'students', email);
 
   const tickets = { ...(studentData.tickets || {}) };
   if (node.ticketReward) {
-    tickets[node.ticketReward] = (tickets[node.ticketReward] || 0) + 1;
+    tickets[node.ticketReward] = (tickets[node.ticketReward] || 0) + ticketAmountFor(node);
   }
   // Ember Shard — awarded on every node completion, regardless of
   // ticketReward, so even the no-ticket capstone chapters still feed
-  // the Ember Shard catch-up trade.
+  // the Ember Shard catch-up trade. Always exactly 1, never scaled.
   tickets.scrap_ticket = (tickets.scrap_ticket || 0) + 1;
 
   const completedNodes = { ...(studentData.completedNodes || {}), [node.nodeId]: true };
@@ -547,6 +569,13 @@ async function awardNode(node, submissionText) {
   const chapter = content.chapters[chapterIndex];
   const chapterJustCompleted = isChapterComplete(chapter, checkData);
   const seasonJustCompleted = content.chapters.every((ch) => isChapterComplete(ch, checkData));
+
+  const capstoneBonus = CAPSTONE_BONUS[chapter.chapterId];
+  if (chapterJustCompleted && capstoneBonus) {
+    ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket'].forEach((type) => {
+      tickets[type] = (tickets[type] || 0) + capstoneBonus;
+    });
+  }
 
   const rankBefore = getRankProgress(studentData);
   const rankAfter = getRankProgress(checkData);
@@ -568,19 +597,27 @@ async function awardNode(node, submissionText) {
     popupsQueued++;
   }
 
+  let unlockTokens = studentData.unlockTokens || 0;
+
   const seId = seasonBadgeId(seasonId);
   if (seasonJustCompleted && !achievements.includes(seId)) {
     achievements.push(seId);
     showAchievement(`${content.seasonName} Champion`, content.subtitle, '👑');
     popupsQueued++;
+
+    const tokenBonus = SEASON_COMPLETION_TOKEN_BONUS[seasonId];
+    if (tokenBonus) {
+      unlockTokens += tokenBonus;
+    }
   }
 
-  await setDoc(studentRef, { tickets, completedNodes, achievements, nodeSubmissions }, { merge: true });
+  await setDoc(studentRef, { tickets, completedNodes, achievements, nodeSubmissions, unlockTokens }, { merge: true });
 
   studentData.tickets = tickets;
   studentData.completedNodes = completedNodes;
   studentData.achievements = achievements;
   studentData.nodeSubmissions = nodeSubmissions;
+  studentData.unlockTokens = unlockTokens;
 
   if (chapterJustCompleted) {
     logActivity({

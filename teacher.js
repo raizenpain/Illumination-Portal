@@ -13,6 +13,7 @@ import { requireAdmin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
 import { ADMIN_EMAILS, ADMINS } from './admins.js';
+import { getRankProgress } from './rank.js';
 import { initSeasonEditor } from './seasonEditor.js';
 import { CLASS_OFFERINGS } from './classOfferings.js';
 
@@ -254,7 +255,7 @@ if (user) {
         <td>${progressPill(p1, data.puzzle1Completed)}</td>
         <td>${progressPill(p2, data.puzzle2Completed)}</td>
         <td>${progressPill(p3, data.puzzle3Completed)}</td>
-        <td><span class="rank-chip" data-rank="${data.rank || 'Seeker'}">${data.rank || 'Seeker'}</span></td>
+        <td><span class="rank-chip" data-rank="${getRankProgress(data).rank}">${getRankProgress(data).rank}</span></td>
       `;
 
       row.title = 'Click to review this student — right-click for more actions';
@@ -536,7 +537,7 @@ if (user) {
       progressText(pieceCount(data, 'puzzle1'), data.puzzle1Completed),
       progressText(pieceCount(data, 'puzzle2'), data.puzzle2Completed),
       progressText(pieceCount(data, 'puzzle3'), data.puzzle3Completed),
-      data.rank || 'Seeker'
+      getRankProgress(data).rank
     ]);
 
     return [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');

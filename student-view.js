@@ -12,6 +12,7 @@ import { requireAdmin } from './auth.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
+import { getRankProgress } from './rank.js';
 
 const user = requireAdmin(ADMIN_EMAILS);
 
@@ -60,7 +61,7 @@ function renderProfile(data, studentEmail) {
     ['Student ID', data.studentId || '—'],
     ['Section', data.section || '—'],
     ['Teacher', data.teacherName || '—'],
-    ['Rank', data.rank || 'Seeker']
+    ['Rank', getRankProgress(data).rank]
   ];
 
   grid.innerHTML = '';

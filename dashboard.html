@@ -78,6 +78,7 @@
       <div class="stats-rank">
         <span class="info-label">Rank</span>
         <strong id="cardRank" class="rank-chip">Seeker</strong>
+        <div class="rank-stars" id="rankStars"></div>
       </div>
     </div>
 
@@ -335,6 +336,7 @@ import { loadGospelQuote } from './gospel.js';
 import { initTicketTrader } from './ticketTrader.js';
 import { initCrafting } from './crafting.js';
 import { containsBannedWord } from './contentFilter.js';
+import { getRankProgress } from './rank.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -368,10 +370,19 @@ async function loadStudentCard() {
     document.getElementById('cardName').textContent = data.name || name;
     document.getElementById('cardSection').textContent = data.section || 'Not Assigned';
     document.getElementById('cardStudentId').textContent = data.studentId || 'N/A';
-    const rank = data.rank || 'Seeker';
+    const rankInfo = getRankProgress(data);
     const rankEl = document.getElementById('cardRank');
-    rankEl.textContent = rank;
-    rankEl.setAttribute('data-rank', rank);
+    rankEl.textContent = rankInfo.rank;
+    rankEl.setAttribute('data-rank', rankInfo.rank);
+
+    const starsEl = document.getElementById('rankStars');
+    starsEl.innerHTML = '';
+    rankInfo.stars.forEach((earned) => {
+      const star = document.createElement('span');
+      star.className = 'rank-star' + (earned ? ' earned' : '');
+      star.textContent = '★';
+      starsEl.appendChild(star);
+    });
 
     const progressInfo = calculateOverallProgress(data);
     document.getElementById('cardProgress').textContent = progressInfo.percent + '%';

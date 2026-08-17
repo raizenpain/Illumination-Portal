@@ -59,7 +59,6 @@ if (enrollBtn) {
       // Only set starting defaults for a brand-new profile — never overwrite
       // an existing student's progress just because they re-submitted this form.
       if (!alreadyEnrolled) {
-        payload.rank = 'Seeker';
         payload.achievements = [];
         payload.totalPieces = 0;
         payload.puzzle1 = [];

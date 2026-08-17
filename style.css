@@ -561,6 +561,30 @@ body {
   50% { box-shadow: 0 0 18px rgba(127,212,220,0.65), inset 0 0 10px rgba(127,212,220,0.3); }
 }
 
+.rank-stars {
+  display: flex;
+  justify-content: center;
+  gap: 3px;
+}
+
+.rank-star {
+  font-size: 13px;
+  line-height: 1;
+  color: rgba(255,255,255,0.15);
+  transition: color 0.4s ease, text-shadow 0.4s ease;
+}
+
+.rank-star.earned {
+  color: #FBBF24;
+  text-shadow: 0 0 6px rgba(251,191,36,0.85);
+  animation: star-glow 2.6s ease-in-out infinite;
+}
+
+@keyframes star-glow {
+  0%, 100% { text-shadow: 0 0 5px rgba(251,191,36,0.6); }
+  50% { text-shadow: 0 0 10px rgba(251,191,36,0.95); }
+}
+
 /* Progress bar */
 
 .progress-bar {
@@ -3036,6 +3060,7 @@ body.teacher-page {
 
 .artifact-card.state-chain-locked .artifact-icon-frame img,
 .artifact-card.state-tier5-pending .artifact-icon-frame img,
+.artifact-card.state-tier5-rank-locked .artifact-icon-frame img,
 .artifact-card.state-tier5-other .artifact-icon-frame img {
   filter: grayscale(1) brightness(0.55);
 }
@@ -3211,6 +3236,227 @@ body.teacher-page {
 
 .achievement-box p {
   color: #D7E3F0;
+}
+
+/* Rank / star "Congratulations!" popup — separate template from the
+   plain achievement-box above, shown via rankPopup.js on puzzle.html
+   and season.html. Shares the same #achievementPopup queue timing in
+   app.js/season.js, just a different overlay element. */
+
+.popup-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(6,9,20,0.82);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+}
+
+.popup-overlay.hidden {
+  display: none;
+}
+
+.popup-overlay.show {
+  opacity: 1;
+}
+
+.popup-box {
+  width: min(460px, calc(100% - 32px));
+  background: linear-gradient(160deg, #10142a, #1D2233);
+  border: 1px solid rgba(251,191,36,0.35);
+  border-radius: 22px;
+  padding: 30px 30px 26px;
+  text-align: center;
+  box-sizing: border-box;
+  box-shadow: 0 30px 70px rgba(0,0,0,0.55), 0 0 60px rgba(251,191,36,0.08);
+  transform: scale(0.88) translateY(10px);
+  transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.3s ease;
+}
+
+.popup-overlay.show .popup-box {
+  transform: scale(1) translateY(0);
+}
+
+.popup-kicker {
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 22px;
+  letter-spacing: 0.04em;
+  color: #F2F6FC;
+  text-shadow: 0 0 16px rgba(251,191,36,0.4);
+  margin: 0;
+}
+
+.popup-sub {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: #8894B3;
+}
+
+.popup-body {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  margin: 26px 0 22px;
+  text-align: left;
+}
+
+.popup-badge {
+  position: relative;
+  flex-shrink: 0;
+  width: 96px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.popup-badge .rays {
+  position: absolute;
+  inset: -30px;
+  background: repeating-conic-gradient(
+    from 0deg,
+    rgba(251,191,36,0.35) 0deg 4deg,
+    transparent 4deg 18deg
+  );
+  border-radius: 50%;
+  animation: rays-spin 14s linear infinite;
+  mask: radial-gradient(circle, black 40%, transparent 72%);
+  -webkit-mask: radial-gradient(circle, black 40%, transparent 72%);
+}
+
+.popup-badge .glow {
+  position: absolute;
+  inset: -14px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251,191,36,0.55), transparent 70%);
+  filter: blur(4px);
+  animation: badge-pulse 2.2s ease-in-out infinite;
+}
+
+.popup-badge .ring {
+  position: relative;
+  width: 88px;
+  height: 88px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #2a2145, #0A0F22);
+  border: 2px solid #FBBF24;
+  box-shadow: 0 0 22px rgba(251,191,36,0.7), inset 0 0 14px rgba(251,191,36,0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 40px;
+}
+
+@keyframes rays-spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+.popup-info {
+  min-width: 0;
+}
+
+.popup-info .eyebrow-small {
+  font-family: 'Cinzel', serif;
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #9FDDE3;
+  margin: 0 0 4px;
+}
+
+.popup-info h2 {
+  margin: 0;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 28px;
+  color: #FFE9B0;
+  text-shadow: 0 0 14px rgba(251,191,36,0.5);
+  line-height: 1.15;
+}
+
+.popup-info p {
+  margin: 6px 0 0;
+  font-size: 12.5px;
+  color: #8894B3;
+  line-height: 1.4;
+}
+
+.popup-stars {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+}
+
+.popup-stars.hidden {
+  display: none;
+}
+
+.popup-stars span {
+  font-size: 15px;
+  color: rgba(255,255,255,0.15);
+}
+
+.popup-stars span.earned {
+  color: #FBBF24;
+  text-shadow: 0 0 6px rgba(251,191,36,0.85);
+}
+
+.popup-stars span.just-earned {
+  animation: star-pop 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes star-pop {
+  0% { transform: scale(0.2); opacity: 0; }
+  60% { transform: scale(1.35); opacity: 1; }
+  100% { transform: scale(1); }
+}
+
+.popup-continue {
+  font-family: 'Cinzel', serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #0A0F22;
+  background: linear-gradient(90deg, #FFE9B0, #FBBF24);
+  border: none;
+  border-radius: 12px;
+  padding: 12px 34px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(251,191,36,0.35);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.popup-continue.hidden {
+  display: none;
+}
+
+.popup-continue:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 26px rgba(251,191,36,0.5);
+}
+
+.popup-continue:focus-visible {
+  outline: 2px solid #FFF3D6;
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .popup-badge .rays,
+  .popup-badge .glow,
+  .popup-stars span.just-earned {
+    animation: none !important;
+  }
 }
 
 .reflection-box {

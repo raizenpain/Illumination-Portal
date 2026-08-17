@@ -5,6 +5,8 @@ import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
 import { containsBannedWord } from './contentFilter.js';
+import { getRankProgress, getSeasonStars, RANK_TIERS } from './rank.js';
+import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -439,7 +441,37 @@ function processPopupQueue() {
   if (popupBusy || popupQueue.length === 0) return;
   popupBusy = true;
 
-  const { title, text, icon = '🏅' } = popupQueue.shift();
+  const item = popupQueue.shift();
+
+  if (item.kind === 'star' || item.kind === 'rank') {
+    ensureRankPopup();
+    const overlay = document.getElementById('rankPopup');
+    if (item.kind === 'star') renderStarPopup(item);
+    else renderRankPopup(item);
+
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    const dismiss = () => {
+      overlay.classList.remove('show');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        popupBusy = false;
+        setTimeout(processPopupQueue, 300);
+      }, 300);
+    };
+
+    if (item.kind === 'rank') {
+      const btn = document.getElementById('rankPopupContinue');
+      const onClick = () => { btn.removeEventListener('click', onClick); dismiss(); };
+      btn.addEventListener('click', onClick);
+    } else {
+      setTimeout(dismiss, 3200);
+    }
+    return;
+  }
+
+  const { title, text, icon = '🏅' } = item;
   const popup = document.getElementById('achievementPopup');
   document.getElementById('achievementTitle').textContent = title;
   document.getElementById('achievementText').textContent = text;
@@ -455,6 +487,14 @@ function processPopupQueue() {
 
 function showAchievement(title, text, icon) {
   queuePopup({ title, text, icon });
+}
+
+function showStarPopup(info) {
+  queuePopup({ kind: 'star', ...info });
+}
+
+function showRankPopup(info) {
+  queuePopup({ kind: 'rank', ...info });
 }
 
 // ================================
@@ -479,6 +519,9 @@ async function awardNode(node, submissionText) {
   const chapter = content.chapters[chapterIndex];
   const chapterJustCompleted = isChapterComplete(chapter, checkData);
   const seasonJustCompleted = content.chapters.every((ch) => isChapterComplete(ch, checkData));
+
+  const rankBefore = getRankProgress(studentData);
+  const rankAfter = getRankProgress(checkData);
 
   const achievements = [...(studentData.achievements || [])];
   let popupsQueued = 0;
@@ -517,6 +560,26 @@ async function awardNode(node, submissionText) {
       title: `Completed "${chapter.chapterTitle}" in ${content.seasonName}`,
       icon: '🏁'
     });
+
+    showStarPopup({
+      rank: rankBefore.rank,
+      stars: getSeasonStars(seasonId, checkData),
+      justEarnedIndex: chapterIndex,
+      subtitle: `${chapter.chapterTitle} — ${content.seasonName}`
+    });
+    popupsQueued++;
+  }
+
+  if (rankAfter.rank !== rankBefore.rank) {
+    logActivity({
+      email, name, type: 'rank',
+      title: `Reached ${rankAfter.rank} Rank`,
+      icon: '⭐'
+    });
+
+    const nextTier = RANK_TIERS.find((t) => t.rank === rankAfter.rank);
+    showRankPopup({ rank: rankAfter.rank, seasonName: nextTier ? nextTier.seasonName : null });
+    popupsQueued++;
   }
 
   if (seasonJustCompleted) {

@@ -19,12 +19,13 @@ import {
   TOKEN_COST_BY_TIER, TIERS, ARTIFACTS, CRAFTING_CHAINS,
   artifactIconPath, chainForTier5
 } from './artifacts.js';
+import { getRankProgress } from './rank.js';
 
 let email = null;
 let name = null;
 let studentData = null;
 
-export function initCrafting({ email: e, name: n, studentData: data, prelimDone }) {
+export async function initCrafting({ email: e, name: n, studentData: data, prelimDone }) {
   const wrap = document.getElementById('craftingWrap');
   if (!wrap) return;
 
@@ -44,6 +45,11 @@ export function initCrafting({ email: e, name: n, studentData: data, prelimDone 
     wrap.classList.add('is-locked');
     overlay.classList.remove('hidden');
   }
+
+  // Catches the case where a student already owned the full chain
+  // before reaching Apostle — the legendary should grant itself the
+  // moment they rank up, not wait for their next purchase click.
+  await checkTier5AutoUnlock();
 
   renderCrafting();
 }
@@ -154,9 +160,14 @@ function artifactState(id, tier) {
   if (isOwned(id)) return { kind: 'owned' };
 
   if (tier === 5) {
-    return studentData.chosenLegendaryChain === id
-      ? { kind: 'tier5-pending' }
-      : { kind: 'tier5-other' };
+    if (studentData.chosenLegendaryChain !== id) return { kind: 'tier5-other' };
+
+    const chainInfo = chainForTier5(id);
+    const chainComplete = chainInfo.chain.every((cid) => isOwned(cid));
+    if (chainComplete && !getRankProgress(studentData).legendaryEligible) {
+      return { kind: 'tier5-rank-locked' };
+    }
+    return { kind: 'tier5-pending' };
   }
 
   const chosen = studentData.chosenLegendaryChain;
@@ -228,6 +239,8 @@ function buildArtifactCard(a, tier) {
     statusHtml = `<span class="artifact-status-badge">✓ Owned</span>`;
   } else if (state.kind === 'tier5-pending') {
     statusHtml = `<span class="artifact-status-badge">🔒 Complete the chain</span>`;
+  } else if (state.kind === 'tier5-rank-locked') {
+    statusHtml = `<span class="artifact-status-badge">🔒 Reach Apostle — all stars</span>`;
   } else if (state.kind === 'tier5-other') {
     statusHtml = `<span class="artifact-status-badge">🔒 Not your target</span>`;
   } else if (state.kind === 'chain-locked') {
@@ -282,6 +295,8 @@ async function checkTier5AutoUnlock() {
 
   const allOwned = chainInfo.chain.every((id) => isOwned(id));
   if (!allOwned) return;
+
+  if (!getRankProgress(studentData).legendaryEligible) return;
 
   const ownedArtifacts = [...ownedList(), chosen];
 

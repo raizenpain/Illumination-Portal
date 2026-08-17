@@ -4,6 +4,8 @@ import { PUZZLE_CONFIG } from './puzzles.js';
 import { PIECE_CODES } from './codes.js';
 import { PIECE_LESSONS } from './lessons.js';
 import { logActivity } from './activity.js';
+import { getRankProgress, getSeasonStars, RANK_TIERS } from './rank.js';
+import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 
 // ================================
 // SETTINGS — adjust freely
@@ -49,7 +51,37 @@ function processPopupQueue() {
   if (popupBusy || popupQueue.length === 0) return;
   popupBusy = true;
 
-  const { heading = 'Achievement Unlocked!', title, text, icon = '🏅' } = popupQueue.shift();
+  const item = popupQueue.shift();
+
+  if (item.kind === 'star' || item.kind === 'rank') {
+    ensureRankPopup();
+    const overlay = document.getElementById('rankPopup');
+    if (item.kind === 'star') renderStarPopup(item);
+    else renderRankPopup(item);
+
+    overlay.classList.remove('hidden');
+    requestAnimationFrame(() => overlay.classList.add('show'));
+
+    const dismiss = () => {
+      overlay.classList.remove('show');
+      setTimeout(() => {
+        overlay.classList.add('hidden');
+        popupBusy = false;
+        setTimeout(processPopupQueue, 300);
+      }, 300);
+    };
+
+    if (item.kind === 'rank') {
+      const btn = document.getElementById('rankPopupContinue');
+      const onClick = () => { btn.removeEventListener('click', onClick); dismiss(); };
+      btn.addEventListener('click', onClick);
+    } else {
+      setTimeout(dismiss, 3200);
+    }
+    return;
+  }
+
+  const { heading = 'Achievement Unlocked!', title, text, icon = '🏅' } = item;
   const popup = document.getElementById('achievementPopup');
   document.getElementById('achievementHeading').textContent = heading;
   document.getElementById('achievementTitle').textContent = title;
@@ -70,6 +102,14 @@ function showAchievement(title, text, icon = '🏅') {
 
 function showLesson(lesson) {
   queuePopup({ heading: '📖 Catechism Moment', title: lesson.title, text: lesson.text, icon: '✝️' });
+}
+
+function showStarPopup(info) {
+  queuePopup({ kind: 'star', ...info });
+}
+
+function showRankPopup(info) {
+  queuePopup({ kind: 'rank', ...info });
 }
 
 async function init() {
@@ -245,9 +285,10 @@ async function handleCodeSubmit() {
 
       if (!achievements.includes(comp.id)) {
         achievements.push(comp.id);
+        const rankBefore = getRankProgress(data);
+
         await updateDoc(studentRef, {
           achievements,
-          rank: comp.rank,
           [config.completedField]: true
         });
         showAchievement(comp.title, comp.text, comp.icon);
@@ -258,11 +299,29 @@ async function handleCodeSubmit() {
           title: `Completed ${config.title} — ${config.subtitle}`,
           icon: '👑'
         });
-        logActivity({
-          email, name, type: 'rank',
-          title: `Reached ${comp.rank} Rank`,
-          icon: '⭐'
+
+        const afterData = { ...data, [config.completedField]: true };
+        const rankAfter = getRankProgress(afterData);
+
+        showStarPopup({
+          rank: rankBefore.rank,
+          stars: getSeasonStars('prelim', afterData),
+          justEarnedIndex: puzzleNumber - 1,
+          subtitle: `${config.title} — ${config.subtitle}, completed`
         });
+        popupsQueued++;
+
+        if (rankAfter.rank !== rankBefore.rank) {
+          logActivity({
+            email, name, type: 'rank',
+            title: `Reached ${rankAfter.rank} Rank`,
+            icon: '⭐'
+          });
+
+          const nextTier = RANK_TIERS.find((t) => t.rank === rankAfter.rank);
+          showRankPopup({ rank: rankAfter.rank, seasonName: nextTier ? nextTier.seasonName : null });
+          popupsQueued++;
+        }
       }
     }
 

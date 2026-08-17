@@ -446,7 +446,8 @@ async function loadStudentCard() {
       rank: rankInfo.rank,
       starsEarned: rankInfo.stars.filter(Boolean).length,
       starsTarget: rankInfo.stars.length,
-      mistakeCount: data.mistakeCount || 0
+      mistakeCount: data.mistakeCount || 0,
+      lastTop5RewardDate: data.lastTop5RewardDate || null
     });
 
   } catch (err) {

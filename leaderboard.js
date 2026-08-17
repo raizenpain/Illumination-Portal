@@ -23,13 +23,29 @@
 // there was never anywhere to record wrong attempts before, so nothing
 // from before that date counts against anyone. A missing/undefined
 // mistakeCount is treated as a clean record for that reason.
+//
+// TOP 5 REWARD — same daily cadence as the dashboard's login Ember
+// Shard: any calendar day a student's own live pace lands them in the
+// Top 5, they get a one-time-per-day bonus (2 Unlock Tokens, 5 Ember
+// Shards, 3 of every other ticket type) written straight to their own
+// student record. Falling out of Top 5 later never claws it back;
+// re-entering on a later day starts earning again.
 // ============================================
 
-import { db, doc, setDoc, collection, getDocs } from './firebase.js';
+import { db, doc, setDoc, updateDoc, increment, collection, getDocs } from './firebase.js';
 import { RANK_ICON as RANK_TIER_ICON } from './rank.js';
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const PLACE_ICON = ['🥇', '🥈', '🥉'];
+
+const TOP5_REWARD = {
+  unlockTokens: 2,
+  scrap_ticket: 5,
+  quiz_ticket: 3,
+  task_ticket: 3,
+  journal_ticket: 3,
+  recitation_ticket: 3
+};
 
 // Floors at one hour so a student who enrolled minutes ago doesn't
 // divide by (near) zero and rocket to the top on a single piece.
@@ -66,7 +82,7 @@ function renderTopStudents(listEl, entries) {
   `).join('');
 }
 
-// info: { email, name, progressPercent, createdAt, rank, starsEarned, starsTarget, mistakeCount }
+// info: { email, name, progressPercent, createdAt, rank, starsEarned, starsTarget, mistakeCount, lastTop5RewardDate }
 export async function initLeaderboard(info) {
   const listEl = document.getElementById('topStudentsList');
   if (!listEl) return;
@@ -100,6 +116,7 @@ export async function initLeaderboard(info) {
       const pace = paceFor(data);
       if (pace !== null && pace > 0) {
         entries.push({
+          email: docSnap.id,
           name: data.name || 'A Seeker',
           pace,
           rank: data.rank || 'Seeker',
@@ -109,9 +126,33 @@ export async function initLeaderboard(info) {
     });
 
     entries.sort((a, b) => b.pace - a.pace);
-    renderTopStudents(listEl, entries.slice(0, 5));
+    const top5 = entries.slice(0, 5);
+    renderTopStudents(listEl, top5);
+
+    if (top5.some((e) => e.email === info.email)) {
+      await awardTop5Reward(info);
+    }
   } catch (err) {
     console.error('Failed to load leaderboard:', err);
     listEl.innerHTML = '<p class="community-feed-empty">Could not load rankings.</p>';
+  }
+}
+
+async function awardTop5Reward(info) {
+  const today = new Date().toISOString().slice(0, 10);
+  if (info.lastTop5RewardDate === today) return;
+
+  try {
+    await updateDoc(doc(db, 'students', info.email), {
+      unlockTokens: increment(TOP5_REWARD.unlockTokens),
+      'tickets.scrap_ticket': increment(TOP5_REWARD.scrap_ticket),
+      'tickets.quiz_ticket': increment(TOP5_REWARD.quiz_ticket),
+      'tickets.task_ticket': increment(TOP5_REWARD.task_ticket),
+      'tickets.journal_ticket': increment(TOP5_REWARD.journal_ticket),
+      'tickets.recitation_ticket': increment(TOP5_REWARD.recitation_ticket),
+      lastTop5RewardDate: today
+    });
+  } catch (err) {
+    console.error('Failed to award Top 5 reward:', err);
   }
 }

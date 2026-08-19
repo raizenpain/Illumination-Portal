@@ -38,7 +38,8 @@ service cloud.firestore {
         'finalReflection', 'finalUnlocked', 'finalReflectionSubmittedAt',
         'apostleReflection', 'apostleUnlocked', 'apostleReflectionSubmittedAt',
         'verificationCode', 'midtermVerificationCode',
-        'semifinalVerificationCode', 'finalVerificationCode'
+        'semifinalVerificationCode', 'finalVerificationCode',
+        'hasSeenDashboardTour'
       ];
     }
 

@@ -350,6 +350,7 @@ import { initCrafting } from './crafting.js';
 import { initLeaderboard } from './leaderboard.js';
 import { containsBannedWord } from './contentFilter.js';
 import { getRankProgress } from './rank.js';
+import { initDashboardTour } from './dashboardTour.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -479,6 +480,8 @@ async function loadStudentCard() {
       mistakeCount: data.mistakeCount || 0,
       lastTop5RewardDate: data.lastTop5RewardDate || null
     });
+
+    initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
 
   } catch (err) {
     console.error('Failed to load student card:', err);

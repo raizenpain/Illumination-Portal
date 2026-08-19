@@ -3973,3 +3973,140 @@ body.season-page {
     font-size: 19px;
   }
 }
+
+/* ================================
+   DASHBOARD GUIDED TOUR
+   First-visit walkthrough (dashboardTour.js). A fixed spotlight ring
+   follows the current step's target element (via box-shadow, so it
+   never needs an SVG mask), while the card itself docks to the
+   bottom of the viewport -- full-width on mobile -- rather than
+   trying to float beside whatever it's highlighting.
+================================ */
+
+.tour-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 10050;
+}
+
+.tour-spotlight {
+  position: fixed;
+  border-radius: 16px;
+  box-shadow: 0 0 0 9999px rgba(6,9,20,0.78);
+  transition: top 0.35s ease, left 0.35s ease, width 0.35s ease, height 0.35s ease;
+  pointer-events: none;
+}
+
+.tour-card {
+  position: fixed;
+  left: 50%;
+  bottom: 16px;
+  transform: translateX(-50%);
+  width: min(420px, calc(100% - 32px));
+  max-height: min(320px, calc(100vh - 32px));
+  overflow-y: auto;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 2px solid #56B2BB;
+  border-radius: 20px;
+  padding: 20px 22px;
+  color: white;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  box-sizing: border-box;
+  animation: popupScale 0.3s ease;
+}
+
+.tour-step-label {
+  margin: 0 0 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #56B2BB;
+}
+
+.tour-card h3 {
+  margin: 0 0 8px;
+  font-size: 18px;
+  color: #FFE9B0;
+}
+
+.tour-card p {
+  margin: 0 0 16px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: #D7E3F0;
+}
+
+.tour-dots {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.tour-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.25);
+  transition: background 0.2s ease;
+}
+
+.tour-dot.active {
+  background: #56B2BB;
+}
+
+.tour-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.tour-actions .back-btn,
+.tour-actions .submit-quiz-btn {
+  flex: 1;
+  margin-top: 0;
+  width: auto;
+}
+
+.tour-actions .back-btn {
+  color: #C7D2E3;
+  border-color: rgba(255,255,255,0.25);
+}
+
+.tour-actions .back-btn:hover {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.4);
+}
+
+.tour-skip-btn {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  background: transparent;
+  border: none;
+  color: #7C8AAE;
+  font-size: 12.5px;
+  font-weight: 600;
+  text-align: center;
+  cursor: pointer;
+}
+
+.tour-skip-btn:hover {
+  color: #D7E3F0;
+  text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .tour-card {
+    left: 0;
+    bottom: 0;
+    transform: none;
+    width: 100%;
+    /* A fixed cap, not a vh-based one -- 45vh ate close to half the
+       screen on real phones, leaving too little of the spotlighted
+       dashboard visible. overflow-y: auto (set on the base .tour-card
+       rule) still protects against any one step's copy running long. */
+    max-height: 220px;
+    border-radius: 20px 20px 0 0;
+    padding: 16px 20px max(16px, env(safe-area-inset-bottom));
+  }
+}

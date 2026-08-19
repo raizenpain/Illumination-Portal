@@ -28,6 +28,7 @@
       <span class="portal-tagline-bold">at Holy Cross of Davao College!</span>
     </a>
 
+    <button id="musicToggleBtn" class="music-toggle-btn" type="button" aria-pressed="false" title="Mute background music">🔊</button>
     <button id="logoutBtn" class="logout-btn">Sign Out</button>
   </header>
 
@@ -352,12 +353,15 @@ import { initLeaderboard } from './leaderboard.js';
 import { containsBannedWord } from './contentFilter.js';
 import { getRankProgress } from './rank.js';
 import { initDashboardTour } from './dashboardTour.js';
+import { initDashboardMusic } from './dashboardMusic.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
 
 const studentRef = doc(db, 'students', email);
 let studentData = {};
+
+initDashboardMusic('musicToggleBtn');
 
 const BADGE_INFO = {
   first_step: { icon: '🥉', title: 'First Step', sub: 'Collected first piece' },

@@ -303,6 +303,28 @@ body {
   transform: translateY(-1px);
 }
 
+.music-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  background: transparent;
+  border: 1.5px solid #1D2233;
+  color: #1D2233;
+  border-radius: 50%;
+  font-size: 18px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+
+.music-toggle-btn:hover {
+  background: #56B2BB;
+  border-color: #56B2BB;
+  transform: translateY(-1px);
+}
+
 /* ================================
    ID CARD
 ================================ */

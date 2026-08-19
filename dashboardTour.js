@@ -3,6 +3,11 @@
 // main sections of the dashboard. Runs once per student; completion
 // (or Skip) is persisted to the student doc via hasSeenDashboardTour
 // so it never shows again, on this device or any other.
+//
+// Admins previewing the dashboard get the tour too, but they have no
+// student doc to write to (admins never enroll), so their "seen"
+// state is just a localStorage flag -- once per browser, not synced
+// across devices like a real student's.
 // ============================================
 
 import { db, doc, updateDoc } from './firebase.js';
@@ -44,8 +49,11 @@ const STEPS = [
   }
 ];
 
+const ADMIN_SEEN_KEY = 'adminHasSeenDashboardTour';
+
 export function initDashboardTour({ email, hasSeenTour, isAdmin }) {
-  if (isAdmin || hasSeenTour) return;
+  const seen = isAdmin ? localStorage.getItem(ADMIN_SEEN_KEY) === 'true' : hasSeenTour;
+  if (seen) return;
 
   const steps = STEPS
     .map(step => ({ ...step, el: document.querySelector(step.selector) }))
@@ -53,7 +61,7 @@ export function initDashboardTour({ email, hasSeenTour, isAdmin }) {
 
   if (!steps.length) return;
 
-  const studentRef = doc(db, 'students', email);
+  const studentRef = isAdmin ? null : doc(db, 'students', email);
   let index = 0;
 
   const overlay = document.createElement('div');
@@ -127,6 +135,11 @@ export function initDashboardTour({ email, hasSeenTour, isAdmin }) {
     window.removeEventListener('scroll', scheduleReposition, true);
     window.removeEventListener('resize', scheduleReposition);
     overlay.remove();
+
+    if (isAdmin) {
+      localStorage.setItem(ADMIN_SEEN_KEY, 'true');
+      return;
+    }
     updateDoc(studentRef, { hasSeenDashboardTour: true }).catch(err => {
       console.error('Failed to save dashboard tour completion:', err);
     });

@@ -9,28 +9,88 @@
 // what the Dungeon Master's read-only student review view
 // (student-view.html) is for.
 //
-// Deliberately a starter list of common English profanity, not an
-// exhaustive one — edit BANNED_WORDS freely to fit your classroom.
+// Expanded per a 2026 Filipino/Bisaya/English student slang reference
+// compiled for this classroom -- deliberately broad by request: every
+// term the reference document flags, across English, Tagalog, and
+// Cebuano/Bisaya profanity AND casual Gen-Z/internet/gaming/texting
+// slang, is treated as inappropriate for this app's spiritual and
+// human formation context, not just outright profanity.
 //
 // Notably absent: "hell" and "damn"/"damnation". This is a Religious
 // Education app whose actual coursepack covers sin, judgment, and
 // salvation — students legitimately need to write those words when
-// reflecting on Module 3/4 content. Also left out mild name-calling
-// like "stupid"/"idiot"/"crap" since those show up constantly in
-// harmless self-deprecating reflection writing ("I used to think X
-// was stupid until...") and would cause more false positives than
-// they're worth for a hard submit-block.
+// reflecting on Module 3/4 content. This is the one deliberate
+// exception; everything else the reference document listed is here.
+//
+// Also left out: the reference's own "Philippine code-switching"
+// example SENTENCES (e.g. "Bro, yawa man ka.") -- those are
+// illustrative combinations, not reusable list entries. Every
+// individual word in them (yawa, buang, cooked, lock in, etc.) is
+// already covered on its own. And "P.I." (the abbreviation for
+// "Putang ina") is skipped as a bare two-letter-plus-periods token --
+// too likely to false-positive on unrelated initials, and "putang
+// ina" / "putang ina mo" below already cover the actual phrase.
 // ============================================
 
 const BANNED_WORDS = [
-  'fuck', 'shit', 'bitch', 'asshole', 'bastard', 'dick', 'piss',
-  'cunt', 'whore', 'slut', 'douche', 'motherfucker', 'retard',
-  'nigga', 'faggot'
+  // English profanity
+  'fuck', 'fucking', 'fuck you', 'shit', 'bullshit', 'bs', 'asshole',
+  'bitch', 'bastard', 'dick', 'piss', 'cunt', 'whore', 'slut',
+  'douche', 'motherfucker', 'retard', 'nigga', 'faggot', 'crap',
+  'stfu', 'fml', 'af', 'wth', 'wtf', 'screw you',
+
+  // English texting/internet slang the reference flags
+  'lmao', 'lmfao', 'lol', 'fr', 'frfr', 'idk', 'idc', 'ikr', 'imo',
+  'tbh', 'slr', 'skl',
+
+  // Cebuano / Bisaya
+  'pisti', 'peste', 'yawa', 'yawa ka', 'piste ka', 'buang', 'buang ka',
+  'giatay', 'giatay ka', 'animal ka', 'atay', 'sus', 'sus nako',
+  'ambot', 'samok', 'paugat', 'kapal ug nawong', 'way ayo', 'bitaw',
+  'lagi', 'atik', 'bai', 'bay', 'pre', 'bes', 'beshi', 'bisdak',
+  'awts', 'hala', 'pastilan', 'petmalu', 'sabaw', 'push', 'tarungun',
+
+  // Filipino / Tagalog
+  'putang ina', 'putang ina mo', 'gago', 'gaga', 'tanga', 'bobo',
+  'ulol', 'bwisit', 'leche', 'lintik', 'hayop ka', 'pakyu', 'kupal',
+  'walang hiya', 'siraulo', 'pikon', 'epal', 'feelingera',
+  'feelingero', 'dasurv', 'iyacc', 'naur', 'arat', 'omsim', 'oms',
+  'chariz', 'charot', 'chz', 'budol', 'deins', 'keri', 'bussin',
+  'nonchalant', 'main character energy',
+
+  // Connector words from the reference doc's Philippine code-switching
+  // examples (Section F) that aren't already covered above. "Wala" is
+  // deliberately excluded -- it's core Bisaya/Tagalog grammar ("none/
+  // nothing/there isn't"), not slang.
+  'bro', 'grabe',
+
+  // Gen-Z / internet jargon
+  'no cap', 'cap', 'bet', 'lowkey', 'highkey', 'rizz', 'w', 'dub', 'l',
+  'goat', 'goated', 'mid', 'fire', 'slay', 'ate', "it's giving",
+  'delulu', 'cringe', 'based', 'valid', 'ratio', 'cook',
+  'let him cook', 'cooked', 'skill issue', 'touch grass', 'npc',
+  'yapping', 'yapper', 'brainrot', 'aura', 'aura points', 'lock in',
+  'crash out',
+
+  // Filipino social-media / relationship / everyday slang
+  'sana all', 'lodi', 'werpa', 'eme', 'emz', 'chika', 'jowa',
+  'ghosting', 'relate', 'flex', 'forda', 'shet', 'shuta', 'labs',
+  'astig', 'kilig', 'beshie', 'oks', 'luh', 'tara', 'seen zone',
+  'fomo', 'yolo', 'chibog', 'keri lang', 'walwal',
+
+  // Gaming / online jargon
+  'gg', 'ggwp', 'ez', 'diff', 'carry', 'feed', 'feeding', 'afk',
+  'clutch', 'nerf', 'buff', 'op', 'noob', 'smurf', 'tilted', 'sweaty',
+  'wipe'
 ];
+
+function escapeRegExp(str) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
 
 export function containsBannedWord(text) {
   const normalized = text.toLowerCase();
-  return BANNED_WORDS.some((word) => new RegExp(`\\b${word}\\b`, 'i').test(normalized));
+  return BANNED_WORDS.some((word) => new RegExp(`\\b${escapeRegExp(word)}\\b`, 'i').test(normalized));
 }
 
 // Catches keyboard-mashing ("asdfasdf", "kjkjkjkj", one huge spaceless

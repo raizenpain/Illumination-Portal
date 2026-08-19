@@ -32,7 +32,11 @@ if (user) {
   const tabsContainer = document.getElementById('puzzleTabs');
   const container = document.getElementById('releaseButtons');
 
-  let activePuzzle = 1;
+  // Starts unselected on purpose -- piece codes are sensitive (they're
+  // literally the unlock passwords), so nothing renders them until the
+  // admin actively clicks a puzzle tab, rather than defaulting to
+  // Puzzle 1 and showing its codes on page load with no interaction.
+  let activePuzzle = null;
 
   function renderTabs() {
     tabsContainer.innerHTML = '';
@@ -56,6 +60,11 @@ if (user) {
   }
 
   async function loadReleasedPieces() {
+    if (activePuzzle === null) {
+      container.innerHTML = '<p>Choose a puzzle above to reveal and manage its relic codes.</p>';
+      return;
+    }
+
     const config = PUZZLE_CONFIG[activePuzzle];
     const ref = doc(db, 'settings', `puzzle${activePuzzle}`);
     const snap = await getDoc(ref);

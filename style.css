@@ -1950,7 +1950,12 @@ body.teacher-page {
   animation: label-glow 3.4s ease-in-out infinite;
 }
 
-#teacherInfo {
+/* #studentHeaderInfo (student-view.html) shares this rule -- without
+   it, that <p> has no color of its own and falls back to the page's
+   default dark navy body text, which is nearly invisible against
+   this dark header background. */
+#teacherInfo,
+#studentHeaderInfo {
   color: #9CA9C4;
   font-size: 13px;
   margin: 0;

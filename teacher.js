@@ -50,7 +50,10 @@ if (user) {
       tab.className = 'puzzle-tab' + (puzzleNumber === activePuzzle ? ' active' : '');
       tab.textContent = `${config.title} — ${config.subtitle}`;
       tab.onclick = () => {
-        activePuzzle = puzzleNumber;
+        // Clicking the already-open tab collapses it back to hidden
+        // instead of just re-rendering the same codes on top of
+        // themselves -- a real toggle, not a one-way reveal.
+        activePuzzle = activePuzzle === puzzleNumber ? null : puzzleNumber;
         renderTabs();
         loadReleasedPieces();
       };

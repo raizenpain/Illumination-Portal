@@ -141,6 +141,21 @@ if (user) {
   const chatLogInput = document.getElementById('chatLogInput');
   const chatLogSendBtn = document.getElementById('chatLogSendBtn');
   const chatLogCloseBtn = document.getElementById('chatLogCloseBtn');
+  const chatLogEmojiBtn = document.getElementById('chatLogEmojiBtn');
+  const chatLogEmojiPicker = document.getElementById('chatLogEmojiPicker');
+
+  if (chatLogEmojiBtn && chatLogEmojiPicker) {
+    chatLogEmojiBtn.onclick = () => {
+      chatLogEmojiPicker.classList.toggle('hidden');
+    };
+    chatLogEmojiPicker.querySelectorAll('.chat-emoji-option').forEach((btn) => {
+      btn.onclick = () => {
+        chatLogInput.value += btn.textContent;
+        chatLogInput.focus();
+        chatLogEmojiPicker.classList.add('hidden');
+      };
+    });
+  }
 
   let teacherGroups = {}; // { teacherEmail: { name, bySection: { section: [studentData] } } }
   let currentTeacher = null; // { email, name }
@@ -704,7 +719,9 @@ if (user) {
       const text = chatLogInput.value.trim();
       if (!text) return;
 
-      if (looksLikeGibberish(text)) {
+      // Only judge actual text as gibberish -- a pure-emoji message
+      // has no Latin letters for that check to work with at all.
+      if (/[a-zA-Z]/.test(text) && looksLikeGibberish(text)) {
         showChatLogError("That doesn't look like a real message — try again.");
         return;
       }

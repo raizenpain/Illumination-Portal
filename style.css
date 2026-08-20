@@ -4409,6 +4409,51 @@ body.season-page {
   background: rgba(0,0,0,0.15);
 }
 
+.chat-emoji-btn {
+  flex-shrink: 0;
+  width: 36px;
+  height: 36px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 10px;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s ease;
+}
+
+.chat-emoji-btn:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+/* A small curated grid, not the full system picker -- toggled by
+   .chat-emoji-btn, sits just above the input row. */
+.chat-emoji-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 4px;
+  padding: 8px 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  background: rgba(0,0,0,0.1);
+}
+
+.chat-emoji-option {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  font-size: 18px;
+  line-height: 1;
+  padding: 6px 0;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.chat-emoji-option:hover {
+  background: rgba(255,255,255,0.1);
+}
+
 .chat-input {
   flex: 1;
   background: rgba(255,255,255,0.06);

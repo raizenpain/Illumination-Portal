@@ -33,6 +33,10 @@ import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
 const MAX_MESSAGES = 50;
 const MAX_LENGTH = 500;
 
+// A small curated set, not the full system emoji picker -- keeps
+// this to wholesome, classroom-appropriate reactions.
+const EMOJI_SET = ['👍', '👏', '🙋', '❤️', '🙏', '😊', '🎉', '✅', '😂', '🔥', '👀', '💯'];
+
 function initials(str) {
   return (str || '?')
     .split(' ')
@@ -69,7 +73,11 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
       <p class="chat-empty">Loading…</p>
     </div>
     <p class="chat-error" id="chatError"></p>
+    <div class="chat-emoji-picker hidden" id="chatEmojiPicker">
+      ${EMOJI_SET.map((e) => `<button type="button" class="chat-emoji-option">${e}</button>`).join('')}
+    </div>
     <div class="chat-input-row">
+      <button type="button" class="chat-emoji-btn" id="chatEmojiBtn" aria-label="Insert emoji">😊</button>
       <input type="text" class="chat-input" id="chatInput" placeholder="Message your class…" maxlength="${MAX_LENGTH}">
       <button type="button" class="chat-send-btn" id="chatSendBtn">Send</button>
     </div>
@@ -87,6 +95,19 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
   const inputEl = panel.querySelector('#chatInput');
   const sendBtn = panel.querySelector('#chatSendBtn');
   const closeBtn = panel.querySelector('#chatCloseBtn');
+  const emojiBtn = panel.querySelector('#chatEmojiBtn');
+  const emojiPicker = panel.querySelector('#chatEmojiPicker');
+
+  emojiBtn.addEventListener('click', () => {
+    emojiPicker.classList.toggle('hidden');
+  });
+  emojiPicker.querySelectorAll('.chat-emoji-option').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      inputEl.value += btn.textContent;
+      inputEl.focus();
+      emojiPicker.classList.add('hidden');
+    });
+  });
 
   let activeTeacherEmail = teacherEmail || null;
   let activeSection = section || null;
@@ -212,7 +233,11 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     const text = inputEl.value.trim();
     if (!text || !activeTeacherEmail || !activeSection) return;
 
-    if (looksLikeGibberish(text)) {
+    // looksLikeGibberish only recognizes Latin letters, so a pure-
+    // emoji message (e.g. just "👏") would otherwise get wrongly
+    // flagged as gibberish -- only run that check when there's
+    // actual text to judge.
+    if (/[a-zA-Z]/.test(text) && looksLikeGibberish(text)) {
       showError("That doesn't look like a real message — try again.");
       return;
     }

@@ -52,6 +52,7 @@ const BANNED_WORDS = [
   'ambot', 'samok', 'paugat', 'kapal ug nawong', 'way ayo', 'bitaw',
   'lagi', 'atik', 'bai', 'bay', 'pre', 'bes', 'beshi', 'bisdak',
   'awts', 'hala', 'pastilan', 'petmalu', 'sabaw', 'push', 'tarungun',
+  '8080 ka ba', 'baho', 'bahog',
 
   // Filipino / Tagalog
   'putang ina', 'putang ina mo', 'gago', 'gaga', 'tanga', 'bobo',

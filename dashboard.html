@@ -354,6 +354,7 @@ import { initLeaderboard } from './leaderboard.js';
 import { containsBannedWord } from './contentFilter.js';
 import { getRankProgress } from './rank.js';
 import { initDashboardTour } from './dashboardTour.js';
+import { initClassChat } from './classChat.js';
 import { initDashboardMusic } from './dashboardMusic.js';
 
 const { email, name } = requireLogin();
@@ -488,6 +489,15 @@ async function loadStudentCard() {
     });
 
     initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
+
+    // Admins have no students/{email} doc at all (no teacherEmail/
+    // section to scope a room to), and chat genuinely doesn't apply
+    // to an admin dashboard preview -- so this is guarded explicitly
+    // rather than "always call and let it no-op" like the trader/
+    // crafting inits above.
+    if (!isSeasonPreviewAdmin && data.teacherEmail && data.section) {
+      initClassChat({ email, name: data.name || name, teacherEmail: data.teacherEmail, section: data.section });
+    }
 
   } catch (err) {
     console.error('Failed to load student card:', err);

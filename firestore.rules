@@ -12,6 +12,20 @@ service cloud.firestore {
              ];
     }
 
+    // A student's teacherEmail/section aren't in their auth token, so
+    // class-scoped collections (classChatMessages) need a cross-
+    // document lookup to know "which class is the CALLER actually in"
+    // rather than trusting whatever the request claims. Bound in one
+    // `let` so it's a single read per rule evaluation, not one per
+    // field compared. msgData is either resource.data (read/update,
+    // the doc as it already exists) or request.resource.data (create,
+    // the doc being written).
+    function isInCallerClass(msgData) {
+      let caller = get(/databases/$(database)/documents/students/$(request.auth.token.email)).data;
+      return caller.teacherEmail == msgData.teacherEmail &&
+             caller.section == msgData.section;
+    }
+
     // Every field a student's own record can legitimately hold, across
     // every write path in the app (enrollment, teacher pick, puzzle
     // pieces, puzzle-gate unlocks, season tickets/achievements/node
@@ -132,6 +146,50 @@ service cloud.firestore {
 
       // Immutable log — no edits or deletes
       allow update, delete: if false;
+    }
+
+    // Per-class chat — private to students who share the same
+    // (teacherEmail, section) pair, plus admins. Unlike activities
+    // (intentionally public site-wide), this is NOT a public feed.
+    match /classChatMessages/{messageId} {
+      // Only the sender's own classmates (by their OWN current
+      // teacherEmail/section on file, not anything the client claims)
+      // or an admin can read a message.
+      allow read: if request.auth != null &&
+                     (isAdmin() || isInCallerClass(resource.data));
+
+      // A student can only post as themselves, into their OWN actual
+      // class, with the exact shape the chat UI expects, starting
+      // unreported. Message text itself is trusted here (already run
+      // through contentFilter.js client-side before this call) --
+      // this rule guards the shape/attribution, not the content.
+      allow create: if request.auth != null &&
+                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                       request.resource.data.senderEmail == request.auth.token.email &&
+                       request.resource.data.keys().hasOnly(
+                         ['senderEmail', 'senderName', 'teacherEmail', 'section', 'text', 'timestamp', 'reported']
+                       ) &&
+                       request.resource.data.text is string &&
+                       request.resource.data.text.size() > 0 &&
+                       request.resource.data.text.size() <= 500 &&
+                       request.resource.data.reported == false &&
+                       isInCallerClass(request.resource.data);
+
+      // Report-only: the one allowed change after a message exists.
+      // Anyone in the same class (or admin) can flip reported to true
+      // -- never false, never touching anything else. This can never
+      // make a message disappear, only flag it for the teacher.
+      allow update: if request.auth != null &&
+                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['reported']) &&
+                       request.resource.data.reported == true &&
+                       (isAdmin() || isInCallerClass(resource.data));
+
+      // Only a teacher/admin can remove a message, and only after
+      // reviewing it in the class chat log -- students can never
+      // delete, matching the "nothing vanishes before a teacher sees
+      // it" policy.
+      allow delete: if isAdmin();
     }
 
     // Everything else — denied by default

@@ -53,6 +53,7 @@
           <div id="rosterView" class="hidden">
             <div class="roster-view-actions">
               <button type="button" class="dm-back-btn roster-back-btn" id="backToClasses">&larr; Back to Classes</button>
+              <button type="button" class="submit-quiz-btn roster-export-btn" id="viewChatLogBtn">💬 View Class Chat Log</button>
               <button type="button" class="submit-quiz-btn roster-export-btn" id="exportCsvBtn">⬇ Export CSV</button>
             </div>
 
@@ -129,6 +130,17 @@
       <div class="reflection-modal-actions">
         <button class="back-btn" id="giftCancelBtn">Cancel</button>
         <button class="submit-quiz-btn" id="giftConfirmBtn">Gift Tickets</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="classChatLogModal" class="achievement-popup hidden">
+    <div class="achievement-box class-chat-log-box">
+      <h2>💬 Class Chat Log</h2>
+      <p class="reflection-hint" id="chatLogClassLabel"></p>
+      <div id="chatLogList" class="chat-log-list"></div>
+      <div class="reflection-modal-actions">
+        <button class="back-btn" id="chatLogCloseBtn">Close</button>
       </div>
     </div>
   </div>

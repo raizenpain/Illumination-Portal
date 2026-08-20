@@ -73,7 +73,7 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
       <p class="chat-empty">Loading…</p>
     </div>
     <p class="chat-error" id="chatError"></p>
-    <div class="chat-emoji-picker hidden" id="chatEmojiPicker">
+    <div class="chat-emoji-picker" id="chatEmojiPicker">
       ${EMOJI_SET.map((e) => `<button type="button" class="chat-emoji-option">${e}</button>`).join('')}
     </div>
     <div class="chat-input-row">
@@ -99,13 +99,13 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
   const emojiPicker = panel.querySelector('#chatEmojiPicker');
 
   emojiBtn.addEventListener('click', () => {
-    emojiPicker.classList.toggle('hidden');
+    emojiPicker.classList.toggle('open');
   });
   emojiPicker.querySelectorAll('.chat-emoji-option').forEach((btn) => {
     btn.addEventListener('click', () => {
       inputEl.value += btn.textContent;
       inputEl.focus();
-      emojiPicker.classList.add('hidden');
+      emojiPicker.classList.remove('open');
     });
   });
 

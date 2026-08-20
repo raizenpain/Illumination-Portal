@@ -146,13 +146,13 @@ if (user) {
 
   if (chatLogEmojiBtn && chatLogEmojiPicker) {
     chatLogEmojiBtn.onclick = () => {
-      chatLogEmojiPicker.classList.toggle('hidden');
+      chatLogEmojiPicker.classList.toggle('open');
     };
     chatLogEmojiPicker.querySelectorAll('.chat-emoji-option').forEach((btn) => {
       btn.onclick = () => {
         chatLogInput.value += btn.textContent;
         chatLogInput.focus();
-        chatLogEmojiPicker.classList.add('hidden');
+        chatLogEmojiPicker.classList.remove('open');
       };
     });
   }

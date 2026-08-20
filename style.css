@@ -4430,13 +4430,22 @@ body.season-page {
 
 /* A small curated grid, not the full system picker -- toggled by
    .chat-emoji-btn, sits just above the input row. */
+/* Own explicit open state, not the generic .hidden utility -- .hidden
+   (display:none) and this rule's display:grid have equal specificity,
+   and .hidden is declared earlier in this file, so the LATER rule
+   here would always win the cascade and the picker could never
+   actually be hidden by toggling .hidden alone. */
 .chat-emoji-picker {
-  display: grid;
+  display: none;
   grid-template-columns: repeat(6, 1fr);
   gap: 4px;
   padding: 8px 12px;
   border-top: 1px solid rgba(255,255,255,0.08);
   background: rgba(0,0,0,0.1);
+}
+
+.chat-emoji-picker.open {
+  display: grid;
 }
 
 .chat-emoji-option {

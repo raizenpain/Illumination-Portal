@@ -4257,6 +4257,19 @@ body.season-page {
   color: #9CA9C4;
 }
 
+/* Only shown for an admin who teaches more than one section --
+   students and single-section admins never see this. */
+.chat-room-picker {
+  margin: 0 14px 8px;
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: white;
+  font-size: 12px;
+  font-family: inherit;
+}
+
 .chat-close-btn {
   background: transparent;
   border: none;

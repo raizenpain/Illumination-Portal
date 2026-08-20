@@ -1,31 +1,40 @@
 // ============================================
-// PER-CLASS CHAT — a floating bubble on the dashboard that expands
-// into a live chat panel scoped to the student's own (teacherEmail,
-// section) pair. Classmates only, never site-wide.
+// PER-CLASS CHAT — a floating bubble that expands into a live chat
+// panel scoped to one (teacherEmail, section) room. Classmates only,
+// never site-wide.
+//
+// Two callers:
+//   - Students (dashboard.html): fixed to their own class, no picker.
+//   - Admins (dashboard.html, admin preview): admins have no
+//     students/{email} doc of their own, so there's no single fixed
+//     room -- this module looks up which section(s) they actually
+//     teach (students whose teacherEmail == them) and either opens
+//     straight into the one class they have, or shows a small picker
+//     if they teach more than one. Mirrors the same "teach multiple
+//     sections" reality teacher.html's roster already handles.
 //
 // Moderation, per agreed policy:
 //   - block-before-send, reusing contentFilter.js (same checks as
 //     reflections/journals) -- a flagged message never reaches
 //     classmates at all.
 //   - report-only for students, no delete/edit -- nothing can be
-//     quietly removed before a teacher sees it. The read-only teacher
-//     log lives in teacher.js/teacher.html.
+//     quietly removed before a teacher sees it. The full read/reply
+//     teacher log lives in teacher.js/teacher.html.
 //
 // Real-time via onSnapshot, mirroring the Community Activity feed's
 // pattern in dashboard.html. Security is enforced server-side in
-// firestore.rules (a student can only read/write messages in the
-// class their OWN student doc says they're in) -- this module trusts
-// that and just builds the matching client query.
+// firestore.rules -- this module trusts that and just builds the
+// matching client query.
 // ============================================
 
-import { db, collection, doc, addDoc, updateDoc, onSnapshot, query, where, orderBy, limit, serverTimestamp } from './firebase.js';
+import { db, collection, doc, addDoc, updateDoc, onSnapshot, query, where, orderBy, limit, getDocs, serverTimestamp } from './firebase.js';
 import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
 
 const MAX_MESSAGES = 50;
 const MAX_LENGTH = 500;
 
-function initials(name) {
-  return (name || '?')
+function initials(str) {
+  return (str || '?')
     .split(' ')
     .filter(Boolean)
     .map((part) => part[0])
@@ -34,15 +43,7 @@ function initials(name) {
     .toUpperCase();
 }
 
-function escapeForAttr(str) {
-  return String(str).replace(/[&<>"']/g, (ch) => ({
-    '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-  })[ch]);
-}
-
-export function initClassChat({ email, name, teacherEmail, section }) {
-  const lastSeenKey = `classChatLastSeen_${teacherEmail}_${section}`;
-
+export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
   const overlay = document.createElement('div');
   overlay.id = 'classChatRoot';
 
@@ -58,13 +59,14 @@ export function initClassChat({ email, name, teacherEmail, section }) {
     <div class="chat-header">
       <div>
         <span class="chat-kicker">Live · Classmates Only</span>
-        <h2>${escapeForAttr(section)}</h2>
+        <h2 id="chatRoomTitle">Class Chat</h2>
         <p>Only students in this class can see this</p>
       </div>
       <button type="button" class="chat-close-btn" id="chatCloseBtn" aria-label="Close chat">✕</button>
     </div>
+    <select class="chat-room-picker hidden" id="chatRoomPicker"></select>
     <div class="chat-messages" id="chatMessages">
-      <p class="chat-empty">No messages yet — say hello 👋</p>
+      <p class="chat-empty">Loading…</p>
     </div>
     <p class="chat-error" id="chatError"></p>
     <div class="chat-input-row">
@@ -78,17 +80,26 @@ export function initClassChat({ email, name, teacherEmail, section }) {
   document.body.appendChild(overlay);
 
   const badge = bubble.querySelector('#chatBadge');
+  const titleEl = panel.querySelector('#chatRoomTitle');
+  const roomPicker = panel.querySelector('#chatRoomPicker');
   const messagesEl = panel.querySelector('#chatMessages');
   const errorEl = panel.querySelector('#chatError');
   const inputEl = panel.querySelector('#chatInput');
   const sendBtn = panel.querySelector('#chatSendBtn');
   const closeBtn = panel.querySelector('#chatCloseBtn');
 
+  let activeTeacherEmail = teacherEmail || null;
+  let activeSection = section || null;
   let latestMessages = [];
   let isOpen = false;
+  let unsubscribe = null;
+
+  function lastSeenKey() {
+    return `classChatLastSeen_${activeTeacherEmail}_${activeSection}`;
+  }
 
   function getLastSeen() {
-    const raw = localStorage.getItem(lastSeenKey);
+    const raw = localStorage.getItem(lastSeenKey());
     return raw ? Number(raw) : 0;
   }
 
@@ -172,28 +183,6 @@ export function initClassChat({ email, name, teacherEmail, section }) {
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  function openPanel() {
-    isOpen = true;
-    panel.classList.add('open');
-    const latestTimestamp = latestMessages[0]?.timestamp;
-    if (latestTimestamp?.toMillis) {
-      localStorage.setItem(lastSeenKey, String(latestTimestamp.toMillis()));
-    }
-    updateBadge();
-    messagesEl.scrollTop = messagesEl.scrollHeight;
-    inputEl.focus();
-  }
-
-  function closePanel() {
-    isOpen = false;
-    panel.classList.remove('open');
-  }
-
-  bubble.addEventListener('click', () => {
-    isOpen ? closePanel() : openPanel();
-  });
-  closeBtn.addEventListener('click', closePanel);
-
   function showError(message) {
     errorEl.textContent = message;
     errorEl.classList.add('show');
@@ -203,7 +192,7 @@ export function initClassChat({ email, name, teacherEmail, section }) {
 
   function send() {
     const text = inputEl.value.trim();
-    if (!text) return;
+    if (!text || !activeTeacherEmail || !activeSection) return;
 
     if (looksLikeGibberish(text)) {
       showError("That doesn't look like a real message — try again.");
@@ -220,8 +209,8 @@ export function initClassChat({ email, name, teacherEmail, section }) {
     addDoc(collection(db, 'classChatMessages'), {
       senderEmail: email,
       senderName: name,
-      teacherEmail,
-      section,
+      teacherEmail: activeTeacherEmail,
+      section: activeSection,
       text,
       timestamp: serverTimestamp(),
       reported: false
@@ -242,19 +231,97 @@ export function initClassChat({ email, name, teacherEmail, section }) {
     if (event.key === 'Enter') send();
   });
 
-  const chatQuery = query(
-    collection(db, 'classChatMessages'),
-    where('teacherEmail', '==', teacherEmail),
-    where('section', '==', section),
-    orderBy('timestamp', 'desc'),
-    limit(MAX_MESSAGES)
-  );
+  // Switches the live room the panel is subscribed to -- used once at
+  // startup, and again if an admin picks a different class from the
+  // room picker. Always tears down the previous listener first so
+  // switching classes never leaves an old one still updating the UI.
+  function subscribeToRoom(nextTeacherEmail, nextSection) {
+    if (unsubscribe) {
+      unsubscribe();
+      unsubscribe = null;
+    }
 
-  onSnapshot(chatQuery, (snapshot) => {
-    latestMessages = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
-    renderMessages();
+    activeTeacherEmail = nextTeacherEmail;
+    activeSection = nextSection;
+    titleEl.textContent = nextSection;
+    latestMessages = [];
+    messagesEl.innerHTML = '<p class="chat-empty">Loading…</p>';
+
+    const chatQuery = query(
+      collection(db, 'classChatMessages'),
+      where('teacherEmail', '==', nextTeacherEmail),
+      where('section', '==', nextSection),
+      orderBy('timestamp', 'desc'),
+      limit(MAX_MESSAGES)
+    );
+
+    unsubscribe = onSnapshot(chatQuery, (snapshot) => {
+      latestMessages = snapshot.docs.map((docSnap) => ({ id: docSnap.id, ...docSnap.data() }));
+      renderMessages();
+      updateBadge();
+    }, (err) => {
+      console.error('Failed to load class chat:', err);
+      messagesEl.innerHTML = '<p class="chat-empty">Could not load this chat.</p>';
+    });
+  }
+
+  function openPanel() {
+    isOpen = true;
+    panel.classList.add('open');
+    const latestTimestamp = latestMessages[0]?.timestamp;
+    if (activeTeacherEmail && activeSection && latestTimestamp?.toMillis) {
+      localStorage.setItem(lastSeenKey(), String(latestTimestamp.toMillis()));
+    }
     updateBadge();
-  }, (err) => {
-    console.error('Failed to load class chat:', err);
+    messagesEl.scrollTop = messagesEl.scrollHeight;
+    inputEl.focus();
+  }
+
+  function closePanel() {
+    isOpen = false;
+    panel.classList.remove('open');
+  }
+
+  bubble.addEventListener('click', () => {
+    isOpen ? closePanel() : openPanel();
   });
+  closeBtn.addEventListener('click', closePanel);
+
+  if (!isAdmin) {
+    // Student path: exactly one room, known up front.
+    subscribeToRoom(teacherEmail, section);
+    return;
+  }
+
+  // Admin path: figure out which section(s) this admin actually
+  // teaches (their own email as a student's teacherEmail), since
+  // there's no single fixed class the way a student has one.
+  messagesEl.innerHTML = '<p class="chat-empty">Loading your classes…</p>';
+
+  getDocs(query(collection(db, 'students'), where('teacherEmail', '==', email)))
+    .then((snapshot) => {
+      const sections = [...new Set(snapshot.docs.map((d) => d.data().section).filter(Boolean))].sort();
+
+      if (sections.length === 0) {
+        titleEl.textContent = 'Class Chat';
+        messagesEl.innerHTML = '<p class="chat-empty">You have no assigned classes yet.</p>';
+        inputEl.disabled = true;
+        sendBtn.disabled = true;
+        return;
+      }
+
+      if (sections.length > 1) {
+        roomPicker.classList.remove('hidden');
+        roomPicker.innerHTML = sections.map((s) => `<option value="${s}">${s}</option>`).join('');
+        roomPicker.addEventListener('change', () => {
+          subscribeToRoom(email, roomPicker.value);
+        });
+      }
+
+      subscribeToRoom(email, sections[0]);
+    })
+    .catch((err) => {
+      console.error('Failed to load admin class list for chat:', err);
+      messagesEl.innerHTML = '<p class="chat-empty">Could not load your classes.</p>';
+    });
 }

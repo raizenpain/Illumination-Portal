@@ -346,7 +346,7 @@ import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
 import { resolveSeasonBadge } from './seasonBadges.js';
-import { ADMIN_EMAILS } from './admins.js';
+import { ADMIN_EMAILS, ADMINS } from './admins.js';
 import { loadGospelQuote } from './gospel.js';
 import { initTicketTrader } from './ticketTrader.js';
 import { initCrafting } from './crafting.js';
@@ -490,12 +490,15 @@ async function loadStudentCard() {
 
     initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
 
-    // Admins have no students/{email} doc at all (no teacherEmail/
-    // section to scope a room to), and chat genuinely doesn't apply
-    // to an admin dashboard preview -- so this is guarded explicitly
-    // rather than "always call and let it no-op" like the trader/
-    // crafting inits above.
-    if (!isSeasonPreviewAdmin && data.teacherEmail && data.section) {
+    // Admins have no students/{email} doc (no fixed teacherEmail/
+    // section), so their chat bubble runs in "admin mode" instead --
+    // classChat.js looks up which section(s) they actually teach and
+    // picks/prompts accordingly, rather than needing a single value
+    // handed to it up front like a student's room does.
+    if (isSeasonPreviewAdmin) {
+      const adminName = (ADMINS.find((a) => a.email === email) || {}).name || name;
+      initClassChat({ email, name: adminName, isAdmin: true });
+    } else if (data.teacherEmail && data.section) {
       initClassChat({ email, name: data.name || name, teacherEmail: data.teacherEmail, section: data.section });
     }
 

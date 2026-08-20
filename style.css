@@ -4674,3 +4674,31 @@ body.season-page {
   letter-spacing: 0.04em;
   vertical-align: middle;
 }
+
+/* ================================
+   DASHBOARD FOOTER — copyright + third-party credits (game concept/
+   artifact icons inspired by Dota 2 (Valve), avatar illustrations
+   (Freepik), background music (Pixabay), click sound (Mixkit).
+================================ */
+
+.dashboard-footer {
+  margin-top: 40px;
+  padding: 18px 10px 4px;
+  border-top: 1px solid #E2E8F0;
+  text-align: center;
+}
+
+.dashboard-footer p {
+  margin: 0 0 6px;
+  font-size: 12px;
+  color: #6B7280;
+}
+
+.dashboard-footer-credits {
+  font-size: 11px;
+  color: #9CA3AF;
+  line-height: 1.6;
+  max-width: 640px;
+  margin-left: auto;
+  margin-right: auto;
+}

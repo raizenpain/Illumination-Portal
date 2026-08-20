@@ -16,11 +16,14 @@
 // slang, is treated as inappropriate for this app's spiritual and
 // human formation context, not just outright profanity.
 //
-// Notably absent: "hell" and "damn"/"damnation". This is a Religious
-// Education app whose actual coursepack covers sin, judgment, and
-// salvation — students legitimately need to write those words when
-// reflecting on Module 3/4 content. This is the one deliberate
-// exception; everything else the reference document listed is here.
+// Notably absent: "hell" and "damn"/"damnation", and "sex" on its
+// own. This is a Religious Education app whose actual coursepack
+// covers sin, judgment, salvation, and (via Theology of the Body /
+// chastity content) human sexuality — students legitimately need to
+// write those words reflecting on that coursework. These are the
+// deliberate exceptions; everything else the reference document
+// listed is here, plus explicit sexual vocabulary/phrases the
+// original slang reference didn't cover at all.
 //
 // Also left out: the reference's own "Philippine code-switching"
 // example SENTENCES (e.g. "Bro, yawa man ka.") -- those are
@@ -37,7 +40,7 @@ const BANNED_WORDS = [
   'fuck', 'fucking', 'fuck you', 'shit', 'bullshit', 'bs', 'asshole',
   'bitch', 'bastard', 'dick', 'piss', 'cunt', 'whore', 'slut',
   'douche', 'motherfucker', 'retard', 'nigga', 'faggot', 'crap',
-  'stfu', 'fml', 'af', 'wth', 'wtf', 'screw you',
+  'stfu', 'fml', 'af', 'wth', 'wtf', 'screw you', 'stupid', 'idiot',
 
   // English texting/internet slang the reference flags
   'lmao', 'lmfao', 'lol', 'fr', 'frfr', 'idk', 'idc', 'ikr', 'imo',

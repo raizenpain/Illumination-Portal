@@ -43,6 +43,36 @@ function resize() {
 window.addEventListener('resize', resize);
 resize();
 
+// ctx.shadowBlur recomputes a real blur convolution on every draw
+// call -- doing that for 60 particles every single frame is one of
+// the most common Canvas2D performance traps. A glow sprite (a
+// radial gradient baked once per color into an offscreen canvas,
+// then just drawImage'd per particle) gets the same soft-glow look
+// for a small fraction of the per-frame cost.
+const SPRITE_SIZE = 48;
+const glowSprites = new Map();
+
+function getGlowSprite(color) {
+  if (glowSprites.has(color)) return glowSprites.get(color);
+
+  const sprite = document.createElement('canvas');
+  sprite.width = SPRITE_SIZE;
+  sprite.height = SPRITE_SIZE;
+  const sctx = sprite.getContext('2d');
+  const r = SPRITE_SIZE / 2;
+  const gradient = sctx.createRadialGradient(r, r, 0, r, r, r);
+  gradient.addColorStop(0, color);
+  gradient.addColorStop(0.35, color);
+  gradient.addColorStop(1, 'transparent');
+  sctx.fillStyle = gradient;
+  sctx.fillRect(0, 0, SPRITE_SIZE, SPRITE_SIZE);
+
+  glowSprites.set(color, sprite);
+  return sprite;
+}
+
+EMBER_COLORS.forEach(getGlowSprite);
+
 class Ember {
   constructor() {
     this.reset(true);
@@ -71,22 +101,24 @@ class Ember {
 
   draw() {
     const flicker = 0.6 + 0.4 * Math.sin(this.life * this.flickerSpeed + this.flickerOffset);
-    const alpha = this.baseAlpha * flicker;
+    ctx.globalAlpha = this.baseAlpha * flicker;
 
-    ctx.save();
-    ctx.globalCompositeOperation = 'lighter';
-    ctx.shadowBlur = this.size * 4;
-    ctx.shadowColor = this.color;
-    ctx.fillStyle = this.color;
-    ctx.globalAlpha = alpha;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
+    // size*4 mirrors the old shadowBlur radius, scaling the pre-baked
+    // sprite up/down per particle instead of re-blurring every frame.
+    const drawSize = this.size * 4 * 2;
+    const sprite = getGlowSprite(this.color);
+    ctx.drawImage(sprite, this.x - drawSize / 2, this.y - drawSize / 2, drawSize, drawSize);
   }
 }
 
 const embers = Array.from({ length: DENSITY }, () => new Ember());
+
+// globalCompositeOperation only needs setting once -- it doesn't
+// change between particles or frames, so it comes out of the
+// per-particle save()/restore() entirely.
+ctx.globalCompositeOperation = 'lighter';
+
+let animationId = null;
 
 function tick() {
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -94,7 +126,19 @@ function tick() {
     if (!prefersReducedMotion) ember.update();
     ember.draw();
   });
-  requestAnimationFrame(tick);
+  animationId = requestAnimationFrame(tick);
 }
 
-requestAnimationFrame(tick);
+// No point animating (or even holding the loop alive) while the
+// dashboard tab isn't actually visible -- e.g. backgrounded or
+// minimized. Picks back up seamlessly when the student returns.
+document.addEventListener('visibilitychange', () => {
+  if (document.hidden) {
+    if (animationId !== null) cancelAnimationFrame(animationId);
+    animationId = null;
+  } else if (animationId === null) {
+    tick();
+  }
+});
+
+tick();

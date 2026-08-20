@@ -4709,6 +4709,15 @@ body.season-page {
   color: #6B7280;
 }
 
+/* .dashboard-footer p's shorthand above zeroes left/right margins on
+   every paragraph in the footer (same specificity trap as the emoji
+   picker's .hidden clash earlier) -- overridden back to auto here so
+   this one paragraph's max-width centering actually takes effect. */
+.dashboard-footer p.dashboard-footer-credits {
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .dashboard-footer-credits {
   font-size: 11px;
   color: #9CA3AF;

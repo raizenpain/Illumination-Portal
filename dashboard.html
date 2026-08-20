@@ -42,22 +42,15 @@
           <div class="avatar-picker" id="avatarPicker">
             <p class="avatar-picker-title">Choose Your Avatar</p>
             <div class="avatar-grid" id="avatarGrid">
-              <button type="button" class="avatar-option" data-avatar="👤">👤</button>
-              <button type="button" class="avatar-option" data-avatar="😀">😀</button>
-              <button type="button" class="avatar-option" data-avatar="😊">😊</button>
-              <button type="button" class="avatar-option" data-avatar="😎">😎</button>
-              <button type="button" class="avatar-option" data-avatar="🤓">🤓</button>
-              <button type="button" class="avatar-option" data-avatar="🥳">🥳</button>
-              <button type="button" class="avatar-option" data-avatar="🧐">🧐</button>
-              <button type="button" class="avatar-option" data-avatar="🧑‍🎓">🧑‍🎓</button>
-              <button type="button" class="avatar-option" data-avatar="🧙">🧙</button>
-              <button type="button" class="avatar-option" data-avatar="🦸">🦸</button>
-              <button type="button" class="avatar-option" data-avatar="🧑🏻">🧑🏻</button>
-              <button type="button" class="avatar-option" data-avatar="🧑🏽">🧑🏽</button>
-              <button type="button" class="avatar-option" data-avatar="🧑🏾">🧑🏾</button>
-              <button type="button" class="avatar-option" data-avatar="🧑🏿">🧑🏿</button>
-              <button type="button" class="avatar-option" data-avatar="👦">👦</button>
-              <button type="button" class="avatar-option" data-avatar="👧">👧</button>
+              <button type="button" class="avatar-option" data-avatar="avatar1.png"><img src="assets/avatars/avatar1.png" alt="Avatar 1"></button>
+              <button type="button" class="avatar-option" data-avatar="avatar2.png"><img src="assets/avatars/avatar2.png" alt="Avatar 2"></button>
+              <button type="button" class="avatar-option" data-avatar="avatar3.png"><img src="assets/avatars/avatar3.png" alt="Avatar 3"></button>
+              <button type="button" class="avatar-option" data-avatar="avatar4.png"><img src="assets/avatars/avatar4.png" alt="Avatar 4"></button>
+              <button type="button" class="avatar-option" data-avatar="avatar5.png"><img src="assets/avatars/avatar5.png" alt="Avatar 5"></button>
+              <button type="button" class="avatar-option" data-avatar="avatar6.png"><img src="assets/avatars/avatar6.png" alt="Avatar 6"></button>
+              <button type="button" class="avatar-option" data-avatar="avatar7.png"><img src="assets/avatars/avatar7.png" alt="Avatar 7"></button>
+              <button type="button" class="avatar-option" data-avatar="avatar8.png"><img src="assets/avatars/avatar8.png" alt="Avatar 8"></button>
+              <button type="button" class="avatar-option" data-avatar="avatar9.png"><img src="assets/avatars/avatar9.png" alt="Avatar 9"></button>
             </div>
           </div>
         </div>
@@ -472,7 +465,7 @@ async function loadStudentCard() {
     }
 
     document.getElementById('cardName').textContent = data.name || name;
-    document.getElementById('avatarCircle').textContent = data.avatarEmoji || '👤';
+    setAvatarCircle(data.avatarImage);
     document.getElementById('cardSection').textContent = data.section || 'Not Assigned';
     document.getElementById('cardStudentId').textContent = data.studentId || 'N/A';
     const rankInfo = getRankProgress(data);
@@ -937,12 +930,22 @@ if (logoutBtn) {
 }
 
 // ================================
-// AVATAR PICKER — a curated emoji set, not photo upload. Deliberate:
-// avoids needing Firebase Storage (not set up in this project) and
-// the moderation risk of open image uploads for a formation app.
+// AVATAR PICKER — a curated illustrated set (assets/avatars/), not
+// photo upload. Deliberate: avoids needing Firebase Storage (not set
+// up in this project) and the moderation risk of open image uploads
+// for a formation app.
 // ================================
 const avatarCircle = document.getElementById('avatarCircle');
 const avatarPicker = document.getElementById('avatarPicker');
+
+function setAvatarCircle(filename) {
+  if (filename) {
+    avatarCircle.innerHTML = `<img src="assets/avatars/${filename}" alt="Your avatar">`;
+  } else {
+    avatarCircle.textContent = '👤';
+  }
+}
+
 if (avatarCircle && avatarPicker) {
   avatarCircle.onclick = (event) => {
     event.stopPropagation();
@@ -951,8 +954,8 @@ if (avatarCircle && avatarPicker) {
 
   avatarPicker.querySelectorAll('.avatar-option').forEach((btn) => {
     btn.onclick = () => {
-      const emoji = btn.dataset.avatar;
-      avatarCircle.textContent = emoji;
+      const filename = btn.dataset.avatar;
+      setAvatarCircle(filename);
       avatarPicker.querySelectorAll('.avatar-option').forEach((o) => o.classList.remove('selected'));
       btn.classList.add('selected');
       avatarPicker.classList.remove('open');
@@ -961,7 +964,7 @@ if (avatarCircle && avatarPicker) {
       // to save to -- let them see the picker work, just don't
       // attempt a write that would fail against a missing document.
       if (!isSeasonPreviewAdmin) {
-        updateDoc(studentRef, { avatarEmoji: emoji }).catch((err) => {
+        updateDoc(studentRef, { avatarImage: filename }).catch((err) => {
           console.error('Failed to save avatar:', err);
         });
       }

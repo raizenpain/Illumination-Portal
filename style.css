@@ -422,7 +422,14 @@ body {
   padding: 0;
   font-family: inherit;
   cursor: pointer;
+  overflow: hidden;
   transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.avatar-circle img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }
 
 .avatar-circle:hover {
@@ -450,7 +457,7 @@ body {
   position: absolute;
   top: 122px;
   left: 0;
-  width: 260px;
+  width: 280px;
   background: linear-gradient(135deg, #1D2233, #0A0F22);
   border: 1px solid rgba(86,178,187,0.3);
   border-radius: 16px;
@@ -482,17 +489,18 @@ body {
 
 .avatar-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
 }
 
 .avatar-option {
-  width: 36px;
-  height: 36px;
+  width: 100%;
+  aspect-ratio: 1;
   border-radius: 50%;
   background: rgba(255,255,255,0.06);
   border: 2px solid transparent;
-  font-size: 18px;
+  padding: 0;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -500,8 +508,15 @@ body {
   transition: all 0.15s ease;
 }
 
+.avatar-option img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .avatar-option:hover {
   background: rgba(255,255,255,0.12);
+  transform: scale(1.05);
 }
 
 .avatar-option.selected {

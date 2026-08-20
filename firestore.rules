@@ -159,8 +159,12 @@ service cloud.firestore {
                      (isAdmin() || isInCallerClass(resource.data));
 
       // A student can only post as themselves, into their OWN actual
-      // class, with the exact shape the chat UI expects, starting
-      // unreported. Message text itself is trusted here (already run
+      // class. An admin has no students/{email} doc to check against
+      // (isInCallerClass would just error on the missing get()), so
+      // they're allowed to post into ANY class instead -- consistent
+      // with them already being fully trusted elsewhere in this app,
+      // and how a teacher joins their own class's chat from the
+      // roster view. Message text itself is trusted here (already run
       // through contentFilter.js client-side before this call) --
       // this rule guards the shape/attribution, not the content.
       allow create: if request.auth != null &&
@@ -173,7 +177,7 @@ service cloud.firestore {
                        request.resource.data.text.size() > 0 &&
                        request.resource.data.text.size() <= 500 &&
                        request.resource.data.reported == false &&
-                       isInCallerClass(request.resource.data);
+                       (isAdmin() || isInCallerClass(request.resource.data));
 
       // Report-only: the one allowed change after a message exists.
       // Anyone in the same class (or admin) can flip reported to true

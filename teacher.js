@@ -10,7 +10,10 @@ import {
   arrayRemove,
   query,
   where,
-  orderBy
+  orderBy,
+  addDoc,
+  onSnapshot,
+  serverTimestamp
 } from './firebase.js';
 import { requireAdmin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
@@ -19,6 +22,7 @@ import { ADMIN_EMAILS, ADMINS } from './admins.js';
 import { getRankProgress } from './rank.js';
 import { initSeasonEditor } from './seasonEditor.js';
 import { CLASS_OFFERINGS } from './classOfferings.js';
+import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
 
 const UNASSIGNED_KEY = '__unassigned__';
 
@@ -133,6 +137,9 @@ if (user) {
   const classChatLogModal = document.getElementById('classChatLogModal');
   const chatLogClassLabel = document.getElementById('chatLogClassLabel');
   const chatLogList = document.getElementById('chatLogList');
+  const chatLogError = document.getElementById('chatLogError');
+  const chatLogInput = document.getElementById('chatLogInput');
+  const chatLogSendBtn = document.getElementById('chatLogSendBtn');
   const chatLogCloseBtn = document.getElementById('chatLogCloseBtn');
 
   let teacherGroups = {}; // { teacherEmail: { name, bySection: { section: [studentData] } } }
@@ -582,75 +589,148 @@ if (user) {
   }
 
   // ================================
-  // CLASS CHAT LOG — read-only review of one class's chat, opened
-  // from the roster view. A one-time fetch (not a live listener) --
-  // reviewing a log is a discrete action, same reasoning as
-  // leaderboard.js's one-shot getDocs rather than an always-live feed.
+  // CLASS CHAT LOG — live, two-way for the teacher/admin: everything
+  // a student sees in that class's chat, plus a send box so the
+  // teacher can actually participate, not just review. Live via
+  // onSnapshot (not the one-shot getDocs a pure review log would use)
+  // specifically because sending needs to see replies arrive without
+  // reopening the modal. The listener is torn down on close/switch so
+  // hopping between classes never stacks up old listeners.
   // ================================
 
-  async function openChatLog(teacherEmail, section) {
+  let chatLogUnsubscribe = null;
+
+  function renderChatLogEntries(docs) {
+    if (!docs.length) {
+      chatLogList.innerHTML = '<p class="chat-log-empty">No messages in this class yet.</p>';
+      return;
+    }
+
+    chatLogList.innerHTML = '';
+
+    docs.forEach((docSnap) => {
+      const msg = docSnap.data();
+
+      const card = document.createElement('div');
+      card.className = 'student-view-submission-card chat-log-entry' + (msg.reported ? ' reported' : '');
+
+      const header = document.createElement('div');
+      header.className = 'student-view-submission-header';
+
+      const title = document.createElement('strong');
+      title.textContent = msg.senderName || msg.senderEmail || 'Unknown';
+      if (msg.reported) {
+        const tag = document.createElement('span');
+        tag.className = 'chat-log-entry-reported-tag';
+        tag.textContent = 'Reported';
+        title.appendChild(tag);
+      }
+
+      const meta = document.createElement('span');
+      meta.textContent = msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleString() : 'Sending…';
+
+      header.appendChild(title);
+      header.appendChild(meta);
+
+      const text = document.createElement('p');
+      text.className = 'student-view-submission-text';
+      text.textContent = msg.text || '';
+
+      card.appendChild(header);
+      card.appendChild(text);
+      chatLogList.appendChild(card);
+    });
+
+    chatLogList.scrollTop = chatLogList.scrollHeight;
+  }
+
+  function showChatLogError(message) {
+    chatLogError.textContent = message;
+    chatLogError.classList.toggle('show', !!message);
+  }
+
+  function closeChatLog() {
+    classChatLogModal.classList.add('hidden');
+    if (chatLogUnsubscribe) {
+      chatLogUnsubscribe();
+      chatLogUnsubscribe = null;
+    }
+  }
+
+  function openChatLog(teacherEmail, section) {
     if (!classChatLogModal) return;
+
+    if (chatLogUnsubscribe) {
+      chatLogUnsubscribe();
+      chatLogUnsubscribe = null;
+    }
 
     chatLogClassLabel.textContent = `${section} — ${teacherEmail}`;
     chatLogList.innerHTML = '<p class="chat-log-empty">Loading…</p>';
+    showChatLogError('');
+    chatLogInput.value = '';
     classChatLogModal.classList.remove('hidden');
 
-    document.getElementById('chatLogCloseBtn').onclick = () => {
-      classChatLogModal.classList.add('hidden');
-    };
+    chatLogCloseBtn.onclick = closeChatLog;
 
-    try {
-      const chatQuery = query(
-        collection(db, 'classChatMessages'),
-        where('teacherEmail', '==', teacherEmail),
-        where('section', '==', section),
-        orderBy('timestamp', 'desc')
-      );
-      const snapshot = await getDocs(chatQuery);
+    const chatQuery = query(
+      collection(db, 'classChatMessages'),
+      where('teacherEmail', '==', teacherEmail),
+      where('section', '==', section),
+      orderBy('timestamp', 'desc')
+    );
 
-      if (snapshot.empty) {
-        chatLogList.innerHTML = '<p class="chat-log-empty">No messages in this class yet.</p>';
-        return;
-      }
-
-      chatLogList.innerHTML = '';
-
-      snapshot.docs.forEach((docSnap) => {
-        const msg = docSnap.data();
-
-        const card = document.createElement('div');
-        card.className = 'student-view-submission-card chat-log-entry' + (msg.reported ? ' reported' : '');
-
-        const header = document.createElement('div');
-        header.className = 'student-view-submission-header';
-
-        const title = document.createElement('strong');
-        title.textContent = msg.senderName || msg.senderEmail || 'Unknown';
-        if (msg.reported) {
-          const tag = document.createElement('span');
-          tag.className = 'chat-log-entry-reported-tag';
-          tag.textContent = 'Reported';
-          title.appendChild(tag);
-        }
-
-        const meta = document.createElement('span');
-        meta.textContent = msg.timestamp?.toDate ? msg.timestamp.toDate().toLocaleString() : 'Sending…';
-
-        header.appendChild(title);
-        header.appendChild(meta);
-
-        const text = document.createElement('p');
-        text.className = 'student-view-submission-text';
-        text.textContent = msg.text || '';
-
-        card.appendChild(header);
-        card.appendChild(text);
-        chatLogList.appendChild(card);
-      });
-    } catch (err) {
+    chatLogUnsubscribe = onSnapshot(chatQuery, (snapshot) => {
+      // Query is newest-first; render oldest-first like a normal chat.
+      renderChatLogEntries([...snapshot.docs].reverse());
+    }, (err) => {
       console.error('Failed to load class chat log:', err);
       chatLogList.innerHTML = '<p class="chat-log-empty">Could not load the chat log.</p>';
-    }
+    });
+
+    const send = () => {
+      const text = chatLogInput.value.trim();
+      if (!text) return;
+
+      if (looksLikeGibberish(text)) {
+        showChatLogError("That doesn't look like a real message — try again.");
+        return;
+      }
+      if (containsBannedWord(text)) {
+        showChatLogError('That message contains language that isn’t allowed here.');
+        return;
+      }
+      showChatLogError('');
+
+      const senderName = (ADMINS.find((a) => a.email === email) || {}).name || name;
+
+      chatLogInput.disabled = true;
+      chatLogSendBtn.disabled = true;
+
+      addDoc(collection(db, 'classChatMessages'), {
+        senderEmail: email,
+        senderName,
+        teacherEmail,
+        section,
+        text,
+        timestamp: serverTimestamp(),
+        reported: false
+      }).then(() => {
+        chatLogInput.value = '';
+      }).catch((err) => {
+        console.error('Failed to send class chat message:', err);
+        showChatLogError('Could not send that message — try again.');
+      }).finally(() => {
+        chatLogInput.disabled = false;
+        chatLogSendBtn.disabled = false;
+        chatLogInput.focus();
+      });
+    };
+
+    chatLogSendBtn.onclick = send;
+    chatLogInput.onkeydown = (event) => {
+      if (event.key === 'Enter') send();
+    };
   }
 
   if (backToTeachersBtn) {

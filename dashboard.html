@@ -36,7 +36,31 @@
   <div class="id-card">
     <div class="id-top-row">
       <div class="id-header">
-        <div class="avatar-circle">👤</div>
+        <div class="avatar-wrap">
+          <button type="button" class="avatar-circle" id="avatarCircle" aria-label="Choose your avatar">👤</button>
+          <span class="avatar-edit-badge">✏️</span>
+          <div class="avatar-picker" id="avatarPicker">
+            <p class="avatar-picker-title">Choose Your Avatar</p>
+            <div class="avatar-grid" id="avatarGrid">
+              <button type="button" class="avatar-option" data-avatar="👤">👤</button>
+              <button type="button" class="avatar-option" data-avatar="😀">😀</button>
+              <button type="button" class="avatar-option" data-avatar="😊">😊</button>
+              <button type="button" class="avatar-option" data-avatar="😎">😎</button>
+              <button type="button" class="avatar-option" data-avatar="🤓">🤓</button>
+              <button type="button" class="avatar-option" data-avatar="🥳">🥳</button>
+              <button type="button" class="avatar-option" data-avatar="🧐">🧐</button>
+              <button type="button" class="avatar-option" data-avatar="🧑‍🎓">🧑‍🎓</button>
+              <button type="button" class="avatar-option" data-avatar="🧙">🧙</button>
+              <button type="button" class="avatar-option" data-avatar="🦸">🦸</button>
+              <button type="button" class="avatar-option" data-avatar="🧑🏻">🧑🏻</button>
+              <button type="button" class="avatar-option" data-avatar="🧑🏽">🧑🏽</button>
+              <button type="button" class="avatar-option" data-avatar="🧑🏾">🧑🏾</button>
+              <button type="button" class="avatar-option" data-avatar="🧑🏿">🧑🏿</button>
+              <button type="button" class="avatar-option" data-avatar="👦">👦</button>
+              <button type="button" class="avatar-option" data-avatar="👧">👧</button>
+            </div>
+          </div>
+        </div>
 
         <div class="id-info">
           <h2 id="cardName">Loading...</h2>
@@ -440,6 +464,7 @@ async function loadStudentCard() {
     }
 
     document.getElementById('cardName').textContent = data.name || name;
+    document.getElementById('avatarCircle').textContent = data.avatarEmoji || '👤';
     document.getElementById('cardSection').textContent = data.section || 'Not Assigned';
     document.getElementById('cardStudentId').textContent = data.studentId || 'N/A';
     const rankInfo = getRankProgress(data);
@@ -901,6 +926,45 @@ if (logoutBtn) {
     localStorage.clear();
     window.location.href = 'login.html';
   };
+}
+
+// ================================
+// AVATAR PICKER — a curated emoji set, not photo upload. Deliberate:
+// avoids needing Firebase Storage (not set up in this project) and
+// the moderation risk of open image uploads for a formation app.
+// ================================
+const avatarCircle = document.getElementById('avatarCircle');
+const avatarPicker = document.getElementById('avatarPicker');
+if (avatarCircle && avatarPicker) {
+  avatarCircle.onclick = (event) => {
+    event.stopPropagation();
+    avatarPicker.classList.toggle('open');
+  };
+
+  avatarPicker.querySelectorAll('.avatar-option').forEach((btn) => {
+    btn.onclick = () => {
+      const emoji = btn.dataset.avatar;
+      avatarCircle.textContent = emoji;
+      avatarPicker.querySelectorAll('.avatar-option').forEach((o) => o.classList.remove('selected'));
+      btn.classList.add('selected');
+      avatarPicker.classList.remove('open');
+
+      // Admins previewing the dashboard have no students/{email} doc
+      // to save to -- let them see the picker work, just don't
+      // attempt a write that would fail against a missing document.
+      if (!isSeasonPreviewAdmin) {
+        updateDoc(studentRef, { avatarEmoji: emoji }).catch((err) => {
+          console.error('Failed to save avatar:', err);
+        });
+      }
+    };
+  });
+
+  document.addEventListener('click', (event) => {
+    if (!event.target.closest('.avatar-wrap')) {
+      avatarPicker.classList.remove('open');
+    }
+  });
 }
 
 // ================================

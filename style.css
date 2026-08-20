@@ -403,6 +403,11 @@ body {
   transform: translateY(-1px);
 }
 
+.avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
 .avatar-circle {
   width: 110px;
   height: 110px;
@@ -414,6 +419,105 @@ body {
   justify-content: center;
   font-size: 26px;
   flex-shrink: 0;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.avatar-circle:hover {
+  border-color: #56B2BB;
+  transform: scale(1.03);
+}
+
+.avatar-edit-badge {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #56B2BB;
+  border: 2px solid #0A0F22;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  pointer-events: none;
+}
+
+.avatar-picker {
+  position: absolute;
+  top: 122px;
+  left: 0;
+  width: 260px;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1px solid rgba(86,178,187,0.3);
+  border-radius: 16px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.4);
+  padding: 14px;
+  z-index: 20;
+  transform-origin: top left;
+  transform: scale(0.92) translateY(-6px);
+  opacity: 0;
+  pointer-events: none;
+  transition: transform 0.15s ease, opacity 0.15s ease;
+}
+
+.avatar-picker.open {
+  transform: scale(1) translateY(0);
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.avatar-picker-title {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #56B2BB;
+  margin: 0 0 10px;
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.avatar-option {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.06);
+  border: 2px solid transparent;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.avatar-option:hover {
+  background: rgba(255,255,255,0.12);
+}
+
+.avatar-option.selected {
+  border-color: #FBBF24;
+  background: rgba(251,191,36,0.15);
+}
+
+@media (max-width: 700px) {
+  .avatar-picker {
+    left: 50%;
+    transform: scale(0.92) translate(-50%, -6px);
+  }
+
+  .avatar-picker.open {
+    transform: scale(1) translate(-50%, 0);
+  }
 }
 
 .id-logo {

@@ -53,7 +53,7 @@ service cloud.firestore {
         'apostleReflection', 'apostleUnlocked', 'apostleReflectionSubmittedAt',
         'verificationCode', 'midtermVerificationCode',
         'semifinalVerificationCode', 'finalVerificationCode',
-        'hasSeenDashboardTour'
+        'hasSeenDashboardTour', 'avatarEmoji'
       ];
     }
 

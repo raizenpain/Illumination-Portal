@@ -27,7 +27,7 @@
 // matching client query.
 // ============================================
 
-import { db, collection, doc, addDoc, updateDoc, onSnapshot, query, where, orderBy, limit, getDocs, serverTimestamp } from './firebase.js';
+import { db, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, getDocs, serverTimestamp } from './firebase.js';
 import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
 
 const MAX_MESSAGES = 50;
@@ -173,6 +173,24 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
           });
           body.appendChild(reportBtn);
         }
+      }
+
+      // Only admins can actually delete (firestore.rules: allow
+      // delete: if isAdmin()) -- students never get this button, only
+      // report. Shown on every message here, not just the admin's
+      // own, so a teacher can remove anything after reviewing it.
+      if (isAdmin) {
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'msg-report-btn';
+        deleteBtn.textContent = 'Delete';
+        deleteBtn.addEventListener('click', () => {
+          if (!confirm('Delete this message for everyone? This cannot be undone.')) return;
+          deleteDoc(doc(db, 'classChatMessages', msg.id)).catch((err) => {
+            console.error('Failed to delete message:', err);
+          });
+        });
+        body.appendChild(deleteBtn);
       }
 
       row.appendChild(avatar);

@@ -636,8 +636,20 @@ if (user) {
       text.className = 'student-view-submission-text';
       text.textContent = msg.text || '';
 
+      const deleteBtn = document.createElement('button');
+      deleteBtn.type = 'button';
+      deleteBtn.className = 'msg-report-btn';
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.addEventListener('click', () => {
+        if (!confirm('Delete this message for everyone? This cannot be undone.')) return;
+        deleteDoc(doc(db, 'classChatMessages', docSnap.id)).catch((err) => {
+          console.error('Failed to delete message:', err);
+        });
+      });
+
       card.appendChild(header);
       card.appendChild(text);
+      card.appendChild(deleteBtn);
       chatLogList.appendChild(card);
     });
 

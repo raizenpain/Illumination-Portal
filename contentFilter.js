@@ -81,7 +81,18 @@ const BANNED_WORDS = [
   // Gaming / online jargon
   'gg', 'ggwp', 'ez', 'diff', 'carry', 'feed', 'feeding', 'afk',
   'clutch', 'nerf', 'buff', 'op', 'noob', 'smurf', 'tilted', 'sweaty',
-  'wipe'
+  'wipe',
+
+  // Explicit sexual content -- reported missing from the earlier
+  // pass (that slang reference didn't cover explicit vocabulary,
+  // just profanity/insults/casual slang). "sex" itself is
+  // deliberately NOT here, same reasoning as hell/damn above: a
+  // Theology of the Body / chastity module legitimately uses
+  // "sex"/"sexuality" academically, so only explicit phrases and
+  // outright vulgar terms are blocked, not the bare word.
+  'iyot', 'iyot ta', 'oten', 'bilat', 'kiss ko bilat', 'kiss ko oten',
+  'chupa', 'sexual intercourse', 'phone sex', 'same sex intercourse',
+  'same-sex intercourse'
 ];
 
 function escapeRegExp(str) {

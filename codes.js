@@ -7,16 +7,16 @@
 // ============================================
 
 export const PIECE_CODES = {
-  puzzle1: { // The Cross
-    1: "SAVING",
-    2: "GLORY",
-    3: "SACRIFICE",
-    4: "TRIUMPH",
-    5: "REDEEM",
-    6: "SIGN",
-    7: "STEWARD",
-    8: "CONSERVE",
-    9: "ECOLOGY"
+  puzzle1: { // The Cross — Latin (previous English set was shown in class by accident)
+    1: "SALVATIO",
+    2: "GLORIA",
+    3: "SACRIFICIUM",
+    4: "TRIUMPHUS",
+    5: "REDEMPTIO",
+    6: "SIGNUM",
+    7: "DISPENSATOR",
+    8: "CONSERVATIO",
+    9: "OECOLOGIA"
   },
   puzzle2: { // The Spirituality
     1: "CREATOR",

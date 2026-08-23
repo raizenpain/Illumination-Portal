@@ -8,7 +8,7 @@
 
 export const CLASS_OFFERINGS_BY_TEACHER = {
   'jornie.hinay@hcdc.edu.ph': [
-    "00725 | ReEd 101: Faith and Reason (MW 8:00-9:00 AM)",
+    "00725 | ReEd 101: Faith and Reason (MWF 8:00-9:00 AM)",
     "00188 | ReEd 305 (2018): Christian Morality (MWF 9:00-10:00 AM)",
     "02201 | ReEd 203: The Catholic Church (MWF 10:00-11:00 AM)",
     "02070 | VED 310: Information Technology (MWF 3:00-4:00 PM)",

@@ -17,6 +17,8 @@ import { SEASON_CONTENT } from './seasonContent.js';
 import { getRankProgress } from './rank.js';
 import { TICKET_INFO } from './ticketTrader.js';
 import { findArtifact, tierOfArtifact, TIERS } from './artifacts.js';
+import { PRELIM_BADGE_INFO } from './prelimBadges.js';
+import { resolveSeasonBadge } from './seasonBadges.js';
 
 const user = requireAdmin(ADMIN_EMAILS);
 
@@ -210,8 +212,9 @@ function renderAchievements(data) {
   }
 
   achievements.forEach((id) => {
-    const title = id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
-    addRow(container, title, '✅');
+    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id);
+    const label = info ? `${info.icon} ${info.title}` : id;
+    addRow(container, label, '✅');
   });
 }
 

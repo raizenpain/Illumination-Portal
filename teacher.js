@@ -406,6 +406,7 @@ if (user) {
       // Same teacher, different class offering — the common case.
       label.textContent = `Move ${data.name || data.email} out of "${section}" into:`;
       teacherWrap.classList.add('hidden');
+      teacherSelect.onchange = null;
       populateSectionSelect(sectionSelect, currentTeacher.email);
     } else {
       // Unassigned students have no teacher to "stay the same" with —

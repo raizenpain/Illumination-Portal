@@ -16,28 +16,37 @@ if (studentNameEl) {
 
 const sectionSelectEl = document.getElementById('sectionSelect');
 
+// Cached so enrollBtn.onclick below can reuse this same read instead of
+// fetching the student doc a second time on the primary CTA path.
+let cachedStudentSnap = null;
+
 // Teacher-select runs BEFORE this page, so the student doc already has
 // teacherEmail by the time they get here — only show that teacher's
 // offerings, never the whole school's.
 (async () => {
   if (!sectionSelectEl) return;
 
-  const studentSnap = await getDoc(doc(db, 'students', email));
-  const teacherEmail = studentSnap.exists() ? studentSnap.data().teacherEmail : null;
+  try {
+    cachedStudentSnap = await getDoc(doc(db, 'students', email));
+    const teacherEmail = cachedStudentSnap.exists() ? cachedStudentSnap.data().teacherEmail : null;
 
-  if (!teacherEmail) {
-    // Shouldn't happen given the onboarding order, but don't strand the
-    // student on a dead dropdown if it does.
-    window.location.href = 'teacher-select.html';
-    return;
+    if (!teacherEmail) {
+      // Shouldn't happen given the onboarding order, but don't strand the
+      // student on a dead dropdown if it does.
+      window.location.href = 'teacher-select.html';
+      return;
+    }
+
+    getOfferingsForTeacher(teacherEmail).forEach((offering) => {
+      const opt = document.createElement('option');
+      opt.value = offering;
+      opt.textContent = offering;
+      sectionSelectEl.appendChild(opt);
+    });
+  } catch (err) {
+    console.error('Failed to load class offerings:', err);
+    sectionSelectEl.innerHTML = '<option value="">-- Failed to load, please refresh the page --</option>';
   }
-
-  getOfferingsForTeacher(teacherEmail).forEach((offering) => {
-    const opt = document.createElement('option');
-    opt.value = offering;
-    opt.textContent = offering;
-    sectionSelectEl.appendChild(opt);
-  });
 })();
 
 // Generate a unique HCDC Student ID
@@ -62,7 +71,7 @@ if (enrollBtn) {
 
     try {
       const studentRef = doc(db, 'students', email);
-      const snap = await getDoc(studentRef);
+      const snap = cachedStudentSnap || await getDoc(studentRef);
       // Teacher-select now runs BEFORE this page, so the record already
       // exists (with just teacherName/teacherEmail) by the time a brand
       // new student gets here — "already enrolled" has to mean "already

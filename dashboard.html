@@ -371,6 +371,7 @@ import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
 import { resolveSeasonBadge } from './seasonBadges.js';
+import { PRELIM_BADGE_INFO } from './prelimBadges.js';
 import { ADMIN_EMAILS, ADMINS } from './admins.js';
 import { loadGospelQuote } from './gospel.js';
 import { initTicketTrader } from './ticketTrader.js';
@@ -389,16 +390,6 @@ const studentRef = doc(db, 'students', email);
 let studentData = {};
 
 initDashboardMusic('musicToggleBtn');
-
-const BADGE_INFO = {
-  first_step: { icon: '🥉', title: 'First Step', sub: 'Collected first piece' },
-  faith_explorer: { icon: '🧭', title: 'Faith Explorer', sub: 'Collected 3 pieces' },
-  mission_builder: { icon: '🛠️', title: 'Mission Builder', sub: 'Collected 6 pieces' },
-  beatitudes_master: { icon: '👑', title: 'Cross Master', sub: 'Completed Puzzle 1' },
-  sacraments_master: { icon: '👑', title: 'Spirituality Master', sub: 'Completed Puzzle 2' },
-  vocation_master: { icon: '👑', title: 'Vocation Master', sub: 'Completed Puzzle 3' },
-  formation_champion: { icon: '🏆', title: 'Formation Champion', sub: 'Completed all puzzles' }
-};
 
 // One Ember Shard per calendar day (UTC), the first time a student
 // opens the dashboard that day — not per refresh/visit, otherwise a
@@ -546,7 +537,7 @@ function renderBadges(achievements) {
   badgeContainer.innerHTML = '';
 
   achievements.forEach(id => {
-    const info = BADGE_INFO[id] || resolveSeasonBadge(id);
+    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id);
     if (!info) return;
 
     const badge = document.createElement('div');

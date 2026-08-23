@@ -23,7 +23,7 @@ const SAME_COUNT = 12;
 const ANY_COUNT = 24;
 const SCRAP_COUNT = 45;
 
-const TICKET_INFO = {
+export const TICKET_INFO = {
   quiz_ticket: { icon: '📝', label: 'Sigil of Insight' },
   task_ticket: { icon: '🎯', label: 'Seal of Diligence' },
   journal_ticket: { icon: '📖', label: 'Scroll of Reflection' },

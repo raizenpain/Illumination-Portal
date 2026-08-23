@@ -1,10 +1,12 @@
 // ============================================
 // STUDENT REVIEW (Dungeon Master console)
 // Read-only summary of a single student — profile, Prelim + Season
-// progress, and every written submission (Prelim reflection +
-// journal/recitation node responses) in one place, so an admin can
-// actually read what a student wrote without touching their data.
-// Reached by clicking a student row in the roster (teacher.js).
+// progress, tickets/tokens, artifacts, achievements, and every written
+// submission (Prelim reflection + journal/recitation node responses)
+// in one place, so an admin can actually read what a student wrote
+// (and spot anything on their record that looks off) without touching
+// their data. Reached by clicking a student row in the roster
+// (teacher.js).
 // ============================================
 
 import { db, doc, getDoc } from './firebase.js';
@@ -13,6 +15,8 @@ import { ADMIN_EMAILS } from './admins.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
 import { getRankProgress } from './rank.js';
+import { TICKET_INFO } from './ticketTrader.js';
+import { findArtifact, tierOfArtifact, TIERS } from './artifacts.js';
 
 const user = requireAdmin(ADMIN_EMAILS);
 
@@ -44,6 +48,9 @@ async function loadStudent(studentEmail) {
     renderProfile(data, studentEmail);
     renderPrelimProgress(data);
     renderSeasonProgress(data);
+    renderTickets(data);
+    renderArtifacts(data);
+    renderAchievements(data);
     renderSubmissions(data);
 
   } catch (err) {
@@ -141,6 +148,70 @@ function renderSeasonProgress(data) {
     row.appendChild(label);
     row.appendChild(pill);
     container.appendChild(row);
+  });
+}
+
+function addRow(container, label, value) {
+  const row = document.createElement('div');
+  row.className = 'student-view-progress-row';
+
+  const labelEl = document.createElement('span');
+  labelEl.textContent = label;
+
+  const valueEl = document.createElement('span');
+  valueEl.textContent = value;
+
+  row.appendChild(labelEl);
+  row.appendChild(valueEl);
+  container.appendChild(row);
+}
+
+function renderTickets(data) {
+  const container = document.getElementById('ticketsList');
+  container.innerHTML = '';
+
+  const tickets = data.tickets || {};
+
+  Object.entries(TICKET_INFO).forEach(([type, info]) => {
+    addRow(container, `${info.icon} ${info.label}`, tickets[type] || 0);
+  });
+
+  addRow(container, '🔓 Unlock Tokens', data.unlockTokens || 0);
+}
+
+function renderArtifacts(data) {
+  const container = document.getElementById('artifactsList');
+  container.innerHTML = '';
+
+  const owned = data.ownedArtifacts || [];
+
+  if (owned.length === 0) {
+    container.innerHTML = '<p>No artifacts crafted yet.</p>';
+    return;
+  }
+
+  owned.forEach((id) => {
+    const artifact = findArtifact(id);
+    const tier = tierOfArtifact(id);
+    const tierInfo = TIERS.find((t) => t.tier === tier);
+    addRow(container, artifact ? artifact.name : id, tierInfo ? tierInfo.name : '—');
+  });
+}
+
+function renderAchievements(data) {
+  const container = document.getElementById('achievementsList');
+  container.innerHTML = '';
+
+  const achievements = data.achievements || [];
+
+  if (achievements.length === 0) {
+    container.innerHTML = '<p>No achievements yet.</p>';
+    return;
+  }
+
+  achievements.forEach((id) => {
+    const title = id.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase());
+    addRow(container, title, '✅');
   });
 }
 

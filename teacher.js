@@ -21,7 +21,7 @@ import { PIECE_CODES } from './codes.js';
 import { ADMIN_EMAILS, ADMINS } from './admins.js';
 import { getRankProgress } from './rank.js';
 import { initSeasonEditor } from './seasonEditor.js';
-import { CLASS_OFFERINGS } from './classOfferings.js';
+import { getOfferingsForTeacher } from './classOfferings.js';
 import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
 
 const UNASSIGNED_KEY = '__unassigned__';
@@ -380,12 +380,20 @@ if (user) {
   };
 
   // --- Re-assign Class ---
-  // Section (class offering) and teacher are independent choices a
-  // student makes at enroll.html/teacher-select.html — there's no
-  // fixed "this teacher's sections" list, so both dropdowns here draw
-  // from the same fixed master list (classOfferings.js) / ADMINS
-  // roster instead of whatever happens to already exist among
-  // currently-enrolled students, which can be empty in a small class.
+  // Section (class offering) is scoped to whichever teacher is being
+  // assigned — each teacher only teaches their own offerings
+  // (classOfferings.js), so the section dropdown must be re-populated
+  // whenever the target teacher changes.
+
+  function populateSectionSelect(sectionSelect, teacherEmail) {
+    sectionSelect.innerHTML = '';
+    getOfferingsForTeacher(teacherEmail).forEach((offering) => {
+      const opt = document.createElement('option');
+      opt.value = offering;
+      opt.textContent = offering;
+      sectionSelect.appendChild(opt);
+    });
+  }
 
   function openReassignModal(data, section) {
     const modal = document.getElementById('reassignModal');
@@ -394,18 +402,11 @@ if (user) {
     const teacherSelect = document.getElementById('reassignTeacherSelect');
     const sectionSelect = document.getElementById('reassignSectionSelect');
 
-    sectionSelect.innerHTML = '';
-    CLASS_OFFERINGS.forEach((offering) => {
-      const opt = document.createElement('option');
-      opt.value = offering;
-      opt.textContent = offering;
-      sectionSelect.appendChild(opt);
-    });
-
     if (currentTeacher.isRealTeacher) {
       // Same teacher, different class offering — the common case.
       label.textContent = `Move ${data.name || data.email} out of "${section}" into:`;
       teacherWrap.classList.add('hidden');
+      populateSectionSelect(sectionSelect, currentTeacher.email);
     } else {
       // Unassigned students have no teacher to "stay the same" with —
       // let the admin pick one along with the class offering.
@@ -419,6 +420,11 @@ if (user) {
         opt.textContent = admin.name;
         teacherSelect.appendChild(opt);
       });
+
+      populateSectionSelect(sectionSelect, ADMINS[0].email);
+      teacherSelect.onchange = () => {
+        populateSectionSelect(sectionSelect, JSON.parse(teacherSelect.value).teacherEmail);
+      };
     }
 
     modal.classList.remove('hidden');

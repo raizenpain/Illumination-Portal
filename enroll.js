@@ -1,7 +1,7 @@
 import { db, doc, getDoc, setDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { ADMIN_EMAILS } from './admins.js';
-import { CLASS_OFFERINGS } from './classOfferings.js';
+import { getOfferingsForTeacher } from './classOfferings.js';
 
 const { email, name } = requireLogin();
 
@@ -15,14 +15,30 @@ if (studentNameEl) {
 }
 
 const sectionSelectEl = document.getElementById('sectionSelect');
-if (sectionSelectEl) {
-  CLASS_OFFERINGS.forEach((offering) => {
+
+// Teacher-select runs BEFORE this page, so the student doc already has
+// teacherEmail by the time they get here — only show that teacher's
+// offerings, never the whole school's.
+(async () => {
+  if (!sectionSelectEl) return;
+
+  const studentSnap = await getDoc(doc(db, 'students', email));
+  const teacherEmail = studentSnap.exists() ? studentSnap.data().teacherEmail : null;
+
+  if (!teacherEmail) {
+    // Shouldn't happen given the onboarding order, but don't strand the
+    // student on a dead dropdown if it does.
+    window.location.href = 'teacher-select.html';
+    return;
+  }
+
+  getOfferingsForTeacher(teacherEmail).forEach((offering) => {
     const opt = document.createElement('option');
     opt.value = offering;
     opt.textContent = offering;
     sectionSelectEl.appendChild(opt);
   });
-}
+})();
 
 // Generate a unique HCDC Student ID
 function generateStudentId() {

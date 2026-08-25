@@ -2133,7 +2133,7 @@ body.teacher-page {
 }
 
 .teacher-panel h2 {
-  margin: 0 0 4px 0;
+  margin: 0 0 16px 0;
   color: #D8FBFF;
   font-family: 'Cinzel', serif;
   font-size: 18px;
@@ -2144,6 +2144,49 @@ body.teacher-page {
   color: #9CA9C4;
   font-size: 14px;
   margin: 0 0 20px 0;
+}
+
+/* Student Review (student-view.html) -- Profile+Tickets form their
+   own independent column on the left. Prelim Progress+Artifacts and
+   Season Progress+Achievements form two more independent columns,
+   grouped together under Written Submissions, which spans exactly
+   their combined width (not the left column too) -- because CSS Grid
+   would force every "row" to the height of its tallest cell (leaving
+   an awkward empty gap under any shorter card, which is the exact
+   bug this replaced), spanning content correctly needs actual nested
+   flex stacks instead: each .sv-col is its own flow, sized only by
+   its own content, so a short card just ends where it ends. */
+.student-view-grid {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: 24px;
+}
+
+.sv-col {
+  flex: 1 1 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.sv-group {
+  flex: 2 1 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.sv-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.sv-row > .sv-col {
+  flex: 1 1 260px;
 }
 
 .season-editor-nested h3 {

@@ -4282,7 +4282,7 @@ body.season-page {
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, opacity 0.2s ease;
   z-index: 9500;
 }
 
@@ -4313,6 +4313,9 @@ body.season-page {
   right: 24px;
   bottom: 96px;
   width: min(340px, calc(100vw - 48px));
+  max-height: min(560px, calc(100vh - 140px));
+  display: flex;
+  flex-direction: column;
   background: linear-gradient(135deg, #1D2233, #0A0F22);
   border: 1px solid rgba(86,178,187,0.25);
   border-radius: 18px;
@@ -4332,8 +4335,21 @@ body.season-page {
   pointer-events: auto;
 }
 
+/* The bubble stays fixed in its own spot regardless of the panel, and
+   on mobile the panel is anchored flush to the bottom (full-bleed
+   sheet) -- so with both visible at once the bubble sits right on top
+   of the send button. The panel's own ✕ already closes it, so just
+   hide the now-redundant bubble while it's open instead of trying to
+   carve out clearance for two independent fixed elements. */
+.chat-panel.open ~ .chat-bubble {
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0.8);
+}
+
 .chat-header {
-  padding: 14px 16px 10px;
+  flex-shrink: 0;
+  padding: 16px 16px 14px;
   border-bottom: 1px solid rgba(255,255,255,0.08);
   display: flex;
   align-items: flex-start;
@@ -4377,16 +4393,84 @@ body.season-page {
 }
 
 /* Only shown for an admin who teaches more than one section --
-   students and single-section admins never see this. */
+   students and single-section admins never see this. A custom
+   button+menu instead of a native <select>, since a browser's own
+   open-dropdown popup ignores CSS entirely and renders as an
+   unstyled native list, clashing hard with the dark theme. */
 .chat-room-picker {
-  margin: 0 14px 8px;
+  flex-shrink: 0;
+  position: relative;
+  margin: 6px 14px 12px;
+}
+
+.chat-room-picker-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
   background: rgba(255,255,255,0.06);
   border: 1px solid rgba(255,255,255,0.12);
   border-radius: 8px;
-  padding: 6px 10px;
+  padding: 9px 12px;
   color: white;
   font-size: 12px;
   font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-room-picker-btn:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.chat-room-picker-caret {
+  flex-shrink: 0;
+  font-size: 10px;
+  color: #7C8AAE;
+  transition: transform 0.15s ease;
+}
+
+.chat-room-picker.open .chat-room-picker-caret {
+  transform: rotate(180deg);
+}
+
+.chat-room-picker-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1px solid rgba(86,178,187,0.3);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+}
+
+.chat-room-picker.open .chat-room-picker-menu {
+  display: block;
+}
+
+.chat-room-picker-option {
+  display: block;
+  width: 100%;
+  background: transparent;
+  border: none;
+  color: #D7E3F0;
+  font-size: 12px;
+  font-family: inherit;
+  text-align: left;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.chat-room-picker-option:hover,
+.chat-room-picker-option.active {
+  background: rgba(86,178,187,0.15);
+  color: white;
 }
 
 .chat-close-btn {
@@ -4405,7 +4489,8 @@ body.season-page {
 }
 
 .chat-messages {
-  height: 280px;
+  flex: 1;
+  min-height: 0;
   overflow-y: auto;
   padding: 12px 14px;
   display: flex;
@@ -4521,6 +4606,7 @@ body.season-page {
 }
 
 .chat-input-row {
+  flex-shrink: 0;
   display: flex;
   gap: 8px;
   padding: 10px 12px;
@@ -4555,6 +4641,7 @@ body.season-page {
    here would always win the cascade and the picker could never
    actually be hidden by toggling .hidden alone. */
 .chat-emoji-picker {
+  flex-shrink: 0;
   display: none;
   grid-template-columns: repeat(6, 1fr);
   gap: 4px;
@@ -4639,6 +4726,7 @@ body.season-page {
     left: 0;
     width: 100%;
     max-width: none;
+    max-height: 80vh;
     border-radius: 18px 18px 0 0;
   }
 }

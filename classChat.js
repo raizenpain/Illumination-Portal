@@ -68,7 +68,13 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
       </div>
       <button type="button" class="chat-close-btn" id="chatCloseBtn" aria-label="Close chat">✕</button>
     </div>
-    <select class="chat-room-picker hidden" id="chatRoomPicker"></select>
+    <div class="chat-room-picker hidden" id="chatRoomPicker">
+      <button type="button" class="chat-room-picker-btn" id="chatRoomPickerBtn">
+        <span id="chatRoomPickerLabel"></span>
+        <span class="chat-room-picker-caret">▾</span>
+      </button>
+      <div class="chat-room-picker-menu" id="chatRoomPickerMenu"></div>
+    </div>
     <div class="chat-messages" id="chatMessages">
       <p class="chat-empty">Loading…</p>
     </div>
@@ -90,6 +96,9 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
   const badge = bubble.querySelector('#chatBadge');
   const titleEl = panel.querySelector('#chatRoomTitle');
   const roomPicker = panel.querySelector('#chatRoomPicker');
+  const roomPickerBtn = panel.querySelector('#chatRoomPickerBtn');
+  const roomPickerLabel = panel.querySelector('#chatRoomPickerLabel');
+  const roomPickerMenu = panel.querySelector('#chatRoomPickerMenu');
   const messagesEl = panel.querySelector('#chatMessages');
   const errorEl = panel.querySelector('#chatError');
   const inputEl = panel.querySelector('#chatInput');
@@ -355,9 +364,35 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
 
       if (sections.length > 1) {
         roomPicker.classList.remove('hidden');
-        roomPicker.innerHTML = sections.map((s) => `<option value="${s}">${s}</option>`).join('');
-        roomPicker.addEventListener('change', () => {
-          subscribeToRoom(email, roomPicker.value);
+        roomPickerLabel.textContent = sections[0];
+
+        roomPickerMenu.innerHTML = '';
+        sections.forEach((s) => {
+          const option = document.createElement('button');
+          option.type = 'button';
+          option.className = 'chat-room-picker-option' + (s === sections[0] ? ' active' : '');
+          option.textContent = s;
+          option.addEventListener('click', () => {
+            roomPickerLabel.textContent = s;
+            roomPickerMenu.querySelectorAll('.chat-room-picker-option').forEach((opt) => {
+              opt.classList.toggle('active', opt === option);
+            });
+            roomPicker.classList.remove('open');
+            subscribeToRoom(email, s);
+          });
+          roomPickerMenu.appendChild(option);
+        });
+
+        roomPickerBtn.addEventListener('click', () => {
+          roomPicker.classList.toggle('open');
+        });
+
+        // Close the menu on an outside click, so it doesn't stay open
+        // and cover the messages/input below it.
+        document.addEventListener('click', (event) => {
+          if (!roomPicker.contains(event.target)) {
+            roomPicker.classList.remove('open');
+          }
         });
       }
 

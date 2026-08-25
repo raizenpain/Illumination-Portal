@@ -53,7 +53,8 @@ service cloud.firestore {
         'apostleReflection', 'apostleUnlocked', 'apostleReflectionSubmittedAt',
         'verificationCode', 'midtermVerificationCode',
         'semifinalVerificationCode', 'finalVerificationCode',
-        'hasSeenDashboardTour', 'avatarImage'
+        'hasSeenDashboardTour', 'avatarImage',
+        'sideQuests'
       ];
     }
 
@@ -142,7 +143,7 @@ service cloud.firestore {
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                        request.resource.data.userId == request.auth.token.email &&
                        request.resource.data.keys().hasOnly(['userId', 'studentName', 'type', 'title', 'icon', 'timestamp']) &&
-                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact'];
+                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact', 'sidequest'];
 
       // Immutable log — no edits or deletes
       allow update, delete: if false;

@@ -117,6 +117,8 @@
     </div>
   </div>
 
+  <div id="sideQuestBanner" class="sidequest-banner hidden"></div>
+
   <div class="dashboard-body">
 
     <div class="dashboard-main">
@@ -383,6 +385,7 @@ import { getRankProgress } from './rank.js';
 import { initDashboardTour } from './dashboardTour.js';
 import { initClassChat } from './classChat.js';
 import { initDashboardMusic } from './dashboardMusic.js';
+import { getFeaturedQuest, getQuestStatus, resolveSideQuestBadge } from './sideQuests.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -516,6 +519,7 @@ async function loadStudentCard() {
     });
 
     initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
+    renderSideQuestBanner(data);
 
     // Admins have no students/{email} doc (no fixed teacherEmail/
     // section), so their chat bubble runs in "admin mode" instead --
@@ -536,6 +540,76 @@ async function loadStudentCard() {
   }
 }
 
+// Advertises whichever side quest is upcoming/active (see
+// sideQuests.js's getFeaturedQuest) right below the ID card, where a
+// student can't miss it -- deliberately teases the upcoming state
+// without naming its theme/content, to build curiosity rather than
+// just announcing it outright.
+function renderSideQuestBanner(data) {
+  const banner = document.getElementById('sideQuestBanner');
+  if (!banner) return;
+
+  const quest = getFeaturedQuest();
+  if (!quest) {
+    banner.classList.add('hidden');
+    return;
+  }
+
+  const status = getQuestStatus(quest);
+  if (status === 'ended') {
+    banner.classList.add('hidden');
+    return;
+  }
+
+  const completed = !!((data.sideQuests || {})[quest.id] || {}).completed;
+
+  function paint() {
+    if (status === 'upcoming') {
+      const diff = new Date(quest.startsAt) - new Date();
+      if (diff <= 0) { window.location.reload(); return; }
+      const days = Math.floor(diff / 86400000);
+      const hours = Math.floor((diff % 86400000) / 3600000);
+      banner.innerHTML = `
+        <div class="sidequest-banner-icon">🔥</div>
+        <div class="sidequest-banner-body">
+          <span class="sidequest-banner-kicker">A Side Quest Awaits...</span>
+          <strong>Something is stirring for the Fiesta Novena</strong>
+          <span class="sidequest-banner-sub">Unlocks in ${days}d ${hours}h — stay curious.</span>
+        </div>
+      `;
+      banner.classList.remove('sidequest-banner-clickable');
+      banner.onclick = null;
+    } else if (completed) {
+      banner.innerHTML = `
+        <div class="sidequest-banner-icon">✅</div>
+        <div class="sidequest-banner-body">
+          <span class="sidequest-banner-kicker">Side Quest</span>
+          <strong>${quest.title} — Completed!</strong>
+          <span class="sidequest-banner-sub">Tap to revisit your finished puzzle.</span>
+        </div>
+      `;
+      banner.classList.add('sidequest-banner-clickable');
+      banner.onclick = () => { window.location.href = `sidequest.html?quest=${quest.id}`; };
+    } else {
+      banner.innerHTML = `
+        <div class="sidequest-banner-icon">🔥</div>
+        <div class="sidequest-banner-body">
+          <span class="sidequest-banner-kicker">🔴 LIVE NOW</span>
+          <strong>${quest.title}</strong>
+          <span class="sidequest-banner-sub">${quest.subtitle}</span>
+        </div>
+        <div class="sidequest-banner-cta">Play Now →</div>
+      `;
+      banner.classList.add('sidequest-banner-clickable');
+      banner.onclick = () => { window.location.href = `sidequest.html?quest=${quest.id}`; };
+    }
+  }
+
+  paint();
+  banner.classList.remove('hidden');
+  if (status === 'upcoming') setInterval(paint, 60000);
+}
+
 function renderBadges(achievements) {
   const badgeContainer = document.getElementById('badgeContainer');
 
@@ -547,7 +621,7 @@ function renderBadges(achievements) {
   badgeContainer.innerHTML = '';
 
   achievements.forEach(id => {
-    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id);
+    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id);
     if (!info) return;
 
     const badge = document.createElement('div');

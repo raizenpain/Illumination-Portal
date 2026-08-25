@@ -19,6 +19,7 @@ import { TICKET_INFO } from './ticketTrader.js';
 import { findArtifact, tierOfArtifact, TIERS } from './artifacts.js';
 import { PRELIM_BADGE_INFO } from './prelimBadges.js';
 import { resolveSeasonBadge } from './seasonBadges.js';
+import { SIDE_QUESTS, resolveSideQuestBadge } from './sideQuests.js';
 
 const user = requireAdmin(ADMIN_EMAILS);
 
@@ -53,6 +54,7 @@ async function loadStudent(studentEmail) {
     renderTickets(data);
     renderArtifacts(data);
     renderAchievements(data);
+    renderSideQuests(data);
     renderSubmissions(data);
 
   } catch (err) {
@@ -215,9 +217,32 @@ function renderAchievements(data) {
   }
 
   achievements.forEach((id) => {
-    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id);
+    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id);
     const label = info ? `${info.icon} ${info.title}` : id;
     addRow(container, label, '✅');
+  });
+}
+
+function renderSideQuests(data) {
+  const container = document.getElementById('sideQuestsList');
+  container.innerHTML = '';
+
+  const quests = Object.values(SIDE_QUESTS);
+  if (quests.length === 0) {
+    container.innerHTML = '<p>No side quests yet.</p>';
+    return;
+  }
+
+  const progress = data.sideQuests || {};
+
+  quests.forEach((quest) => {
+    const entry = progress[quest.id];
+    if (entry && entry.completed) {
+      const when = entry.completedAt ? new Date(entry.completedAt).toLocaleDateString() : '';
+      addRow(container, quest.title, `✅ ${when}`);
+    } else {
+      addRow(container, quest.title, 'Not completed');
+    }
   });
 }
 

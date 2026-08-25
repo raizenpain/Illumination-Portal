@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Side Quest | HCDC Illumination Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="clickSound.js"></script>
+</head>
+<body class="dashboard-page sidequest-page">
+
+  <div class="sidequest-container">
+
+    <div class="sidequest-header">
+      <div class="sidequest-crest">🧩</div>
+      <div class="sidequest-header-text">
+        <span class="info-label">Side Quest</span>
+        <h1 id="questTitle">Loading…</h1>
+        <p id="questSubtitle"></p>
+      </div>
+      <button class="dm-back-btn" onclick="window.location.href='dashboard.html'">&larr; Dashboard</button>
+    </div>
+
+    <p id="questStatusBanner" class="sidequest-status-banner hidden"></p>
+
+    <div id="crosswordArea" class="sidequest-play-area hidden">
+      <div class="crossword-grid-wrap">
+        <div id="crosswordGrid" class="crossword-grid"></div>
+      </div>
+      <div class="crossword-clues">
+        <div class="crossword-clue-col">
+          <h3>Across</h3>
+          <ol id="acrossClues" class="crossword-clue-list"></ol>
+        </div>
+        <div class="crossword-clue-col">
+          <h3>Down</h3>
+          <ol id="downClues" class="crossword-clue-list"></ol>
+        </div>
+      </div>
+    </div>
+
+    <div id="questActions" class="sidequest-actions hidden">
+      <button id="checkAnswersBtn" type="button" class="submit-quiz-btn">Check My Answers</button>
+      <p id="questFeedback" class="sidequest-feedback"></p>
+    </div>
+
+  </div>
+
+  <div id="questRewardPopup" class="achievement-popup hidden">
+    <div class="achievement-box">
+      <div class="achievement-icon">🎉</div>
+      <h2>Side Quest Complete!</h2>
+      <h3 id="rewardTitle">Word of Faith</h3>
+      <p id="rewardText"></p>
+      <button id="rewardCloseBtn" type="button" class="submit-quiz-btn">Nice!</button>
+    </div>
+  </div>
+
+  <script type="module" src="sidequest.js"></script>
+
+</body>
+</html>

@@ -1220,6 +1220,10 @@ body {
   background: rgba(2,132,199,0.14);
 }
 
+.activity-icon[data-type="sidequest"] {
+  background: rgba(240,169,78,0.16);
+}
+
 /* ================================
    DASHBOARD PAGE (dashboard.html)
 ================================ */
@@ -3460,6 +3464,21 @@ body.teacher-page {
   animation: fadeIn 0.3s ease;
 }
 
+/* The Side Quest achievement badge's icon -- shown in the dashboard's
+   badge grid (.badge-icon, ~32px context) and in Student Review's
+   achievements row alike, so it's given its own fixed size + a small
+   "medallion" treatment rather than scaling off surrounding text like
+   .inline-icon below. */
+.sidequest-badge-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
+  object-fit: cover;
+  vertical-align: middle;
+  border: 1.5px solid rgba(251,191,36,0.5);
+  box-shadow: 0 0 10px rgba(251,191,36,0.3);
+}
+
 /* Inline replacement for an emoji glyph -- sized in em so it scales
    with whatever text it sits next to, same as a text character would.
    Bigger than 1em on purpose: these are detailed illustrated icons,
@@ -4888,4 +4907,332 @@ body.season-page {
   max-width: 640px;
   margin-left: auto;
   margin-right: auto;
+}
+
+/* Advertisement banner on dashboard.html for whichever side quest is
+   upcoming/active -- see renderSideQuestBanner(). Deliberately louder
+   than the surrounding cards (gradient + glow + pulse) since its whole
+   job is to be impossible to miss and build anticipation. */
+.sidequest-banner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: 1300px;
+  margin: 0 auto 28px;
+  padding: 18px 24px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, rgba(240,169,78,0.18), rgba(138,31,43,0.14));
+  border: 1px solid rgba(251,191,36,0.4);
+  box-shadow: 0 0 22px rgba(251,191,36,0.18);
+  animation: sidequest-banner-pulse 3.2s ease-in-out infinite;
+}
+
+@keyframes sidequest-banner-pulse {
+  0%, 100% { box-shadow: 0 0 16px rgba(251,191,36,0.15); }
+  50% { box-shadow: 0 0 28px rgba(251,191,36,0.35); }
+}
+
+.sidequest-banner-clickable {
+  cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.sidequest-banner-clickable:hover {
+  transform: translateY(-2px);
+}
+
+.sidequest-banner-icon {
+  font-size: 30px;
+  flex-shrink: 0;
+}
+
+.sidequest-banner-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sidequest-banner-kicker {
+  font-family: 'Cinzel', serif;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #FBBF24;
+}
+
+.sidequest-banner-body strong {
+  font-family: 'Cinzel', serif;
+  font-size: 16px;
+  color: #FFF3D6;
+}
+
+.sidequest-banner-sub {
+  font-size: 13px;
+  color: #D7E3F0;
+}
+
+.sidequest-banner-cta {
+  flex-shrink: 0;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 13px;
+  color: #0A0F22;
+  background: linear-gradient(180deg, #FFE9B0, #FBBF24 85%);
+  padding: 10px 18px;
+  border-radius: 10px;
+}
+
+@media (max-width: 600px) {
+  .sidequest-banner {
+    flex-wrap: wrap;
+  }
+
+  .sidequest-banner-cta {
+    width: 100%;
+    text-align: center;
+  }
+}
+
+/* ================================
+   SIDE QUEST (sidequest.html) -- crossword page. Reuses
+   body.dashboard-page's dark radial background and .achievement-popup
+   for the reward celebration; everything below is specific to the
+   crossword grid/clue layout.
+================================ */
+
+:root {
+  --cw-cell-size: 30px;
+}
+
+.sidequest-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px;
+}
+
+.sidequest-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  background: linear-gradient(135deg, rgba(86,178,187,0.1), rgba(29,34,51,0.4));
+  border: 1px solid rgba(86,178,187,0.25);
+  padding: 22px 28px;
+  border-radius: 18px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  margin-bottom: 24px;
+  flex-wrap: wrap;
+}
+
+.sidequest-crest {
+  width: 56px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.08);
+  border: 2px solid rgba(86,178,187,0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 26px;
+  box-shadow: 0 0 16px rgba(86,178,187,0.25);
+}
+
+.sidequest-header-text {
+  flex: 1;
+  min-width: 200px;
+}
+
+.sidequest-header-text h1 {
+  margin: 3px 0 2px;
+  font-family: 'Cinzel', serif;
+  font-size: 22px;
+  color: #D8FBFF;
+  text-shadow: 0 0 8px rgba(127,212,220,0.5);
+}
+
+.sidequest-header-text p {
+  margin: 0;
+  color: #9CA9C4;
+  font-size: 13.5px;
+}
+
+.sidequest-status-banner {
+  background: rgba(251,191,36,0.1);
+  border: 1px solid rgba(251,191,36,0.3);
+  color: #FFE9B0;
+  padding: 14px 20px;
+  border-radius: 14px;
+  font-size: 14px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.sidequest-play-area {
+  display: flex;
+  align-items: flex-start;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.crossword-grid-wrap {
+  flex: 2 1 500px;
+  max-width: 100%;
+  max-height: 75vh;
+  overflow: auto;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1px solid rgba(86,178,187,0.2);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+.crossword-grid {
+  display: grid;
+  gap: 1px;
+  width: max-content;
+}
+
+.crossword-cell {
+  position: relative;
+  width: var(--cw-cell-size);
+  height: var(--cw-cell-size);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.crossword-cell-blocked {
+  background: transparent;
+  border-color: transparent;
+}
+
+.crossword-cell-number {
+  position: absolute;
+  top: 1px;
+  left: 2px;
+  font-size: 8px;
+  color: #7FD4DC;
+  line-height: 1;
+  pointer-events: none;
+}
+
+.crossword-cell-input {
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  border: none;
+  outline: none;
+  text-align: center;
+  color: white;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 14px;
+  text-transform: uppercase;
+  padding: 0;
+}
+
+.crossword-cell-input:disabled {
+  color: #4ADE80;
+}
+
+.crossword-cell-active {
+  background: rgba(86,178,187,0.22);
+}
+
+.crossword-clues {
+  flex: 1 1 280px;
+  display: flex;
+  gap: 20px;
+  max-height: 75vh;
+}
+
+.crossword-clue-col {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  background: linear-gradient(135deg, #1D2233, #0A0F22);
+  border: 1px solid rgba(86,178,187,0.2);
+  border-radius: 16px;
+  padding: 16px;
+  box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+}
+
+.crossword-clue-col h3 {
+  margin: 0 0 10px;
+  font-family: 'Cinzel', serif;
+  font-size: 14px;
+  color: #D8FBFF;
+}
+
+.crossword-clue-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.crossword-clue-list li {
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #D7E3F0;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 6px;
+}
+
+.crossword-clue-list li:hover {
+  background: rgba(255,255,255,0.06);
+}
+
+.crossword-clue-list li strong {
+  color: #FBBF24;
+}
+
+.crossword-clue-length {
+  color: #7C8AAE;
+  font-size: 11px;
+}
+
+.crossword-clue-active {
+  background: rgba(86,178,187,0.18);
+}
+
+.sidequest-actions {
+  margin-top: 24px;
+  text-align: center;
+}
+
+.sidequest-feedback {
+  margin-top: 10px;
+  color: #9CA9C4;
+  font-size: 13.5px;
+}
+
+@media (max-width: 700px) {
+  :root {
+    --cw-cell-size: 26px;
+  }
+
+  .sidequest-play-area {
+    flex-direction: column;
+  }
+
+  .crossword-grid-wrap,
+  .crossword-clues {
+    flex-basis: auto;
+    width: 100%;
+  }
+
+  .crossword-clues {
+    max-height: none;
+    flex-direction: column;
+  }
+
+  .crossword-clue-col {
+    max-height: 260px;
+  }
 }

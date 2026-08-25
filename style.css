@@ -303,23 +303,6 @@ body {
   transform: translateY(-1px);
 }
 
-/* .dm-back-btn's default colors (light text/border) are built for
-   teacher.html's dark theme -- dashboard.html's header is light, so it
-   needs the same dark-navy palette as its logout/music buttons here or
-   the light text would be nearly invisible against the white header. */
-.portal-header .dm-back-btn {
-  border-color: #1D2233;
-  color: #1D2233;
-  background: transparent;
-}
-
-.portal-header .dm-back-btn:hover {
-  background: #56B2BB;
-  border-color: #56B2BB;
-  color: white;
-  box-shadow: none;
-}
-
 .music-toggle-btn {
   display: inline-flex;
   align-items: center;

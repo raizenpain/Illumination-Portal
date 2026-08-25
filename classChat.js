@@ -84,7 +84,7 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     </div>
     <div class="chat-input-row">
       <button type="button" class="chat-emoji-btn" id="chatEmojiBtn" aria-label="Insert emoji">😊</button>
-      <input type="text" class="chat-input" id="chatInput" placeholder="Message your class…" maxlength="${MAX_LENGTH}">
+      <textarea class="chat-input" id="chatInput" placeholder="Message your class…" maxlength="${MAX_LENGTH}" rows="1"></textarea>
       <button type="button" class="chat-send-btn" id="chatSendBtn">Send</button>
     </div>
   `;
@@ -113,6 +113,7 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
   emojiPicker.querySelectorAll('.chat-emoji-option').forEach((btn) => {
     btn.addEventListener('click', () => {
       inputEl.value += btn.textContent;
+      autoGrowInput();
       inputEl.focus();
       emojiPicker.classList.remove('open');
     });
@@ -268,6 +269,7 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
       reported: false
     }).then(() => {
       inputEl.value = '';
+      autoGrowInput();
     }).catch((err) => {
       console.error('Failed to send class chat message:', err);
       showError('Could not send that message — try again.');
@@ -278,9 +280,25 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     });
   }
 
+  // Grows the textarea with its content (up to the CSS max-height,
+  // which then scrolls internally) instead of a single line that just
+  // scrolls horizontally out of view as you type -- resetting to
+  // 'auto' first is what lets scrollHeight shrink back down too, not
+  // just grow.
+  function autoGrowInput() {
+    inputEl.style.height = 'auto';
+    inputEl.style.height = `${inputEl.scrollHeight}px`;
+  }
+
   sendBtn.addEventListener('click', send);
+  inputEl.addEventListener('input', autoGrowInput);
   inputEl.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') send();
+    // Enter sends; Shift+Enter inserts a real newline, same convention
+    // as most chat apps.
+    if (event.key === 'Enter' && !event.shiftKey) {
+      event.preventDefault();
+      send();
+    }
   });
 
   // Switches the live room the panel is subscribed to -- used once at

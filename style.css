@@ -4585,6 +4585,7 @@ body.season-page {
   line-height: 1.4;
   color: #D7E3F0;
   overflow-wrap: break-word;
+  white-space: pre-wrap;
 }
 
 .msg.me .msg-bubble {
@@ -4633,6 +4634,7 @@ body.season-page {
 .chat-input-row {
   flex-shrink: 0;
   display: flex;
+  align-items: flex-end;
   gap: 8px;
   padding: 10px 12px;
   border-top: 1px solid rgba(255,255,255,0.08);
@@ -4703,6 +4705,11 @@ body.season-page {
   color: white;
   font-size: 12.5px;
   font-family: inherit;
+  line-height: 1.4;
+  resize: none;
+  min-height: 38px;
+  max-height: 120px;
+  overflow-y: auto;
 }
 
 .chat-input::placeholder {

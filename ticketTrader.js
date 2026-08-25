@@ -28,7 +28,7 @@ export const TICKET_INFO = {
   task_ticket: { icon: '🎯', label: 'Seal of Diligence' },
   journal_ticket: { icon: '📖', label: 'Scroll of Reflection' },
   recitation_ticket: { icon: '🗣️', label: "Herald's Voice" },
-  scrap_ticket: { icon: '♻️', label: 'Ember Shard' }
+  scrap_ticket: { icon: '<img src="assets/ember-shard.png" class="inline-icon" alt="">', label: 'Ember Shard' }
 };
 
 const TRADEABLE_TYPES = ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket'];
@@ -85,7 +85,7 @@ function renderWallet(walletEl, studentData) {
   const tokenSlot = document.createElement('div');
   tokenSlot.className = 'ticket-slot ticket-slot-token';
   tokenSlot.title = 'Artifact Unlock Tokens';
-  tokenSlot.innerHTML = `<span class="ticket-slot-icon">🪙</span><span class="ticket-slot-count">${tokens}</span>`;
+  tokenSlot.innerHTML = `<span class="ticket-slot-icon"><img src="assets/unlock-token.png" class="inline-icon" alt=""></span><span class="ticket-slot-count">${tokens}</span>`;
   walletEl.appendChild(tokenSlot);
 }
 
@@ -140,7 +140,7 @@ function renderTraderModal() {
 
   // --- Scrap ---
   const scrapCount = tickets.scrap_ticket || 0;
-  document.getElementById('sixScrapInputLabel').textContent = `♻️ ${Math.min(scrapCount, SCRAP_COUNT)}/${SCRAP_COUNT}`;
+  document.getElementById('sixScrapCount').textContent = `${Math.min(scrapCount, SCRAP_COUNT)}/${SCRAP_COUNT}`;
 
   const sixScrapBtn = document.getElementById('sixScrapTradeBtn');
   sixScrapBtn.disabled = scrapCount < SCRAP_COUNT;

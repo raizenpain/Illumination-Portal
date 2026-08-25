@@ -246,9 +246,9 @@ function buildArtifactCard(a, tier) {
   } else if (state.kind === 'chain-locked') {
     statusHtml = `<span class="artifact-status-badge">🔒 Unlock earlier tier first</span>`;
   } else if (state.kind === 'need-tokens') {
-    statusHtml = `<span class="artifact-status-badge">Need ${state.cost}🪙</span>`;
+    statusHtml = `<span class="artifact-status-badge">Need ${state.cost}<img src="assets/unlock-token.png" class="inline-icon" alt=""></span>`;
   } else if (state.kind === 'buyable') {
-    statusHtml = `<button type="button" class="submit-quiz-btn artifact-buy-btn" data-artifact-id="${a.id}" data-tier="${tier}">Buy · ${state.cost}🪙</button>`;
+    statusHtml = `<button type="button" class="submit-quiz-btn artifact-buy-btn" data-artifact-id="${a.id}" data-tier="${tier}">Buy · ${state.cost}<img src="assets/unlock-token.png" class="inline-icon" alt=""></button>`;
   }
 
   card.innerHTML = `

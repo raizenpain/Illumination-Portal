@@ -3417,6 +3417,31 @@ body.teacher-page {
   animation: fadeIn 0.3s ease;
 }
 
+/* Inline replacement for an emoji glyph -- sized in em so it scales
+   with whatever text it sits next to, same as a text character would.
+   Bigger than 1em on purpose: these are detailed illustrated icons,
+   not simple glyphs, and read poorly at plain text size. */
+.inline-icon {
+  width: 1.3em;
+  height: 1.3em;
+  vertical-align: -0.3em;
+  object-fit: contain;
+}
+
+/* Ticket Trader specifically needs bigger icons still -- fixed px so
+   they don't shrink along with the (fairly small) row/slot text. */
+.trade-output .inline-icon,
+.trade-input .inline-icon {
+  width: 24px;
+  height: 24px;
+  vertical-align: -6px;
+}
+
+.ticket-slot-icon .inline-icon {
+  width: 28px;
+  height: 28px;
+}
+
 .hidden {
   display: none;
 }

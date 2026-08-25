@@ -158,7 +158,10 @@ function addRow(container, label, value) {
   row.className = 'student-view-progress-row';
 
   const labelEl = document.createElement('span');
-  labelEl.textContent = label;
+  // innerHTML, not textContent: labels here can carry a trusted
+  // <img class="inline-icon"> from TICKET_INFO/PRELIM_BADGE_INFO --
+  // always internal constants, never student-supplied text.
+  labelEl.innerHTML = label;
 
   const valueEl = document.createElement('span');
   valueEl.textContent = value;
@@ -178,7 +181,7 @@ function renderTickets(data) {
     addRow(container, `${info.icon} ${info.label}`, tickets[type] || 0);
   });
 
-  addRow(container, '🔓 Unlock Tokens', data.unlockTokens || 0);
+  addRow(container, '<img src="assets/unlock-token.png" class="inline-icon" alt=""> Unlock Tokens', data.unlockTokens || 0);
 }
 
 function renderArtifacts(data) {

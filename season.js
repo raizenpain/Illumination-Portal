@@ -8,20 +8,13 @@ import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
 import { containsBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
 import { getRankProgress, getSeasonStars, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
+import { TICKET_INFO } from './ticketTrader.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
 
 const params = new URLSearchParams(window.location.search);
 const seasonId = params.get('season');
-
-const TICKET_INFO = {
-  quiz_ticket: { icon: '📝', label: 'Sigil of Insight' },
-  task_ticket: { icon: '🎯', label: 'Seal of Diligence' },
-  journal_ticket: { icon: '📖', label: 'Scroll of Reflection' },
-  recitation_ticket: { icon: '🗣️', label: "Herald's Voice" },
-  scrap_ticket: { icon: '♻️', label: 'Ember Shard' }
-};
 
 const NODE_TYPE_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️', identification: '🔍' };
 const NODE_TYPE_HEADING_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️', identification: '🔍' };

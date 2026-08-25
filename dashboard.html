@@ -29,6 +29,7 @@
       <span class="portal-tagline-bold">at Holy Cross of Davao College!</span>
     </a>
 
+    <button id="dungeonMasterBtn" class="dm-back-btn hidden" type="button" onclick="window.location.href='teacher.html'">🐉 Dungeon Master</button>
     <button id="musicToggleBtn" class="music-toggle-btn" type="button" aria-pressed="false" title="Mute background music">🔊</button>
     <button id="logoutBtn" class="logout-btn">Sign Out</button>
   </header>
@@ -385,6 +386,15 @@ import { initDashboardMusic } from './dashboardMusic.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
+
+// login.html sends an admin straight to teacher.html on sign-in, but
+// an admin can still end up here (previewing the dashboard as a
+// student would see it) -- give them a one-click way back to the
+// Dungeon Master console instead of having to edit the URL by hand.
+// Students never see this at all.
+if (isSeasonPreviewAdmin) {
+  document.getElementById('dungeonMasterBtn').classList.remove('hidden');
+}
 
 const studentRef = doc(db, 'students', email);
 let studentData = {};

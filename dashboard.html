@@ -584,12 +584,12 @@ function renderSideQuestBanner(data) {
         <div class="sidequest-banner-icon">✅</div>
         <div class="sidequest-banner-body">
           <span class="sidequest-banner-kicker">Side Quest</span>
-          <strong>${quest.title} — Completed!</strong>
-          <span class="sidequest-banner-sub">Tap to revisit your finished puzzle.</span>
+          <strong>${quest.title}</strong>
+          <span class="sidequest-banner-sub">${quest.completedCta || 'Tap to revisit what you found.'}</span>
         </div>
       `;
       banner.classList.add('sidequest-banner-clickable');
-      banner.onclick = () => { window.location.href = `sidequest.html?quest=${quest.id}`; };
+      banner.onclick = () => { window.location.href = `${quest.page}?quest=${quest.id}`; };
     } else {
       banner.innerHTML = `
         <div class="sidequest-banner-icon">🔥</div>
@@ -601,7 +601,7 @@ function renderSideQuestBanner(data) {
         <div class="sidequest-banner-cta">Play Now →</div>
       `;
       banner.classList.add('sidequest-banner-clickable');
-      banner.onclick = () => { window.location.href = `sidequest.html?quest=${quest.id}`; };
+      banner.onclick = () => { window.location.href = `${quest.page}?quest=${quest.id}`; };
     }
   }
 

@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Quiet Shore | HCDC Illumination Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="clickSound.js"></script>
+</head>
+<body class="dashboard-page sidequest-page">
+
+  <div class="sidequest-container">
+
+    <div class="sidequest-header">
+      <div class="sidequest-crest">🎣</div>
+      <div class="sidequest-header-text">
+        <span class="info-label">Side Quest</span>
+        <h1 id="questTitle">Loading…</h1>
+        <p id="questSubtitle"></p>
+      </div>
+      <button class="dm-back-btn" onclick="window.location.href='dashboard.html'">&larr; Dashboard</button>
+    </div>
+
+    <p id="questStatusBanner" class="sidequest-status-banner hidden"></p>
+
+    <div id="shoreArea" class="shore-area hidden">
+
+      <div class="shore-main">
+        <div class="shore-bait-row">
+          <span class="shore-bait-label">🪱 Bait</span>
+          <span id="baitCount" class="shore-bait-count">0</span>
+        </div>
+
+        <div class="shore-water">
+          <div id="shoreStatusText" class="shore-status-text">The water is calm</div>
+          <div id="shoreStatusHint" class="shore-status-hint">Cast your line to start</div>
+
+          <div id="reelTrack" class="reel-track hidden">
+            <div id="reelMarker" class="reel-marker"></div>
+            <div id="reelBar" class="reel-bar"></div>
+          </div>
+          <div id="reelMeterWrap" class="reel-meter-wrap hidden">
+            <div id="reelMeterFill" class="reel-meter-fill"></div>
+          </div>
+
+          <button id="actionBtn" type="button" class="submit-quiz-btn shore-action-btn">Cast Line</button>
+        </div>
+      </div>
+
+      <div class="shore-collections">
+        <div class="teacher-panel">
+          <h2>🐟 The Pond</h2>
+          <div id="pondList" class="pond-list"></div>
+        </div>
+
+        <div class="teacher-panel">
+          <h2>🕯️ The Reliquary</h2>
+          <div id="reliquaryList" class="reliquary-list"></div>
+        </div>
+      </div>
+
+    </div>
+
+  </div>
+
+  <div id="choiceModal" class="achievement-popup hidden">
+    <div class="achievement-box">
+      <div class="achievement-icon">🎣</div>
+      <h2>A Great Carp!</h2>
+      <p>Choose which ticket to receive:</p>
+      <div id="choiceButtons" class="shore-choice-buttons"></div>
+    </div>
+  </div>
+
+  <div id="catchPopup" class="achievement-popup hidden">
+    <div class="achievement-box" id="catchBox">
+      <div class="achievement-icon" id="catchIcon">🐟</div>
+      <h2 id="catchHeading">Landed a fish!</h2>
+      <h3 id="catchTitle"></h3>
+      <p id="catchText"></p>
+      <div id="catchTickets" class="shore-catch-tickets"></div>
+      <button id="catchCloseBtn" type="button" class="submit-quiz-btn">Cast Again</button>
+    </div>
+  </div>
+
+  <script type="module" src="sidequest-fishing.js"></script>
+
+</body>
+</html>

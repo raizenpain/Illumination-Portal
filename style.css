@@ -4997,7 +4997,7 @@ body.season-page {
 }
 
 /* ================================
-   SIDE QUEST (sidequest.html) -- crossword page. Reuses
+   SIDE QUEST (sidequest-crossword.html) -- crossword page. Reuses
    body.dashboard-page's dark radial background and .achievement-popup
    for the reward celebration; everything below is specific to the
    crossword grid/clue layout.

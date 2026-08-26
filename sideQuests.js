@@ -18,7 +18,7 @@ export const SIDE_QUESTS = {
   crossword_fiesta_2026: {
     id: 'crossword_fiesta_2026',
     kind: 'crossword',
-    page: 'sidequest.html',
+    page: 'sidequest-crossword.html',
     icon: '<img src="assets/sidequest-badge.png" class="sidequest-badge-icon" alt="">',
     title: 'Word of Faith',
     subtitle: "A crossword built from everything you've learned so far — HCDC's Fiesta Novena begins here.",
@@ -121,6 +121,46 @@ export const SIDE_QUESTS = {
       legendary: 'A legendary catch.',
       onHookObject: 'Something rests in the net — press and hold!', onHookObjectHint: 'Keep holding to bring it in — let go and it slips away',
       noBait: 'No bait left — come back for the next Side Quest.'
+    }
+  },
+
+  illumination_2026: {
+    id: 'illumination_2026',
+    kind: 'illumination',
+    page: 'sidequest-illumination.html',
+    icon: '🏮',
+    title: 'Illumination',
+    subtitle: 'A 2D adventure of light and discovery — hold your lantern high and climb toward the tower.',
+    completedCta: 'Tap to walk the path again.',
+    startsAt: '2026-09-09T00:00:00+08:00',
+    endsAt: '2026-09-13T23:59:59+08:00',
+    // Two separate one-time grants, additive: collecting all 6 shards pays
+    // out shardsReward once; reaching the Beacon (at all, regardless of
+    // shard count) pays out beaconReward once. A full run nets both.
+    shardsReward: { quiz_ticket: 4, task_ticket: 4, journal_ticket: 4, recitation_ticket: 4, scrap_ticket: 4 },
+    beaconReward: { quiz_ticket: 6, task_ticket: 6, journal_ticket: 6, recitation_ticket: 6, scrap_ticket: 6 },
+    // Short reflections shown the moment each shard is picked up (own
+    // phrasing, not verbatim Catechism/Scripture citations beyond the
+    // short attributed Bible verses) -- and one longer reflection shown
+    // once the Beacon is reached, tying the game's light/dark theme to
+    // the Church's own old name for Baptism: "Illumination."
+    shardReflections: [
+      { verse: '"The people who walked in darkness have seen a great light." — Isaiah 9:2',
+        note: 'Every act of faith starts as a small flame — small enough to fit in one hand, but strong enough to take the first step.' },
+      { verse: '"Your word is a lamp for my feet and a light for my path." — Psalm 119:105',
+        note: "God rarely shows the whole road at once. He shows enough of it for the next step — and then the next." },
+      { verse: '"The light shines in the darkness, and the darkness has not overcome it." — John 1:5',
+        note: 'The dark parts of life — grief, doubt, a hard season — were never stronger than the light. They only look that way up close.' },
+      { verse: '"Even the darkness is not dark to you; the night is as bright as the day." — Psalm 139:12',
+        note: "God isn't waiting on the other side of your darkest season for you to arrive. He's already walking through it with you." },
+      { verse: '"You, Lord, keep my lamp burning; my God turns my darkness into light." — Psalm 18:28',
+        note: "The oil runs low because the walk is hard, not because you're doing it wrong. It gets refilled — that's the whole point of the lamps along the way." },
+      { verse: '"I am the light of the world. Whoever follows me will never walk in darkness." — John 8:12',
+        note: "Six shards in, the lantern reaches further — not because the dark got smaller, but because you're carrying more of the light now." }
+    ],
+    beaconReflection: {
+      heading: 'The Beacon Is Lit',
+      text: "You crossed the whole valley in the dark, one small circle of lantern-light at a time — and the tower was there waiting the entire way.\n\nThat isn't only how this game works. From the earliest days of the Church, the moment a person is baptized has been called \"Illumination\" — the point where someone stops merely holding on to a light from the outside, and starts being lit up by one from within.\n\nThe darkness doesn't fully disappear — not in this game, and not in life. Grief still comes. Doubt still comes. Seasons still come that make no sense while you're inside them. But none of it gets the last word: \"The light shines in the darkness, and the darkness has not overcome it.\" (John 1:5)\n\nWhatever quagmire you're walking through right now, you are not walking through it alone, and you are not walking toward nothing. There is a light on the other side of it — and it was never one you had to make yourself."
     }
   }
 };

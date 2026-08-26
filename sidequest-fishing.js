@@ -399,8 +399,8 @@ async function resolveFishCatch() {
   addToPond(species.id, weightKg, band);
 
   if (band === 'undersized') {
-    showToast(quest.copy.undersized);
-    setIdle();
+    renderCollections();
+    showCatchPopup({ kind: 'fish', species, weightKg, band, tickets: {} });
     return;
   }
 
@@ -508,12 +508,6 @@ async function grantAndShow(result) {
 // REVEAL + COLLECTIONS
 // ================================
 
-function showToast(text) {
-  statusTextEl.textContent = text;
-  statusHintEl.textContent = '';
-  setTimeout(setIdle, 1400);
-}
-
 function showCatchPopup(result) {
   const ticketChips = Object.entries(result.tickets)
     .map(([type, qty]) => `<span class="shore-ticket-chip">+${qty} ${TICKET_LABELS[type] || type}</span>`)
@@ -528,11 +522,14 @@ function showCatchPopup(result) {
     catchTextEl.textContent = result.object.text;
   } else {
     catchBox.classList.remove('shore-catch-object');
-    const label = result.band === 'legendary' ? quest.copy.legendary : result.band === 'trophy' ? quest.copy.trophy : 'Landed it!';
+    const label = result.band === 'legendary' ? quest.copy.legendary
+      : result.band === 'trophy' ? quest.copy.trophy
+      : result.band === 'undersized' ? 'You caught something!'
+      : 'Landed it!';
     catchIcon.textContent = '🐟';
     catchHeading.textContent = label;
     catchTitleEl.textContent = `${result.species.name} — ${result.weightKg} kg`;
-    catchTextEl.textContent = result.species.verse;
+    catchTextEl.textContent = result.band === 'undersized' ? quest.copy.undersizedPopup : result.species.verse;
   }
 
   catchPopup.classList.remove('hidden');

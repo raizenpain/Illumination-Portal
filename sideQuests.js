@@ -116,7 +116,7 @@ export const SIDE_QUESTS = {
       tooEarly: 'You reeled in too early. Nothing there.',
       missedHook: 'It slipped the hook.',
       lost: 'The line went slack. It got away.',
-      undersized: 'Too small. Back it goes.',
+      undersizedPopup: "Nice catch! It's a bit small to keep — cast again for a bigger one.",
       trophy: 'A trophy catch.',
       legendary: 'A legendary catch.',
       onHookObject: 'Something rests in the net — press and hold!', onHookObjectHint: 'Keep holding to bring it in — let go and it slips away',

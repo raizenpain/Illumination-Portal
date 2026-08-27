@@ -404,11 +404,14 @@ let studentData = {};
 
 initDashboardMusic('musicToggleBtn');
 
-// One Ember Shard per calendar day (UTC), the first time a student
-// opens the dashboard that day — not per refresh/visit, otherwise a
-// student could just mash F5 to farm unlimited Unlock Tokens.
+// One Ember Shard per calendar day (Philippine time), the first time a
+// student opens the dashboard that day — not per refresh/visit, otherwise
+// a student could just mash F5 to farm unlimited Unlock Tokens. Must use
+// Asia/Manila, not raw UTC -- UTC's day boundary falls at 8am Philippine
+// time, which would wrongly deny an early-morning visit its shard if the
+// previous day's shard was already claimed the night before.
 async function awardDailyVisitShard(data) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
   if (data.lastVisitRewardDate === today) return;
 
   try {

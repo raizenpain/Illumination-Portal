@@ -139,7 +139,9 @@ export async function initLeaderboard(info) {
 }
 
 async function awardTop5Reward(info) {
-  const today = new Date().toISOString().slice(0, 10);
+  // Philippine time, not raw UTC -- see the matching fix + comment on
+  // awardDailyVisitShard() in dashboard.html for why this matters.
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
   if (info.lastTop5RewardDate === today) return;
 
   try {

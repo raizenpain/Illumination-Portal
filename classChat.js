@@ -29,6 +29,7 @@
 
 import { db, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, getDocs, serverTimestamp } from './firebase.js';
 import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
+import { maybePostDailyGreeting } from './dailyGreeting.js';
 
 const MAX_MESSAGES = 50;
 const MAX_LENGTH = 500;
@@ -163,6 +164,14 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     messagesEl.innerHTML = '';
     // latestMessages arrives newest-first (query order); render oldest-first.
     [...latestMessages].reverse().forEach((msg) => {
+      if (msg.type === 'greeting') {
+        const greetingEl = document.createElement('div');
+        greetingEl.className = 'msg-greeting';
+        greetingEl.textContent = msg.text;
+        messagesEl.appendChild(greetingEl);
+        return;
+      }
+
       const isMe = msg.senderEmail === email;
 
       const row = document.createElement('div');
@@ -316,6 +325,8 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     titleEl.textContent = nextSection;
     latestMessages = [];
     messagesEl.innerHTML = '<p class="chat-empty">Loading…</p>';
+
+    maybePostDailyGreeting({ teacherEmail: nextTeacherEmail, section: nextSection, email, name });
 
     const chatQuery = query(
       collection(db, 'classChatMessages'),

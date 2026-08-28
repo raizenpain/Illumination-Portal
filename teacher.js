@@ -23,6 +23,7 @@ import { getRankProgress } from './rank.js';
 import { initSeasonEditor } from './seasonEditor.js';
 import { getOfferingsForTeacher } from './classOfferings.js';
 import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
+import { maybePostDailyGreeting } from './dailyGreeting.js';
 
 const UNASSIGNED_KEY = '__unassigned__';
 
@@ -633,14 +634,20 @@ if (user) {
     docs.forEach((docSnap) => {
       const msg = docSnap.data();
 
+      const isGreeting = msg.type === 'greeting';
+
       const card = document.createElement('div');
-      card.className = 'student-view-submission-card chat-log-entry' + (msg.reported ? ' reported' : '');
+      card.className = 'student-view-submission-card chat-log-entry' + (msg.reported ? ' reported' : '') + (isGreeting ? ' chat-log-greeting' : '');
 
       const header = document.createElement('div');
       header.className = 'student-view-submission-header';
 
       const title = document.createElement('strong');
-      title.textContent = msg.senderName || msg.senderEmail || 'Unknown';
+      // A daily greeting is technically posted under whichever real
+      // account happened to open the chat first that day (see
+      // dailyGreeting.js) -- shown here as its own system label
+      // instead of that (effectively random) name.
+      title.textContent = isGreeting ? '🌅 Daily Greeting' : (msg.senderName || msg.senderEmail || 'Unknown');
       if (msg.reported) {
         const tag = document.createElement('span');
         tag.className = 'chat-log-entry-reported-tag';
@@ -704,6 +711,8 @@ if (user) {
     showChatLogError('');
     chatLogInput.value = '';
     classChatLogModal.classList.remove('hidden');
+
+    maybePostDailyGreeting({ teacherEmail, section, email, name });
 
     chatLogCloseBtn.onclick = closeChatLog;
 

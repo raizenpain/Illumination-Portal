@@ -4657,6 +4657,20 @@ body.season-page {
   color: white;
 }
 
+.msg-greeting {
+  align-self: center;
+  max-width: 92%;
+  margin: 4px 0 10px;
+  padding: 9px 16px;
+  border-radius: 14px;
+  background: rgba(251,191,36,0.10);
+  border: 1px solid rgba(251,191,36,0.28);
+  color: #FFE9B0;
+  font-size: 12px;
+  line-height: 1.5;
+  text-align: center;
+}
+
 .msg-report-btn {
   background: transparent;
   border: none;
@@ -4856,6 +4870,15 @@ body.season-page {
 .chat-log-entry.reported {
   border-left-color: #F87171;
   background: rgba(248,113,113,0.06);
+}
+
+.chat-log-entry.chat-log-greeting {
+  border-left-color: rgba(251,191,36,0.5);
+  background: rgba(251,191,36,0.05);
+}
+
+.chat-log-entry.chat-log-greeting strong {
+  color: #FBBF24;
 }
 
 .chat-log-entry-reported-tag {

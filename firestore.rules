@@ -168,16 +168,21 @@ service cloud.firestore {
       // roster view. Message text itself is trusted here (already run
       // through contentFilter.js client-side before this call) --
       // this rule guards the shape/attribution, not the content.
+      // 'type' is optional and, when present, may only be 'greeting' --
+      // the one system-styled message kind (see dailyGreeting.js),
+      // still attributed to the real posting account above, just
+      // rendered differently client-side.
       allow create: if request.auth != null &&
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                        request.resource.data.senderEmail == request.auth.token.email &&
                        request.resource.data.keys().hasOnly(
-                         ['senderEmail', 'senderName', 'teacherEmail', 'section', 'text', 'timestamp', 'reported']
+                         ['senderEmail', 'senderName', 'teacherEmail', 'section', 'text', 'timestamp', 'reported', 'type']
                        ) &&
                        request.resource.data.text is string &&
                        request.resource.data.text.size() > 0 &&
                        request.resource.data.text.size() <= 500 &&
                        request.resource.data.reported == false &&
+                       (!('type' in request.resource.data) || request.resource.data.type == 'greeting') &&
                        (isAdmin() || isInCallerClass(request.resource.data));
 
       // Report-only: the one allowed change after a message exists.
@@ -195,6 +200,28 @@ service cloud.firestore {
       // delete, matching the "nothing vanishes before a teacher sees
       // it" policy.
       allow delete: if isAdmin();
+    }
+
+    // One tiny tracking doc per class room (id: `${teacherEmail}__${section}`),
+    // holding only the date the daily greeting was last posted there --
+    // see dailyGreeting.js. Whoever opens that room's chat first each
+    // day both reads and writes this inside a transaction, so it needs
+    // the same class-membership check as the messages themselves.
+    match /classChatGreetings/{roomId} {
+      allow read: if request.auth != null &&
+                     (isAdmin() || isInCallerClass(resource.data));
+
+      allow create: if request.auth != null &&
+                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                       request.resource.data.keys().hasOnly(['teacherEmail', 'section', 'lastDate']) &&
+                       request.resource.data.lastDate is string &&
+                       (isAdmin() || isInCallerClass(request.resource.data));
+
+      allow update: if request.auth != null &&
+                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastDate']) &&
+                       request.resource.data.lastDate is string &&
+                       (isAdmin() || isInCallerClass(resource.data));
     }
 
     // Everything else — denied by default

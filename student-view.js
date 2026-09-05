@@ -16,7 +16,7 @@ import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
 import { getRankProgress } from './rank.js';
 import { TICKET_INFO } from './ticketTrader.js';
-import { findArtifact, tierOfArtifact, TIERS } from './artifacts.js';
+import { findArtifact, tierOfArtifact, TIERS, artifactIconPath, chainForTier5 } from './artifacts.js';
 import { PRELIM_BADGE_INFO } from './prelimBadges.js';
 import { resolveSeasonBadge } from './seasonBadges.js';
 import { SIDE_QUESTS, resolveSideQuestBadge } from './sideQuests.js';
@@ -191,18 +191,76 @@ function renderArtifacts(data) {
   container.innerHTML = '';
 
   const owned = data.ownedArtifacts || [];
+  const chosen = data.chosenLegendaryChain;
+  const chainInfo = chosen ? chainForTier5(chosen) : null;
+
+  const chainHeading = document.createElement('p');
+  chainHeading.className = 'student-view-chain-heading';
+  chainHeading.innerHTML = chainInfo
+    ? `Pursuing: <strong>${chainInfo.tier5Name}</strong>`
+    : 'No Legendary chain chosen yet.';
+  container.appendChild(chainHeading);
+
+  if (chainInfo) {
+    const fullChain = [...chainInfo.chain, chosen]; // 4 prerequisites + the legendary itself
+    const row = document.createElement('div');
+    row.className = 'crafting-chain-row';
+
+    fullChain.forEach((id, i) => {
+      const artifactOwned = owned.includes(id);
+      const artifact = findArtifact(id);
+
+      const node = document.createElement('div');
+      node.className = `crafting-chain-node ${artifactOwned ? 'state-owned' : 'state-pending'}`;
+      node.title = artifact ? artifact.name : id;
+      node.innerHTML = `
+        <div class="crafting-chain-icon-frame"><img src="${artifactIconPath(id)}" alt=""></div>
+        <span class="crafting-chain-label">${artifact ? artifact.name : id}</span>
+      `;
+      row.appendChild(node);
+
+      if (i < fullChain.length - 1) {
+        const connector = document.createElement('div');
+        connector.className = `crafting-chain-connector${artifactOwned ? ' is-lit' : ''}`;
+        row.appendChild(connector);
+      }
+    });
+
+    container.appendChild(row);
+  }
+
+  const ownedHeading = document.createElement('h4');
+  ownedHeading.className = 'artifact-tier-heading student-view-owned-heading';
+  ownedHeading.textContent = `All Artifacts Owned (${owned.length})`;
+  container.appendChild(ownedHeading);
 
   if (owned.length === 0) {
-    container.innerHTML = '<p>No artifacts crafted yet.</p>';
+    const empty = document.createElement('p');
+    empty.textContent = 'No artifacts crafted yet.';
+    container.appendChild(empty);
     return;
   }
+
+  const grid = document.createElement('div');
+  grid.className = 'artifact-grid artifact-grid-compact';
 
   owned.forEach((id) => {
     const artifact = findArtifact(id);
     const tier = tierOfArtifact(id);
     const tierInfo = TIERS.find((t) => t.tier === tier);
-    addRow(container, artifact ? artifact.name : id, tierInfo ? tierInfo.name : '—');
+
+    const card = document.createElement('div');
+    card.className = 'artifact-card state-owned';
+    if (tierInfo) card.style.setProperty('--tier-accent', tierInfo.accent);
+    card.innerHTML = `
+      <div class="artifact-icon-frame"><img src="${artifactIconPath(id)}" alt=""></div>
+      <div class="artifact-name">${artifact ? artifact.name : id}</div>
+      <span class="artifact-status-badge">${tierInfo ? tierInfo.name : '—'}</span>
+    `;
+    grid.appendChild(card);
   });
+
+  container.appendChild(grid);
 }
 
 function renderAchievements(data) {

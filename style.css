@@ -2588,6 +2588,56 @@ body.teacher-page {
   border-bottom: none;
 }
 
+/* Crafting sub-section of the Artifacts panel -- reuses crafting.js's
+   own .crafting-chain-row/.artifact-grid classes (same visual
+   language as the dashboard) rather than inventing new ones, just in
+   read-only form (no buy buttons/lock states, only owned/pending). */
+.student-view-chain-heading {
+  margin: 0 0 4px;
+  color: #9CA9C4;
+  font-size: 14px;
+}
+
+.student-view-chain-heading strong {
+  color: #FBBF24;
+}
+
+.student-view-owned-heading {
+  margin-top: 20px;
+}
+
+/* The dashboard's chain row is sized (with text labels) for a much
+   wider main column and scrolls horizontally there -- doesn't fit
+   this panel's narrower width even shrunk, so the label is dropped
+   here (the artifact's name is already in the grid right below;
+   hover/tap still gets it via the node's title attribute) and the
+   icon-only row is sized to actually fit without scrolling. */
+#artifactsList .crafting-chain-row {
+  overflow-x: visible;
+  flex-wrap: nowrap;
+  padding: 6px 0 4px;
+}
+
+#artifactsList .crafting-chain-node {
+  width: 36px;
+  gap: 0;
+}
+
+#artifactsList .crafting-chain-label {
+  display: none;
+}
+
+#artifactsList .crafting-chain-icon-frame {
+  width: 36px;
+  height: 36px;
+}
+
+#artifactsList .crafting-chain-connector {
+  min-width: 6px;
+  flex: 1 1 6px;
+  margin-top: 17px;
+}
+
 .student-view-submission-card {
   background: rgba(255,255,255,0.03);
   border: 1px solid rgba(255,255,255,0.1);

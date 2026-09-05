@@ -3542,6 +3542,241 @@ body.teacher-page {
   color: #D7E3F0;
 }
 
+/* ============================================
+   TREASURE REVEAL — the "open the treasure" moment shown by
+   treasureReveal.js on Side Quest completion (crossword, fishing's
+   first/rare catches, Illumination's shard-set + beacon). Built and
+   injected at call time, not hand-authored per page -- these classes
+   are its whole visual contract. Deliberately bigger than the plain
+   .achievement-box above per Jornie's call: this should read as a big
+   deal, not a routine popup. */
+.treasure-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,7,15,0.86);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  animation: fadeIn 0.35s ease;
+}
+
+.treasure-box {
+  width: min(560px, calc(100% - 32px));
+  max-height: calc(100vh - 48px);
+  overflow-y: auto;
+  background: linear-gradient(160deg, #1D2233 0%, #0A0F22 100%);
+  border: 2px solid #FBBF24;
+  border-radius: 28px;
+  padding: 36px 32px 32px;
+  text-align: center;
+  color: white;
+  box-shadow: 0 0 0 1px rgba(251,191,36,0.15), 0 30px 70px rgba(0,0,0,0.55), 0 0 80px rgba(251,191,36,0.12);
+  animation: popupScale 0.4s cubic-bezier(.2,.9,.3,1.2);
+  box-sizing: border-box;
+}
+
+.treasure-kicker {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FBBF24;
+  margin: 0 0 14px;
+}
+
+.treasure-stage {
+  position: relative;
+  width: 260px;
+  height: 260px;
+  margin: 0 auto 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.treasure-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(251,191,36,0.55) 0%, rgba(251,191,36,0.18) 40%, transparent 72%);
+  animation: treasureGlowPulse 2.6s ease-in-out infinite;
+  filter: blur(2px);
+}
+
+@keyframes treasureGlowPulse {
+  0%, 100% { transform: scale(0.92); opacity: 0.7; }
+  50% { transform: scale(1.08); opacity: 1; }
+}
+
+.treasure-icon-frame {
+  position: relative;
+  width: 196px;
+  height: 196px;
+  border-radius: 20px;
+  overflow: hidden;
+  box-shadow: 0 0 0 3px rgba(251,191,36,0.55), 0 0 40px rgba(251,191,36,0.45), 0 18px 30px rgba(0,0,0,0.5);
+  animation: treasureIconBob 3.2s ease-in-out infinite;
+}
+
+@keyframes treasureIconBob {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-6px); }
+}
+
+.treasure-icon-frame img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.treasure-shine {
+  position: absolute;
+  top: 0;
+  left: -150%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(75deg, transparent 0%, rgba(255,255,255,0.55) 50%, transparent 100%);
+  animation: treasureShineSweep 2.8s ease-in-out infinite;
+}
+
+@keyframes treasureShineSweep {
+  0% { left: -150%; }
+  35% { left: 150%; }
+  100% { left: 150%; }
+}
+
+.treasure-sparkles {
+  position: absolute;
+  inset: -20px;
+  pointer-events: none;
+}
+
+.treasure-sparkles span {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background: #FBBF24;
+  clip-path: polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+  animation: treasureSparkle 1.8s ease-in-out infinite;
+  box-shadow: 0 0 8px rgba(251,191,36,0.9);
+}
+
+.treasure-sparkles span:nth-child(1) { top: 6%; left: 12%; animation-delay: 0s; width: 12px; height: 12px; }
+.treasure-sparkles span:nth-child(2) { top: 18%; left: 85%; animation-delay: .3s; width: 8px; height: 8px; }
+.treasure-sparkles span:nth-child(3) { top: 78%; left: 88%; animation-delay: .6s; width: 14px; height: 14px; }
+.treasure-sparkles span:nth-child(4) { top: 85%; left: 8%; animation-delay: .9s; width: 9px; height: 9px; }
+.treasure-sparkles span:nth-child(5) { top: 48%; left: 2%; animation-delay: 1.2s; width: 11px; height: 11px; }
+.treasure-sparkles span:nth-child(6) { top: 2%; left: 55%; animation-delay: 1.5s; width: 8px; height: 8px; }
+
+@keyframes treasureSparkle {
+  0%, 100% { opacity: 0; transform: scale(0.3) rotate(0deg); }
+  50% { opacity: 1; transform: scale(1.15) rotate(45deg); }
+}
+
+.treasure-heading {
+  margin: 0 0 6px;
+  font-size: 26px;
+  color: #FBBF24;
+  text-shadow: 0 0 20px rgba(251,191,36,0.4);
+}
+
+.treasure-sub {
+  margin: 0 0 22px;
+  color: #D7E3F0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.treasure-open-btn {
+  background: linear-gradient(135deg, #FDE68A, #FBBF24 45%, #D97706);
+  color: #241900;
+  border: none;
+  border-radius: 14px;
+  padding: 16px 36px;
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: .3px;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(251,191,36,0.4);
+  animation: treasureBtnPulse 2.2s ease-in-out infinite;
+}
+
+.treasure-open-btn:hover {
+  filter: brightness(1.08);
+}
+
+@keyframes treasureBtnPulse {
+  0%, 100% { box-shadow: 0 10px 26px rgba(251,191,36,0.4); }
+  50% { box-shadow: 0 10px 36px rgba(251,191,36,0.65); }
+}
+
+.treasure-reveal-icon {
+  font-size: 56px;
+  margin-bottom: 6px;
+}
+
+.treasure-reward-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin: 18px 0 26px;
+}
+
+.treasure-chip {
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.5);
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 700;
+  color: #FDE68A;
+  animation: treasureChipIn 0.4s ease backwards;
+}
+
+.treasure-chip:nth-child(1) { animation-delay: .05s; }
+.treasure-chip:nth-child(2) { animation-delay: .15s; }
+.treasure-chip:nth-child(3) { animation-delay: .25s; }
+.treasure-chip:nth-child(4) { animation-delay: .35s; }
+.treasure-chip:nth-child(5) { animation-delay: .45s; }
+
+@keyframes treasureChipIn {
+  from { opacity: 0; transform: translateY(8px) scale(.9); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.treasure-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.treasure-close-btn {
+  background: rgba(255,255,255,0.08);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 12px;
+  padding: 13px 26px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.treasure-dashboard-btn {
+  background: linear-gradient(135deg, #56B2BB, #2E7D8A);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  padding: 13px 26px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 /* Rank / star "Congratulations!" popup — separate template from the
    plain achievement-box above, shown via rankPopup.js on puzzle.html
    and season.html. Shares the same #achievementPopup queue timing in

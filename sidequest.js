@@ -10,6 +10,7 @@ import { db, doc, getDoc, runTransaction, increment, arrayUnion } from './fireba
 import { requireLogin } from './auth.js';
 import { SIDE_QUESTS, getQuestStatus, getFeaturedQuest, sideQuestBadgeId } from './sideQuests.js';
 import { logActivity } from './activity.js';
+import { showTreasureReveal } from './treasureReveal.js';
 
 const { email, name } = requireLogin();
 
@@ -23,10 +24,6 @@ const downListEl = document.getElementById('downClues');
 const actionsEl = document.getElementById('questActions');
 const checkBtn = document.getElementById('checkAnswersBtn');
 const feedbackEl = document.getElementById('questFeedback');
-const rewardPopup = document.getElementById('questRewardPopup');
-const rewardTitleEl = document.getElementById('rewardTitle');
-const rewardTextEl = document.getElementById('rewardText');
-const rewardCloseBtn = document.getElementById('rewardCloseBtn');
 
 const TICKET_LABELS = {
   quiz_ticket: 'Sigil of Insight',
@@ -390,14 +387,11 @@ async function awardCompletion() {
 }
 
 function showRewardPopup() {
-  rewardTitleEl.textContent = quest.title;
-  rewardTextEl.textContent = 'You solved it! ' + Object.entries(quest.reward)
-    .map(([type, qty]) => `+${qty} ${TICKET_LABELS[type] || type}`)
-    .join(', ');
-  rewardPopup.classList.remove('hidden');
   actionsEl.classList.add('hidden');
+  showTreasureReveal({
+    iconSrc: quest.treasureIcon,
+    heading: quest.title,
+    subheading: 'A treasure has been earned for finishing this Side Quest.',
+    chips: Object.entries(quest.reward).map(([type, qty]) => `+${qty} ${TICKET_LABELS[type] || type}`)
+  });
 }
-
-rewardCloseBtn.addEventListener('click', () => {
-  rewardPopup.classList.add('hidden');
-});

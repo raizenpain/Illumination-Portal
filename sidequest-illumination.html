@@ -58,15 +58,72 @@
   #reflect .kicker{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--amber);opacity:.85}
   #reflect h3{font-size:20px;color:var(--cream);margin:8px 0 14px;line-height:1.35}
   #reflect .body{font-size:14.5px;color:rgba(246,230,194,.88);line-height:1.7;white-space:pre-line}
-  #reflect .reward-banner{margin-top:16px;padding:12px 14px;border-radius:10px;
-    background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.35);
-    color:#c9f5d4;font-size:14px;font-weight:600;text-align:center}
-  #reflect .reward-banner.hidden{display:none}
   #reflect button{margin-top:20px;padding:9px 22px;border-radius:20px;border:1px solid rgba(243,180,95,.5);
     background:rgba(243,180,95,.14);color:var(--amber);font-size:13.5px;cursor:pointer;
     font-variant-numeric:tabular-nums}
   #reflect button:active{background:rgba(243,180,95,.3)}
   #reflect button:disabled{cursor:default;opacity:.55;border-color:rgba(243,180,95,.28);background:transparent}
+
+  .hidden{display:none}
+
+  /* ---------- treasure reveal (see treasureReveal.js) ---------- */
+  .treasure-popup{position:fixed;inset:0;background:rgba(3,7,11,.86);backdrop-filter:blur(2px);
+    z-index:60;display:flex;align-items:center;justify-content:center;animation:treasureFadeIn .35s ease}
+  .treasure-box{width:min(560px, calc(100% - 32px));max-height:calc(100vh - 48px);overflow-y:auto;
+    background:linear-gradient(180deg,#132a34,#0b1c24);border:2px solid var(--amber);border-radius:24px;
+    padding:36px 32px 32px;text-align:center;color:var(--cream);
+    box-shadow:0 0 0 1px rgba(243,180,95,.15),0 30px 70px rgba(0,0,0,.55),0 0 80px rgba(243,180,95,.12);
+    animation:treasurePopScale .4s cubic-bezier(.2,.9,.3,1.2)}
+  .treasure-kicker{text-transform:uppercase;letter-spacing:2px;font-size:13px;font-weight:700;color:var(--amber);margin:0 0 14px}
+  .treasure-stage{position:relative;width:260px;height:260px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center}
+  .treasure-glow{position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(circle, rgba(243,180,95,.55) 0%, rgba(243,180,95,.18) 40%, transparent 72%);
+    animation:treasureGlowPulse 2.6s ease-in-out infinite;filter:blur(2px)}
+  .treasure-icon-frame{position:relative;width:196px;height:196px;border-radius:20px;overflow:hidden;
+    box-shadow:0 0 0 3px rgba(243,180,95,.55),0 0 40px rgba(243,180,95,.45),0 18px 30px rgba(0,0,0,.5);
+    animation:treasureIconBob 3.2s ease-in-out infinite}
+  .treasure-icon-frame img{width:100%;height:100%;object-fit:cover;display:block}
+  .treasure-shine{position:absolute;top:0;left:-150%;width:60%;height:100%;
+    background:linear-gradient(75deg, transparent 0%, rgba(255,255,255,.55) 50%, transparent 100%);
+    animation:treasureShineSweep 2.8s ease-in-out infinite}
+  .treasure-sparkles{position:absolute;inset:-20px;pointer-events:none}
+  .treasure-sparkles span{position:absolute;width:10px;height:10px;background:var(--amber);
+    clip-path:polygon(50% 0%, 61% 39%, 100% 50%, 61% 61%, 50% 100%, 39% 61%, 0% 50%, 39% 39%);
+    animation:treasureSparkle 1.8s ease-in-out infinite;box-shadow:0 0 8px rgba(243,180,95,.9)}
+  .treasure-sparkles span:nth-child(1){top:6%;left:12%;animation-delay:0s;width:12px;height:12px}
+  .treasure-sparkles span:nth-child(2){top:18%;left:85%;animation-delay:.3s;width:8px;height:8px}
+  .treasure-sparkles span:nth-child(3){top:78%;left:88%;animation-delay:.6s;width:14px;height:14px}
+  .treasure-sparkles span:nth-child(4){top:85%;left:8%;animation-delay:.9s;width:9px;height:9px}
+  .treasure-sparkles span:nth-child(5){top:48%;left:2%;animation-delay:1.2s;width:11px;height:11px}
+  .treasure-sparkles span:nth-child(6){top:2%;left:55%;animation-delay:1.5s;width:8px;height:8px}
+  .treasure-heading{margin:0 0 6px;font-size:26px;color:var(--amber);text-shadow:0 0 20px rgba(243,180,95,.4)}
+  .treasure-sub{margin:0 0 22px;color:rgba(246,230,194,.8);font-size:15px;line-height:1.5}
+  .treasure-open-btn{background:linear-gradient(135deg,#f6e6c2,#f3b45f 45%,#c9791f);color:#241900;border:none;
+    border-radius:14px;padding:16px 36px;font-size:17px;font-weight:800;letter-spacing:.3px;cursor:pointer;
+    box-shadow:0 10px 26px rgba(243,180,95,.4);animation:treasureBtnPulse 2.2s ease-in-out infinite}
+  .treasure-open-btn:hover{filter:brightness(1.08)}
+  .treasure-reveal-icon{font-size:56px;margin-bottom:6px}
+  .treasure-reward-chips{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin:18px 0 26px}
+  .treasure-chip{background:rgba(243,180,95,.12);border:1px solid rgba(243,180,95,.5);border-radius:999px;
+    padding:9px 16px;font-size:14px;font-weight:700;color:var(--cream);animation:treasureChipIn .4s ease backwards}
+  .treasure-chip:nth-child(1){animation-delay:.05s}
+  .treasure-chip:nth-child(2){animation-delay:.15s}
+  .treasure-chip:nth-child(3){animation-delay:.25s}
+  .treasure-chip:nth-child(4){animation-delay:.35s}
+  .treasure-chip:nth-child(5){animation-delay:.45s}
+  .treasure-actions{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+  .treasure-close-btn{background:rgba(246,230,194,.08);color:var(--cream);border:1px solid rgba(246,230,194,.18);
+    border-radius:12px;padding:13px 26px;font-size:15px;font-weight:700;cursor:pointer}
+  .treasure-dashboard-btn{background:linear-gradient(135deg,#1b3a41,#12262b);color:var(--cream);
+    border:1px solid rgba(246,230,194,.25);border-radius:12px;padding:13px 26px;font-size:15px;font-weight:700;cursor:pointer}
+  @keyframes treasureFadeIn{from{opacity:0}to{opacity:1}}
+  @keyframes treasurePopScale{from{opacity:0;transform:scale(.85)}to{opacity:1;transform:scale(1)}}
+  @keyframes treasureGlowPulse{0%,100%{transform:scale(.92);opacity:.7}50%{transform:scale(1.08);opacity:1}}
+  @keyframes treasureIconBob{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+  @keyframes treasureShineSweep{0%{left:-150%}35%{left:150%}100%{left:150%}}
+  @keyframes treasureSparkle{0%,100%{opacity:0;transform:scale(.3) rotate(0deg)}50%{opacity:1;transform:scale(1.15) rotate(45deg)}}
+  @keyframes treasureBtnPulse{0%,100%{box-shadow:0 10px 26px rgba(243,180,95,.4)}50%{box-shadow:0 10px 36px rgba(243,180,95,.65)}}
+  @keyframes treasureChipIn{from{opacity:0;transform:translateY(8px) scale(.9)}to{opacity:1;transform:translateY(0) scale(1)}}
 </style>
 </head>
 <body>
@@ -84,7 +141,6 @@
     <div class="kicker" id="reflectKicker">Along the Way</div>
     <h3 id="reflectHeading"></h3>
     <div class="body" id="reflectBody"></div>
-    <div class="reward-banner hidden" id="reflectReward"></div>
     <button id="reflectClose" type="button">Continue</button>
   </div>
 </div>
@@ -108,8 +164,17 @@ import { db, doc, getDoc, runTransaction, increment, arrayUnion } from './fireba
 import { requireLogin } from './auth.js';
 import { SIDE_QUESTS, getQuestStatus, getFeaturedQuest, sideQuestBadgeId } from './sideQuests.js';
 import { logActivity } from './activity.js';
+import { showTreasureReveal } from './treasureReveal.js';
 
 const { email, name } = requireLogin();
+
+const TICKET_LABELS = {
+  quiz_ticket: 'Sigil of Insight',
+  task_ticket: 'Seal of Diligence',
+  journal_ticket: 'Scroll of Reflection',
+  recitation_ticket: "Herald's Voice",
+  scrap_ticket: 'Ember Shard'
+};
 
 const params = new URLSearchParams(window.location.search);
 const requestedId = params.get('quest');
@@ -122,7 +187,6 @@ const reflectEl = document.getElementById('reflect');
 const reflectKickerEl = document.getElementById('reflectKicker');
 const reflectHeadingEl = document.getElementById('reflectHeading');
 const reflectBodyEl = document.getElementById('reflectBody');
-const reflectRewardEl = document.getElementById('reflectReward');
 const reflectCloseBtn = document.getElementById('reflectClose');
 
 function formatDate(iso) {
@@ -138,17 +202,11 @@ function showGate(heading, text) {
 // Reflections can't be skipped -- they hold the screen for a fixed
 // read time, then dismiss themselves. No click can close them early.
 let reflectTimer = null;
-function showReflection(kicker, heading, text, durationMs, rewardText) {
+function showReflection(kicker, heading, text, durationMs) {
   window.__gamePaused = true;
   reflectKickerEl.textContent = kicker;
   reflectHeadingEl.textContent = heading;
   reflectBodyEl.textContent = text;
-  if (rewardText) {
-    reflectRewardEl.textContent = rewardText;
-    reflectRewardEl.classList.remove('hidden');
-  } else {
-    reflectRewardEl.classList.add('hidden');
-  }
   reflectEl.classList.add('on');
 
   reflectCloseBtn.disabled = true;
@@ -207,26 +265,41 @@ async function grantOnce(flagName, tickets) {
   }
 }
 
-function rewardLine(tickets, isFullQuest) {
-  const qty = Object.values(tickets)[0]; // every ticket type gets the same amount
-  return isFullQuest
-    ? `🎉 Congratulations! +${qty} of every ticket type — quest complete!`
-    : `🎉 Congratulations! +${qty} of every ticket type!`;
+function rewardChips(tickets) {
+  return Object.entries(tickets).map(([type, qty]) => `+${qty} ${TICKET_LABELS[type] || type}`);
 }
 
-window.onShardPicked = (index) => {
+window.onShardPicked = async (index) => {
   const r = quest.shardReflections[index];
   if (!r) return;
   const isLastShard = index === quest.shardReflections.length - 1;
   const isNewGrant = isLastShard && !studentState.shardsCompleted;
   if (isLastShard) grantOnce('shardsCompleted', quest.shardsReward);
-  showReflection('Along the Way', r.verse, r.note, 60000, isNewGrant ? rewardLine(quest.shardsReward, false) : null);
+  if (isNewGrant) {
+    window.__gamePaused = true;
+    await showTreasureReveal({
+      iconSrc: quest.treasureIcon,
+      heading: 'Six Shards Gathered',
+      subheading: 'A treasure has been earned along the way.',
+      chips: rewardChips(quest.shardsReward)
+    });
+  }
+  showReflection('Along the Way', r.verse, r.note, 60000);
 };
 
-window.onBeaconReached = () => {
+window.onBeaconReached = async () => {
   const isNewGrant = !studentState.beaconCompleted;
   grantOnce('beaconCompleted', quest.beaconReward);
-  showReflection('The Beacon', quest.beaconReflection.heading, quest.beaconReflection.text, 120000, isNewGrant ? rewardLine(quest.beaconReward, true) : null);
+  if (isNewGrant) {
+    window.__gamePaused = true;
+    await showTreasureReveal({
+      iconSrc: quest.treasureIcon,
+      heading: 'The Beacon Is Lit',
+      subheading: 'A treasure has been earned for completing this Side Quest.',
+      chips: rewardChips(quest.beaconReward)
+    });
+  }
+  showReflection('The Beacon', quest.beaconReflection.heading, quest.beaconReflection.text, 120000);
 };
 
 async function init() {

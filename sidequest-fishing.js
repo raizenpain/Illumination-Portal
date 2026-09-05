@@ -11,6 +11,7 @@ import { db, doc, getDoc, updateDoc, runTransaction, increment, arrayUnion } fro
 import { requireLogin } from './auth.js';
 import { SIDE_QUESTS, getQuestStatus, getFeaturedQuest, sideQuestBadgeId } from './sideQuests.js';
 import { logActivity } from './activity.js';
+import { showTreasureReveal } from './treasureReveal.js';
 
 const { email, name } = requireLogin();
 
@@ -501,7 +502,32 @@ async function grantAndShow(result) {
   }
 
   renderCollections();
-  showCatchPopup(result);
+
+  const isRare = result.kind === 'object' || result.band === 'trophy' || result.band === 'legendary';
+  if (!isFirstEver && !isRare) {
+    showCatchPopup(result);
+    return;
+  }
+
+  setIdle();
+  const chips = Object.entries(result.tickets).map(([type, qty]) => `+${qty} ${TICKET_LABELS[type] || type}`);
+  if (result.kind === 'object') {
+    showTreasureReveal({
+      iconSrc: quest.treasureIcon,
+      kicker: 'A Blessed Object!',
+      heading: result.object.name,
+      subheading: result.object.text,
+      chips
+    });
+  } else {
+    showTreasureReveal({
+      iconSrc: quest.treasureIcon,
+      kicker: isFirstEver ? 'Side Quest Complete' : (result.band === 'legendary' ? 'Legendary Catch!' : 'Trophy Catch!'),
+      heading: `${result.species.name} — ${result.weightKg} kg`,
+      subheading: result.species.verse,
+      chips
+    });
+  }
 }
 
 // ================================

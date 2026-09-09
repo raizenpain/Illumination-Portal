@@ -451,54 +451,76 @@ async function grantAndShow(result) {
   const studentRef = doc(db, 'students', email);
   const isFirstEver = !fishingState.completed;
 
-  try {
-    await runTransaction(db, async (tx) => {
-      const snap = await tx.get(studentRef);
-      const data = snap.data() || {};
-      const current = (data.sideQuests || {})[quest.id] || {};
+  const attempt = () => runTransaction(db, async (tx) => {
+    const snap = await tx.get(studentRef);
+    const data = snap.data() || {};
+    const current = (data.sideQuests || {})[quest.id] || {};
 
-      const updates = {};
+    const updates = {};
 
-      if (result.kind === 'fish') {
-        updates[`sideQuests.${quest.id}.pond`] = arrayUnion({
-          speciesId: result.species.id,
-          weightKg: result.weightKg,
-          band: result.band,
-          caughtAt: new Date().toISOString()
-        });
-        updates[`sideQuests.${quest.id}.caughtSpecies`] = arrayUnion(result.species.id);
-      }
-
-      if (result.kind === 'object') {
-        const already = (current.reliquary || []).some((r) => r.objectId === result.object.id);
-        if (already) return; // race guard: someone else already recorded this find
-        updates[`sideQuests.${quest.id}.reliquary`] = arrayUnion({
-          objectId: result.object.id, foundAt: new Date().toISOString()
-        });
-      }
-
-      Object.entries(result.tickets).forEach(([type, qty]) => {
-        updates[`tickets.${type}`] = increment(qty);
+    if (result.kind === 'fish') {
+      updates[`sideQuests.${quest.id}.pond`] = arrayUnion({
+        speciesId: result.species.id,
+        weightKg: result.weightKg,
+        band: result.band,
+        caughtAt: new Date().toISOString()
       });
-
-      if (isFirstEver) {
-        updates[`sideQuests.${quest.id}.completed`] = true;
-        updates[`sideQuests.${quest.id}.completedAt`] = new Date().toISOString();
-        updates.achievements = arrayUnion(sideQuestBadgeId(quest.id));
-      }
-
-      tx.update(studentRef, updates);
-    });
+      updates[`sideQuests.${quest.id}.caughtSpecies`] = arrayUnion(result.species.id);
+    }
 
     if (result.kind === 'object') {
-      fishingState.reliquary.push({ objectId: result.object.id, foundAt: new Date().toISOString() });
+      const already = (current.reliquary || []).some((r) => r.objectId === result.object.id);
+      if (already) return; // race guard: someone else already recorded this find
+      updates[`sideQuests.${quest.id}.reliquary`] = arrayUnion({
+        objectId: result.object.id, foundAt: new Date().toISOString()
+      });
     }
+
+    Object.entries(result.tickets).forEach(([type, qty]) => {
+      updates[`tickets.${type}`] = increment(qty);
+    });
+
     if (isFirstEver) {
-      fishingState.completed = true;
-      logActivity({ email, name, type: 'sidequest', title: `Completed the "${quest.title}" side quest`, icon: '🎣' });
+      updates[`sideQuests.${quest.id}.completed`] = true;
+      updates[`sideQuests.${quest.id}.completedAt`] = new Date().toISOString();
+      updates.achievements = arrayUnion(sideQuestBadgeId(quest.id));
     }
+
+    tx.update(studentRef, updates);
+  });
+
+  let saved = true;
+  try {
+    await attempt();
   } catch (err) {
-    console.error('Failed to save catch:', err);
+    console.error('Failed to save catch, retrying once:', err);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      await attempt();
+    } catch (err2) {
+      console.error('Retry also failed to save catch:', err2);
+      saved = false;
+    }
+  }
+
+  if (!saved) {
+    // Nothing was persisted -- don't run the celebration popups below,
+    // they'd tell the student they earned a reward that was never
+    // actually saved (this was a real bug: the popup used to show
+    // unconditionally regardless of whether the write succeeded).
+    statusTextEl.textContent = "That catch didn't save -- connection hiccup.";
+    statusHintEl.textContent = 'Nothing was lost from your bait or progress otherwise. Please cast again in a moment.';
+    setIdle();
+    renderCollections();
+    return;
+  }
+
+  if (result.kind === 'object') {
+    fishingState.reliquary.push({ objectId: result.object.id, foundAt: new Date().toISOString() });
+  }
+  if (isFirstEver) {
+    fishingState.completed = true;
+    logActivity({ email, name, type: 'sidequest', title: `Completed the "${quest.title}" side quest`, icon: '🎣' });
   }
 
   renderCollections();

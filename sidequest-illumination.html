@@ -228,16 +228,21 @@ function showReflection(kicker, heading, text, durationMs) {
 
 let studentState = { shardsCompleted: false, beaconCompleted: false, completed: false };
 
+// Returns true once flagName is confirmed set (whether granted just now,
+// already granted on a prior run, or -- after one retry -- still failing
+// but caller-visible so it can tell the student honestly instead of
+// celebrating a reward that never actually saved.
 async function grantOnce(flagName, tickets) {
   const studentRef = doc(db, 'students', email);
-  let granted = false;
-  let firstEverCompletion = false;
-  try {
+
+  const attempt = async () => {
+    let granted = false, alreadyDone = false, firstEverCompletion = false;
     await runTransaction(db, async (tx) => {
+      granted = false; alreadyDone = false; firstEverCompletion = false;
       const snap = await tx.get(studentRef);
       const data = snap.data() || {};
       const current = (data.sideQuests || {})[quest.id] || {};
-      if (current[flagName]) return; // already granted -- replay, no-op
+      if (current[flagName]) { alreadyDone = true; return; }
 
       const updates = { [`sideQuests.${quest.id}.${flagName}`]: true };
       Object.entries(tickets).forEach(([type, qty]) => { updates[`tickets.${type}`] = increment(qty); });
@@ -252,15 +257,31 @@ async function grantOnce(flagName, tickets) {
       tx.update(studentRef, updates);
       granted = true;
     });
-  } catch (err) {
-    console.error(`Failed to grant ${flagName}:`, err);
-  }
+    return { granted, alreadyDone, firstEverCompletion };
+  };
 
-  if (granted) {
+  const apply = ({ granted, firstEverCompletion }) => {
     studentState[flagName] = true;
-    if (firstEverCompletion) {
+    if (granted && firstEverCompletion) {
       studentState.completed = true;
       logActivity({ email, name, type: 'sidequest', title: `Completed the "${quest.title}" side quest`, icon: '🏮' });
+    }
+  };
+
+  try {
+    const result = await attempt();
+    apply(result);
+    return true;
+  } catch (err) {
+    console.error(`Failed to grant ${flagName}, retrying once:`, err);
+    try {
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+      const result = await attempt();
+      apply(result);
+      return true;
+    } catch (err2) {
+      console.error(`Retry also failed to grant ${flagName}:`, err2);
+      return false;
     }
   }
 }
@@ -281,29 +302,46 @@ window.onShardPicked = async (index) => {
 // instead of the old index-based guess inside onShardPicked above.
 window.onShardsComplete = async () => {
   const isNewGrant = !studentState.shardsCompleted;
-  grantOnce('shardsCompleted', quest.shardsReward);
+  const ok = await grantOnce('shardsCompleted', quest.shardsReward);
   if (isNewGrant) {
     window.__gamePaused = true;
-    await showTreasureReveal({
-      iconSrc: quest.treasureIcon,
-      heading: 'Six Shards Gathered',
-      subheading: 'A treasure has been earned along the way.',
-      chips: rewardChips(quest.shardsReward)
-    });
+    if (ok) {
+      await showTreasureReveal({
+        iconSrc: quest.treasureIcon,
+        heading: 'Six Shards Gathered',
+        subheading: 'A treasure has been earned along the way.',
+        chips: rewardChips(quest.shardsReward)
+      });
+      // showTreasureReveal never touches __gamePaused itself -- without
+      // this the game stayed frozen forever after the popup closed,
+      // permanently blocking the walk to the Beacon (and its reward).
+      window.__gamePaused = false;
+    } else {
+      showReflection('Hold On', "Your Reward Didn't Save",
+        'Something interrupted the connection just now. Nothing was lost -- reload this page and gather all six Light Shards again to receive it.',
+        20000);
+    }
   }
 };
 
 window.onBeaconReached = async () => {
   const isNewGrant = !studentState.beaconCompleted;
-  grantOnce('beaconCompleted', quest.beaconReward);
+  const ok = await grantOnce('beaconCompleted', quest.beaconReward);
   if (isNewGrant) {
     window.__gamePaused = true;
-    await showTreasureReveal({
-      iconSrc: quest.treasureIcon,
-      heading: 'The Beacon Is Lit',
-      subheading: 'A treasure has been earned for completing this Side Quest.',
-      chips: rewardChips(quest.beaconReward)
-    });
+    if (ok) {
+      await showTreasureReveal({
+        iconSrc: quest.treasureIcon,
+        heading: 'The Beacon Is Lit',
+        subheading: 'A treasure has been earned for completing this Side Quest.',
+        chips: rewardChips(quest.beaconReward)
+      });
+    } else {
+      showReflection('Hold On', "Your Reward Didn't Save",
+        'Something interrupted the connection just now. Reload this page, walk back to the Beacon, and it will grant your reward.',
+        20000);
+      return;
+    }
   }
   showReflection('The Beacon', quest.beaconReflection.heading, quest.beaconReflection.text, 120000);
 };

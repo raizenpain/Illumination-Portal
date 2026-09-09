@@ -369,7 +369,7 @@
 </div>
 
 <script type="module">
-import { db, doc, getDoc, updateDoc, increment, runTransaction, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
+import { db, doc, getDoc, updateDoc, increment, runTransaction, arrayUnion, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
@@ -447,6 +447,63 @@ async function awardDailyVisitShard(data) {
   }
 }
 
+// Self-heals a specific known failure mode: a student finished every
+// piece of a puzzle, but the "officially completed" write (the flag that
+// unlocks the next puzzle and grants the completion badge + tickets)
+// never saved -- app.js's completion step has no retry, so a transient
+// failure there (a Firestore quota blip, a dropped connection) leaves the
+// student stuck forever with all pieces collected but the next puzzle
+// still locked, and no error was ever shown to them. Rather than hunting
+// down and hand-patching affected students, every dashboard load checks
+// for exactly this mismatch and repairs it on the spot -- granting the
+// same achievement + tickets they would have gotten had the original
+// write succeeded, nothing more, nothing less, and never touching a
+// student who doesn't have every piece already.
+async function healStuckPuzzleCompletions(data) {
+  for (const config of Object.values(PUZZLE_CONFIG)) {
+    const pieces = data[config.piecesField] || [];
+    if (pieces.length < config.totalPieces || data[config.completedField]) continue;
+
+    try {
+      let healed = false;
+
+      // Re-checks against the LIVE record inside the transaction, same
+      // reasoning as awardDailyVisitShard above -- avoids a double-grant
+      // if this ever ran twice near-simultaneously (two open tabs, etc.).
+      await runTransaction(db, async (tx) => {
+        healed = false;
+        const snap = await tx.get(studentRef);
+        const live = snap.data() || {};
+        const livePieces = live[config.piecesField] || [];
+        if (livePieces.length < config.totalPieces || live[config.completedField]) return;
+
+        const comp = config.completionAchievement;
+        const liveAchievements = live.achievements || [];
+        const updates = {
+          [config.completedField]: true,
+          'tickets.scrap_ticket': increment(2)
+        };
+        if (!liveAchievements.includes(comp.id)) updates.achievements = arrayUnion(comp.id);
+
+        tx.update(studentRef, updates);
+        healed = true;
+      });
+
+      if (healed) {
+        const comp = config.completionAchievement;
+        data[config.completedField] = true;
+        data.tickets = { ...(data.tickets || {}), scrap_ticket: (data.tickets?.scrap_ticket || 0) + 2 };
+        if (!(data.achievements || []).includes(comp.id)) {
+          data.achievements = [...(data.achievements || []), comp.id];
+        }
+        console.warn(`Repaired a stuck completion for ${config.title} -- every piece was already collected but the completed flag never saved.`);
+      }
+    } catch (err) {
+      console.error(`Failed to heal a stuck completion for ${config.title}:`, err);
+    }
+  }
+}
+
 async function loadStudentCard() {
   try {
     const snapshot = await getDoc(studentRef);
@@ -469,6 +526,7 @@ async function loadStudentCard() {
       }
 
       await awardDailyVisitShard(data);
+      await healStuckPuzzleCompletions(data);
     }
 
     document.getElementById('cardName').textContent = data.name || name;

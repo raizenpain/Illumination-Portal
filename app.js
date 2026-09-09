@@ -278,54 +278,81 @@ async function handleCodeSubmit() {
   }
 
   if (uploadedPieces.length === config.totalPieces) {
+    // This write marks the whole puzzle "officially complete" -- the flag
+    // the dashboard checks to unlock the next puzzle. It used to have no
+    // error handling at all: if it failed (a dropped connection, a
+    // Firestore quota blip), the student had already seen "Piece
+    // unlocked!" from the block above and had no way to know anything
+    // was wrong -- they'd just find the next puzzle locked later, with no
+    // explanation. Now it retries once, and if it still fails, says so
+    // clearly instead of failing silently. (The dashboard also self-heals
+    // this exact mismatch on load as a second safety net -- see
+    // healStuckPuzzleCompletions in dashboard.html.)
     const studentRef = doc(db, 'students', email);
-    const snap = await getDoc(studentRef);
 
-    if (snap.exists()) {
+    const markComplete = async () => {
+      const snap = await getDoc(studentRef);
+      if (!snap.exists()) return;
+
       const data = snap.data();
       const achievements = data.achievements || [];
       const comp = config.completionAchievement;
+      if (achievements.includes(comp.id)) return;
 
-      if (!achievements.includes(comp.id)) {
-        achievements.push(comp.id);
-        const rankBefore = getRankProgress(data);
+      achievements.push(comp.id);
+      const rankBefore = getRankProgress(data);
 
-        await updateDoc(studentRef, {
-          achievements,
-          [config.completedField]: true,
-          'tickets.scrap_ticket': increment(2)
-        });
-        showAchievement(comp.title, comp.text, comp.icon);
-        popupsQueued++;
+      await updateDoc(studentRef, {
+        achievements,
+        [config.completedField]: true,
+        'tickets.scrap_ticket': increment(2)
+      });
+      showAchievement(comp.title, comp.text, comp.icon);
+      popupsQueued++;
 
+      logActivity({
+        email, name, type: 'puzzle',
+        title: `Completed ${config.title} — ${config.subtitle}`,
+        icon: '👑'
+      });
+
+      const afterData = { ...data, [config.completedField]: true };
+      const rankAfter = getRankProgress(afterData);
+
+      showStarPopup({
+        rank: rankBefore.rank,
+        stars: getSeasonStars('prelim', afterData),
+        justEarnedIndex: puzzleNumber - 1,
+        subtitle: `${config.title} — ${config.subtitle}, completed`
+      });
+      popupsQueued++;
+
+      if (rankAfter.rank !== rankBefore.rank) {
         logActivity({
-          email, name, type: 'puzzle',
-          title: `Completed ${config.title} — ${config.subtitle}`,
-          icon: '👑'
+          email, name, type: 'rank',
+          title: `Reached ${rankAfter.rank} Rank`,
+          icon: '⭐'
         });
 
-        const afterData = { ...data, [config.completedField]: true };
-        const rankAfter = getRankProgress(afterData);
-
-        showStarPopup({
-          rank: rankBefore.rank,
-          stars: getSeasonStars('prelim', afterData),
-          justEarnedIndex: puzzleNumber - 1,
-          subtitle: `${config.title} — ${config.subtitle}, completed`
-        });
+        const nextTier = RANK_TIERS.find((t) => t.rank === rankAfter.rank);
+        showRankPopup({ rank: rankAfter.rank, seasonName: nextTier ? nextTier.seasonName : null });
         popupsQueued++;
+      }
+    };
 
-        if (rankAfter.rank !== rankBefore.rank) {
-          logActivity({
-            email, name, type: 'rank',
-            title: `Reached ${rankAfter.rank} Rank`,
-            icon: '⭐'
-          });
-
-          const nextTier = RANK_TIERS.find((t) => t.rank === rankAfter.rank);
-          showRankPopup({ rank: rankAfter.rank, seasonName: nextTier ? nextTier.seasonName : null });
-          popupsQueued++;
+    try {
+      await markComplete();
+    } catch (err) {
+      console.error(`Failed to save ${config.title} completion, retrying once:`, err);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await markComplete();
+      } catch (err2) {
+        console.error(`Retry also failed to save ${config.title} completion:`, err2);
+        if (status) {
+          status.textContent = '⚠️ All pieces collected, but we could not confirm completion. Please return to the Dashboard — it will fix itself automatically when it loads.';
         }
+        return; // don't redirect to completion.html on an unconfirmed save
       }
     }
 

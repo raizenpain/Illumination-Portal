@@ -272,9 +272,16 @@ function rewardChips(tickets) {
 window.onShardPicked = async (index) => {
   const r = quest.shardReflections[index];
   if (!r) return;
-  const isLastShard = index === quest.shardReflections.length - 1;
-  const isNewGrant = isLastShard && !studentState.shardsCompleted;
-  if (isLastShard) grantOnce('shardsCompleted', quest.shardsReward);
+  showReflection('Along the Way', r.verse, r.note, 60000);
+};
+
+// Fired once the player has genuinely collected all 6 (a real count check
+// in the canvas engine, not "whichever shard happens to sit last in the
+// map array") -- this is what actually grants the shards reward now,
+// instead of the old index-based guess inside onShardPicked above.
+window.onShardsComplete = async () => {
+  const isNewGrant = !studentState.shardsCompleted;
+  grantOnce('shardsCompleted', quest.shardsReward);
   if (isNewGrant) {
     window.__gamePaused = true;
     await showTreasureReveal({
@@ -284,7 +291,6 @@ window.onShardPicked = async (index) => {
       chips: rewardChips(quest.shardsReward)
     });
   }
-  showReflection('Along the Way', r.verse, r.note, 60000);
 };
 
 window.onBeaconReached = async () => {
@@ -518,14 +524,20 @@ function update(){
     return;
   }
 
-  // horizontal
+  // horizontal -- reverted to the exact original values. Every attempt at
+  // tightening air control (less top speed, more air drag) to fix "always
+  // falling" ended up shrinking how far a jump can carry horizontally,
+  // breaking gap-crossing that used to work ("can't reach the other
+  // side"). This game is live for real students right now, so the safe
+  // move is the known-good original until the actual fix is figured out
+  // with more specifics, not another blind guess.
   const acc=p.ground?0.9:0.55;
   if(K.left){p.vx-=acc;p.face=-1;}
   if(K.right){p.vx+=acc;p.face=1;}
   if(!K.left&&!K.right) p.vx*= p.ground?0.80:0.93;
   p.vx=clamp(p.vx,-4.7,4.7);
 
-  // jump
+  // jump -- original values
   if(K.jump) p.buf=9; else p.buf=Math.max(0,p.buf-1);
   if(p.buf&&p.coyote){ p.vy=-13.1; p.ground=false; p.coyote=0; p.buf=0; sfx.jump(); }
   if(!K.jump&&p.vy<-5) p.vy=-5;   // variable jump height
@@ -564,7 +576,12 @@ function update(){
     s.got=true; sfx.shard();
     const n=shards.filter(a=>a.got).length;
     msg={text:`Light shard ${n} of 6 — your lantern reaches further.`,life:200};
-    window.onShardPicked && window.onShardPicked(shards.indexOf(s));
+    // pass how-many-collected-so-far (n-1, 0-indexed), not the shard's
+    // fixed map position (shards.indexOf(s)) -- shards can be gathered in
+    // any order, so indexing by map position let the "6th shard" reward
+    // and reflection text fire off whichever physical shard happened to
+    // sit last in the SHARDS array, not the one actually picked up 6th
+    window.onShardPicked && window.onShardPicked(n-1);
     if(n===6){ window.onShardsComplete && window.onShardsComplete(); }
   }}
   for(const l of lamps){ if(!l.lit&&Math.hypot(l.x-(p.x+10),l.y-24-(p.y+16))<60){

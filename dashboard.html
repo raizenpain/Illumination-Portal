@@ -659,7 +659,7 @@ function renderSideQuestBanner(data) {
           <strong>${quest.title}</strong>
           <span class="sidequest-banner-sub">${quest.subtitle}</span>
         </div>
-        <div class="sidequest-banner-cta">Play Now →</div>
+        <div class="sidequest-banner-cta">Play Now »</div>
       `;
       banner.classList.add('sidequest-banner-clickable');
       banner.onclick = () => { window.location.href = `${quest.page}?quest=${quest.id}`; };

@@ -162,23 +162,14 @@
 <script type="module">
 import { db, doc, getDoc, runTransaction, increment, arrayUnion } from './firebase.js';
 import { requireLogin } from './auth.js';
-import { SIDE_QUESTS, getQuestStatus, getFeaturedQuest, sideQuestBadgeId } from './sideQuests.js';
+import { vaultGameBadgeId } from './vaultGames.js';
 import { logActivity } from './activity.js';
 import { showTreasureReveal } from './treasureReveal.js';
+import { TICKETS, SHARDS_REWARD, BEACON_REWARD, TREASURE_ICON, SHARD_REFLECTIONS, BEACON_REFLECTION } from './illuminationContent.js';
 
 const { email, name } = requireLogin();
 
-const TICKET_LABELS = {
-  quiz_ticket: 'Sigil of Insight',
-  task_ticket: 'Seal of Diligence',
-  journal_ticket: 'Scroll of Reflection',
-  recitation_ticket: "Herald's Voice",
-  scrap_ticket: 'Ember Shard'
-};
-
-const params = new URLSearchParams(window.location.search);
-const requestedId = params.get('quest');
-const quest = requestedId ? SIDE_QUESTS[requestedId] : getFeaturedQuest();
+const TICKET_LABELS = Object.fromEntries(Object.values(TICKETS).map(t => [t.ticket, t.name]));
 
 const gateEl = document.getElementById('gate');
 const gateHeadingEl = document.getElementById('gateHeading');
@@ -188,10 +179,6 @@ const reflectKickerEl = document.getElementById('reflectKicker');
 const reflectHeadingEl = document.getElementById('reflectHeading');
 const reflectBodyEl = document.getElementById('reflectBody');
 const reflectCloseBtn = document.getElementById('reflectClose');
-
-function formatDate(iso) {
-  return new Date(iso).toLocaleString('en-PH', { month: 'long', day: 'numeric', hour: 'numeric', minute: '2-digit' });
-}
 
 function showGate(heading, text) {
   gateHeadingEl.textContent = heading;
@@ -228,11 +215,14 @@ function showReflection(kicker, heading, text, durationMs) {
 
 let studentState = { shardsCompleted: false, beaconCompleted: false, completed: false };
 
+// vaultGames.illumination.* -- kept completely separate from the Side
+// Quest's own sideQuests.illumination_2026.* record, per design: the same
+// climb, played and rewarded twice over, independently.
 // Returns true once flagName is confirmed set (whether granted just now,
 // already granted on a prior run, or -- after one retry -- still failing
 // but caller-visible so it can tell the student honestly instead of
 // celebrating a reward that never actually saved.
-async function grantOnce(flagName, tickets) {
+async function grantOnce(flagName, reward) {
   const studentRef = doc(db, 'students', email);
 
   const attempt = async () => {
@@ -241,17 +231,20 @@ async function grantOnce(flagName, tickets) {
       granted = false; alreadyDone = false; firstEverCompletion = false;
       const snap = await tx.get(studentRef);
       const data = snap.data() || {};
-      const current = (data.sideQuests || {})[quest.id] || {};
+      const current = (data.vaultGames || {}).illumination || {};
       if (current[flagName]) { alreadyDone = true; return; }
 
-      const updates = { [`sideQuests.${quest.id}.${flagName}`]: true };
-      Object.entries(tickets).forEach(([type, qty]) => { updates[`tickets.${type}`] = increment(qty); });
+      const updates = { [`vaultGames.illumination.${flagName}`]: true };
+      reward.tickets.forEach(({ key, count }) => {
+        updates[`tickets.${TICKETS[key].ticket}`] = increment(count);
+      });
+      if (reward.unlockTokens) updates.unlockTokens = increment(reward.unlockTokens);
 
       if (flagName === 'beaconCompleted' && !current.completed) {
         firstEverCompletion = true;
-        updates[`sideQuests.${quest.id}.completed`] = true;
-        updates[`sideQuests.${quest.id}.completedAt`] = new Date().toISOString();
-        updates.achievements = arrayUnion(sideQuestBadgeId(quest.id));
+        updates['vaultGames.illumination.completed'] = true;
+        updates['vaultGames.illumination.completedAt'] = new Date().toISOString();
+        updates.achievements = arrayUnion(vaultGameBadgeId('illumination'));
       }
 
       tx.update(studentRef, updates);
@@ -264,7 +257,7 @@ async function grantOnce(flagName, tickets) {
     studentState[flagName] = true;
     if (granted && firstEverCompletion) {
       studentState.completed = true;
-      logActivity({ email, name, type: 'sidequest', title: `Completed the "${quest.title}" side quest`, icon: '🏮' });
+      logActivity({ email, name, type: 'vaultgame', title: 'Carried the lantern to the Beacon and opened The Lumière', icon: '🏮' });
     }
   };
 
@@ -286,12 +279,14 @@ async function grantOnce(flagName, tickets) {
   }
 }
 
-function rewardChips(tickets) {
-  return Object.entries(tickets).map(([type, qty]) => `+${qty} ${TICKET_LABELS[type] || type}`);
+function rewardChips(reward) {
+  const chips = reward.tickets.map(({ key, count }) => `+${count} ${TICKETS[key].name}`);
+  if (reward.unlockTokens) chips.push(`+${reward.unlockTokens} Artifact Unlock Tokens`);
+  return chips;
 }
 
 window.onShardPicked = async (index) => {
-  const r = quest.shardReflections[index];
+  const r = SHARD_REFLECTIONS[index];
   if (!r) return;
   showReflection('Along the Way', r.verse, r.note, 60000);
 };
@@ -302,15 +297,16 @@ window.onShardPicked = async (index) => {
 // instead of the old index-based guess inside onShardPicked above.
 window.onShardsComplete = async () => {
   const isNewGrant = !studentState.shardsCompleted;
-  const ok = await grantOnce('shardsCompleted', quest.shardsReward);
+  const ok = await grantOnce('shardsCompleted', SHARDS_REWARD);
   if (isNewGrant) {
     window.__gamePaused = true;
     if (ok) {
       await showTreasureReveal({
-        iconSrc: quest.treasureIcon,
+        iconSrc: TREASURE_ICON,
+        kicker: 'Illumination',
         heading: 'Six Shards Gathered',
         subheading: 'A treasure has been earned along the way.',
-        chips: rewardChips(quest.shardsReward)
+        chips: rewardChips(SHARDS_REWARD)
       });
       // showTreasureReveal never touches __gamePaused itself -- without
       // this the game stayed frozen forever after the popup closed,
@@ -326,15 +322,16 @@ window.onShardsComplete = async () => {
 
 window.onBeaconReached = async () => {
   const isNewGrant = !studentState.beaconCompleted;
-  const ok = await grantOnce('beaconCompleted', quest.beaconReward);
+  const ok = await grantOnce('beaconCompleted', BEACON_REWARD);
   if (isNewGrant) {
     window.__gamePaused = true;
     if (ok) {
       await showTreasureReveal({
-        iconSrc: quest.treasureIcon,
-        heading: 'The Beacon Is Lit',
-        subheading: 'A treasure has been earned for completing this Side Quest.',
-        chips: rewardChips(quest.beaconReward)
+        iconSrc: TREASURE_ICON,
+        kicker: 'Illumination Complete',
+        heading: 'The Lumière Is Yours',
+        subheading: 'A treasure has been earned for completing this Vault Game.',
+        chips: rewardChips(BEACON_REWARD)
       });
     } else {
       showReflection('Hold On', "Your Reward Didn't Save",
@@ -343,17 +340,10 @@ window.onBeaconReached = async () => {
       return;
     }
   }
-  showReflection('The Beacon', quest.beaconReflection.heading, quest.beaconReflection.text, 120000);
+  showReflection('The Beacon', BEACON_REFLECTION.heading, BEACON_REFLECTION.text, 120000);
 };
 
 async function init() {
-  if (!quest || quest.kind !== 'illumination') {
-    showGate('No Side Quest Right Now', 'Check back soon — a new one is on the way.');
-    return;
-  }
-
-  const status = getQuestStatus(quest);
-
   let data = {};
   try {
     const snap = await getDoc(doc(db, 'students', email));
@@ -361,7 +351,8 @@ async function init() {
   } catch (err) {
     console.error('Failed to load student record:', err);
   }
-  const saved = (data.sideQuests || {})[quest.id];
+
+  const saved = (data.vaultGames || {}).illumination;
   if (saved) {
     studentState = {
       shardsCompleted: !!saved.shardsCompleted,
@@ -370,13 +361,12 @@ async function init() {
     };
   }
 
-  if (status === 'upcoming') {
-    showGate('The Path Is Not Yet Open', `The climb opens ${formatDate(quest.startsAt)}. Come back then!`);
-    return;
-  }
-
-  if (status === 'ended' && !studentState.completed) {
-    showGate('The Path Has Closed', 'This Side Quest has ended. Watch the dashboard for the next one!');
+  // One-time challenge, like every other Vault Game: once the Beacon has
+  // been reached, this climb is closed for good. (Reaching the shards
+  // milestone alone does not lock it -- a student can still return to
+  // finish the climb to the Beacon.)
+  if (studentState.completed) {
+    showGate('The Lantern Rests', 'You have already carried this light all the way to the Beacon. The Lumière is yours to keep — this climb is a path walked once.');
     return;
   }
 

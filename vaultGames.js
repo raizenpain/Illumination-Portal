@@ -20,9 +20,15 @@
 // Master switch: the Vault section and its cards are always visible to
 // students once VAULT_GAMES has entries, but while this is false every
 // card renders locked ("Coming Soon") regardless of its own `page`,
-// so the section can be shown off before it's actually playable. Flip
-// to true (one line, no per-game edits) when it's time to open it up.
-export const VAULT_UNLOCKED = false;
+// so the section can be shown off before it's actually playable.
+//
+// Date-gated rather than a hand-flipped boolean, same startsAt-style
+// pattern as sideQuests.js's own date checks -- announced (Fiesta
+// announcement popup, 2026-09-14) to open "tomorrow", so it opens
+// itself the moment that day begins in Philippine time, with nothing
+// left to remember to go do by hand.
+const VAULT_RELEASE_AT = '2026-09-15T00:00:00+08:00';
+export const VAULT_UNLOCKED = Date.now() >= new Date(VAULT_RELEASE_AT).getTime();
 
 export const VAULT_GAMES = {
   scriptorium: {

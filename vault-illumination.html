@@ -162,7 +162,7 @@
 <script type="module">
 import { db, doc, getDoc, runTransaction, increment, arrayUnion } from './firebase.js';
 import { requireLogin } from './auth.js';
-import { vaultGameBadgeId } from './vaultGames.js';
+import { vaultGameBadgeId, VAULT_UNLOCKED } from './vaultGames.js';
 import { logActivity } from './activity.js';
 import { showTreasureReveal } from './treasureReveal.js';
 import { TICKETS, SHARDS_REWARD, BEACON_REWARD, TREASURE_ICON, SHARD_REFLECTIONS, BEACON_REFLECTION } from './illuminationContent.js';
@@ -344,6 +344,11 @@ window.onBeaconReached = async () => {
 };
 
 async function init() {
+  // The dashboard card already hides itself while the Vault is locked, but
+  // this page is still reachable by direct URL -- bounce back rather than
+  // let a real award transaction fire before release.
+  if (!VAULT_UNLOCKED) { window.location.href = 'dashboard.html'; return; }
+
   let data = {};
   try {
     const snap = await getDoc(doc(db, 'students', email));
@@ -634,7 +639,11 @@ function update(){
   for(const b of birds){
     b.x=b.x0+Math.sin(t/38*b.speed+b.ph)*b.range;
     b.y=b.y0+Math.sin(t/17+b.ph)*10;
-    if(Math.hypot(b.x-(p.x+10),b.y-(p.y+16))<24){
+    // p.dead can already be >0 this same frame from the fall-death check
+    // above (birds patrol open-air gaps, exactly where a falling player
+    // passes through) -- don't let a bird then escalate that same frame
+    // to the harsher full-reset penalty on top of the fall respawn.
+    if(p.dead===0&&Math.hypot(b.x-(p.x+10),b.y-(p.y+16))<24){
       p.dead=48; p.birdHit=true; sfx.fall();
       msg={text:'Struck from the dark — you fall back to the beginning.',life:220};
       break;

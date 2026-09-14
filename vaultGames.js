@@ -86,5 +86,9 @@ export function resolveVaultGameBadge(id) {
   if (!id.startsWith('vault_')) return null;
   const game = VAULT_GAMES[id.replace(/^vault_/, '')];
   if (!game) return null;
-  return { icon: game.icon || '🎮', title: game.title, sub: 'Vault Game completed' };
+  // game.icon is sized for the dashboard's 72px card chip (.vault-game-icon,
+  // 60px) -- swapped here to the smaller badge-sized class so it doesn't
+  // render oversized in the ~32px achievement badge grid / inline rows.
+  const icon = (game.icon || '🎮').replace('vault-game-icon', 'vault-badge-icon');
+  return { icon, title: game.title, sub: 'Vault Game completed' };
 }

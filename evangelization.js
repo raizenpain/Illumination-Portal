@@ -13,7 +13,7 @@
 
 import { db, doc, getDoc, runTransaction, increment, arrayUnion, updateDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
-import { vaultGameBadgeId } from './vaultGames.js';
+import { vaultGameBadgeId, VAULT_UNLOCKED } from './vaultGames.js';
 import { logActivity } from './activity.js';
 import { showTreasureReveal } from './treasureReveal.js';
 import {
@@ -480,6 +480,7 @@ function updateBirds(dt) {
     b.x = b.x0 + Math.sin(b.clock * b.speed + b.ph) * b.range;
     b.y = b.y0 + Math.sin(b.clock * 2 + b.ph) * 4;
     if (b.hitCooldown > 0) { b.hitCooldown -= dt; return; }
+    if (state.respawnGrace > 0) return;
     if (Math.hypot(p.x - b.x, p.y - b.y) < BIRD_CATCH_RADIUS) {
       b.hitCooldown = 1.5;
       handleBirdHit();
@@ -1196,6 +1197,11 @@ function maybeShowPreview() {
 
 async function init() {
   if (maybeShowPreview()) return;
+
+  // The dashboard card already hides itself while the Vault is locked, but
+  // this page is still reachable by direct URL -- bounce back rather than
+  // let a real awardCompletion() transaction fire before release.
+  if (!VAULT_UNLOCKED) { window.location.href = 'dashboard.html'; return; }
 
   let data = {};
   try {

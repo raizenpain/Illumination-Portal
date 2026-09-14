@@ -30,7 +30,7 @@
 import { db, doc, getDoc, updateDoc, runTransaction, increment, arrayUnion } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { logActivity } from './activity.js';
-import { vaultGameBadgeId } from './vaultGames.js';
+import { vaultGameBadgeId, VAULT_UNLOCKED } from './vaultGames.js';
 import { showTreasureReveal } from './treasureReveal.js';
 import { TICKETS } from './vaultTickets.js';
 import {
@@ -419,7 +419,6 @@ function miss(gname, text) {
   verdict = { up: false, text };
   if (gname) wrong = [...wrong, gname];
   if (left <= 0) {
-    marks += 1;
     roundsLost += 1;
     cool = COOLDOWN;
     screen = 'cooldown';
@@ -733,6 +732,11 @@ function wireEvents() {
  * ========================================================================= */
 
 async function init() {
+  // The dashboard card already hides itself while the Vault is locked, but
+  // this page is still reachable by direct URL -- bounce back rather than
+  // let a real awardCompletion() transaction fire before release.
+  if (!VAULT_UNLOCKED) { window.location.href = 'dashboard.html'; return; }
+
   let data = {};
   try {
     const snap = await getDoc(doc(db, 'students', email));

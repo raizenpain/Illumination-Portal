@@ -400,6 +400,7 @@ import { initClassChat } from './classChat.js';
 import { initDashboardMusic } from './dashboardMusic.js';
 import { getFeaturedQuest, getQuestStatus, resolveSideQuestBadge } from './sideQuests.js';
 import { VAULT_GAMES, VAULT_UNLOCKED, resolveVaultGameBadge } from './vaultGames.js';
+import { checkVaultCapstone, maybeShowCapstonePreview } from './vaultCapstone.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -596,6 +597,11 @@ async function loadStudentCard() {
     initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
     renderSideQuestBanner(data);
     renderVaultGames(data);
+    maybeShowCapstonePreview({ email, name: data.name || name, data }).then((shown) => {
+      if (!shown && VAULT_UNLOCKED && !isSeasonPreviewAdmin) {
+        checkVaultCapstone({ email, name: data.name || name, data });
+      }
+    });
 
     // Admins have no students/{email} doc (no fixed teacherEmail/
     // section), so their chat bubble runs in "admin mode" instead --

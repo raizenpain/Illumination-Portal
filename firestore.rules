@@ -54,7 +54,8 @@ service cloud.firestore {
         'verificationCode', 'midtermVerificationCode',
         'semifinalVerificationCode', 'finalVerificationCode',
         'hasSeenDashboardTour', 'avatarImage',
-        'sideQuests', 'vaultGames', 'seenGameGuides'
+        'sideQuests', 'vaultGames', 'seenGameGuides',
+        'vaultCapstoneGranted', 'vaultCapstoneKeyUsed'
       ];
     }
 

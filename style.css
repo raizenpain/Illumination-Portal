@@ -3904,6 +3904,144 @@ body.teacher-page {
   cursor: pointer;
 }
 
+.treasure-close-btn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* No mobile breakpoint existed for this component at all before --
+   the fixed 260px/196px stage+icon-frame were tight-to-overflowing
+   under ~360px viewports. Applies to every showTreasureReveal() caller
+   (all 5 Vault Games, all 3 Side Quests, the Vault Capstone), not just
+   the celebration variant below. */
+@media (max-width: 480px) {
+  .treasure-box { padding: 26px 18px 22px; border-radius: 22px; }
+  .treasure-stage { width: 190px; height: 190px; }
+  .treasure-icon-frame { width: 140px; height: 140px; border-radius: 16px; }
+  .treasure-heading { font-size: 21px; }
+  .treasure-sub { font-size: 13.5px; }
+  .treasure-open-btn { padding: 14px 26px; font-size: 15.5px; }
+  .treasure-chip { font-size: 12.5px; padding: 7px 12px; }
+  .treasure-close-btn, .treasure-dashboard-btn { padding: 12px 20px; font-size: 14px; }
+  .capstone-key-grid { grid-template-columns: repeat(auto-fill, minmax(76px, 1fr)); gap: 8px; }
+}
+
+/* ================================
+   VAULT CAPSTONE — celebration variant. Opt-in via
+   showTreasureReveal({ celebration: true }), used only by
+   vaultCapstone.js's core reveal sequence -- every other reward in the
+   app (Side Quests, individual Vault Games) keeps the plain look
+   above. This is meant to read as the single biggest reward moment in
+   the whole portal, so it gets its own richer, "legendary" treatment:
+   a double gold ring, a bigger/bolder heading pop, and a confetti
+   burst the plain variant never shows. ================================ */
+.treasure-box.celebration {
+  /* Without this, .treasure-confetti's position:absolute;inset:0 (added
+     below) anchors to the nearest positioned ancestor instead -- which
+     is .treasure-popup (the full-viewport fixed overlay), not this box
+     -- so confetti pieces render across the whole screen instead of
+     being clipped to the card. Caught by an actual screenshot, not
+     just reading the CSS. Deliberately NOT overflow:hidden here too --
+     .treasure-box already relies on its own overflow-y:auto (base
+     class) to stay scrollable when content is taller than the
+     viewport; .treasure-confetti's own overflow:hidden below is enough
+     to contain the pieces without breaking that. */
+  position: relative;
+  border: 2px solid #FDE68A;
+  box-shadow:
+    0 0 0 1px rgba(251,191,36,0.25),
+    0 0 0 8px rgba(251,191,36,0.08),
+    0 30px 80px rgba(0,0,0,0.6),
+    0 0 120px rgba(251,191,36,0.22);
+}
+
+.treasure-box.celebration .treasure-heading {
+  font-size: 30px;
+  animation: celebrationHeadingPop 0.6s cubic-bezier(.2,1.4,.4,1);
+}
+
+@media (max-width: 480px) {
+  .treasure-box.celebration .treasure-heading { font-size: 23px; }
+}
+
+@keyframes celebrationHeadingPop {
+  0% { opacity: 0; transform: scale(0.6); }
+  60% { opacity: 1; transform: scale(1.08); }
+  100% { transform: scale(1); }
+}
+
+.treasure-box.celebration .treasure-glow {
+  background: radial-gradient(circle, rgba(253,230,138,0.7) 0%, rgba(251,191,36,0.25) 42%, transparent 74%);
+}
+
+.treasure-box.celebration .treasure-icon-frame {
+  box-shadow: 0 0 0 3px #FDE68A, 0 0 55px rgba(251,191,36,0.6), 0 18px 30px rgba(0,0,0,0.5);
+}
+
+/* Confetti burst -- plain absolutely-positioned pieces, randomized
+   per-piece via inline style vars set in JS (left/color/delay/duration/
+   rotation), so no two bursts look identical. Auto-removed from the DOM
+   by treasureReveal.js once its animation ends. */
+.treasure-confetti {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  border-radius: inherit;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -12px;
+  left: var(--x, 50%);
+  width: var(--size, 8px);
+  height: calc(var(--size, 8px) * 0.4);
+  background: var(--color, #FBBF24);
+  opacity: 0;
+  animation: confettiFall var(--duration, 2.2s) var(--delay, 0s) ease-in forwards;
+}
+
+@keyframes confettiFall {
+  0% { opacity: 0; transform: translateY(0) rotate(0deg); }
+  8% { opacity: 1; }
+  100% { opacity: 0; transform: translateY(340px) rotate(var(--spin, 480deg)); }
+}
+
+/* Vault Capstone's Silver Key picker -- reuses .artifact-card/
+   .artifact-icon-frame/.artifact-name from the crafting UI so the two
+   free picks feel native to it, inside the shared .treasure-box shell. */
+.capstone-key-tier-label {
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #FBBF24;
+  text-align: left;
+  margin: 18px 0 8px;
+}
+
+.capstone-key-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+  gap: 10px;
+}
+
+.capstone-key-empty {
+  font-size: 13px;
+  color: #9CA9C4;
+  text-align: left;
+  margin: 0 0 8px;
+}
+
+.capstone-pick-card {
+  cursor: pointer;
+}
+
+.capstone-pick-card.selected {
+  border-color: #FBBF24;
+  box-shadow: 0 0 12px rgba(251,191,36,0.4);
+}
+
 /* Rank / star "Congratulations!" popup — separate template from the
    plain achievement-box above, shown via rankPopup.js on puzzle.html
    and season.html. Shares the same #achievementPopup queue timing in

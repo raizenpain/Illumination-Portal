@@ -5969,6 +5969,104 @@ body.season-page {
   filter: none;
 }
 
+/* ================================
+   HCDC 75TH FIESTA ANNOUNCEMENT — one-time info popup, image + 2
+   paragraphs + a single Skip button. Higher z-index than every other
+   dashboard overlay (.tour-overlay is 10050) since dashboard.html
+   deliberately shows this first and waits for it to close before
+   triggering the dashboard tour or the Vault Capstone reveal.
+   ================================ */
+.fiesta-popup {
+  position: fixed;
+  inset: 0;
+  background: rgba(5,7,15,0.86);
+  backdrop-filter: blur(2px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 10100;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: fadeIn 0.35s ease;
+}
+
+.fiesta-card {
+  width: min(480px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  background: linear-gradient(160deg, #1D2233 0%, #0A0F22 100%);
+  border: 2px solid #FBBF24;
+  border-radius: 22px;
+  box-shadow: 0 0 0 1px rgba(251,191,36,0.15), 0 30px 70px rgba(0,0,0,0.55), 0 0 60px rgba(251,191,36,0.1);
+  animation: popupScale 0.4s cubic-bezier(.2,.9,.3,1.2);
+}
+
+.fiesta-card-img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 20px 20px 0 0;
+}
+
+.fiesta-card-body {
+  padding: 22px 26px 26px;
+  text-align: left;
+}
+
+.fiesta-kicker {
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #FBBF24;
+  margin: 0 0 8px;
+}
+
+.fiesta-heading {
+  margin: 0 0 14px;
+  font-size: 24px;
+  color: #FBBF24;
+  text-shadow: 0 0 20px rgba(251,191,36,0.35);
+}
+
+.fiesta-card-body p {
+  margin: 0 0 14px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #D7E3F0;
+}
+
+.fiesta-card-body p strong {
+  color: #FFE9B0;
+}
+
+.fiesta-skip-btn {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+  background: linear-gradient(135deg, #FDE68A, #FBBF24 45%, #D97706);
+  color: #241900;
+  border: none;
+  border-radius: 14px;
+  padding: 15px 26px;
+  font-size: 16px;
+  font-weight: 800;
+  letter-spacing: .3px;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(251,191,36,0.35);
+}
+
+.fiesta-skip-btn:hover {
+  filter: brightness(1.08);
+}
+
+@media (max-width: 480px) {
+  .fiesta-card-body { padding: 18px 18px 20px; }
+  .fiesta-heading { font-size: 20px; }
+  .fiesta-card-body p { font-size: 13.5px; }
+  .fiesta-skip-btn { padding: 13px 22px; font-size: 15px; }
+}
+
 @media (max-width: 700px) {
   .shore-area {
     flex-direction: column;

@@ -401,6 +401,7 @@ import { initDashboardMusic } from './dashboardMusic.js';
 import { getFeaturedQuest, getQuestStatus, resolveSideQuestBadge } from './sideQuests.js';
 import { VAULT_GAMES, VAULT_UNLOCKED, resolveVaultGameBadge } from './vaultGames.js';
 import { checkVaultCapstone, maybeShowCapstonePreview } from './vaultCapstone.js';
+import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -594,13 +595,23 @@ async function loadStudentCard() {
       lastTop5RewardDate: data.lastTop5RewardDate || null
     });
 
-    initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
     renderSideQuestBanner(data);
     renderVaultGames(data);
-    maybeShowCapstonePreview({ email, name: data.name || name, data }).then((shown) => {
-      if (!shown && VAULT_UNLOCKED && !isSeasonPreviewAdmin) {
-        checkVaultCapstone({ email, name: data.name || name, data });
-      }
+    // The Fiesta announcement is sequenced ahead of the dashboard tour
+    // and the Vault Capstone reveal so they never visually stack on top
+    // of each other -- both wait for this one to close first (or
+    // resolve immediately if already seen/expired).
+    maybeShowFiesta75Announcement({
+      email,
+      hasSeen: !!data.hasSeenFiesta75Announcement,
+      isAdmin: isSeasonPreviewAdmin
+    }).then(() => {
+      initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
+      maybeShowCapstonePreview({ email, name: data.name || name, data }).then((shown) => {
+        if (!shown && VAULT_UNLOCKED && !isSeasonPreviewAdmin) {
+          checkVaultCapstone({ email, name: data.name || name, data });
+        }
+      });
     });
 
     // Admins have no students/{email} doc (no fixed teacherEmail/

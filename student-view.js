@@ -20,6 +20,7 @@ import { findArtifact, tierOfArtifact, TIERS, artifactIconPath, chainForTier5 } 
 import { PRELIM_BADGE_INFO } from './prelimBadges.js';
 import { resolveSeasonBadge } from './seasonBadges.js';
 import { SIDE_QUESTS, resolveSideQuestBadge } from './sideQuests.js';
+import { VAULT_GAMES, resolveVaultGameBadge } from './vaultGames.js';
 
 const user = requireAdmin(ADMIN_EMAILS);
 
@@ -55,6 +56,7 @@ async function loadStudent(studentEmail) {
     renderArtifacts(data);
     renderAchievements(data);
     renderSideQuests(data);
+    renderVaultGames(data);
     renderSubmissions(data);
 
   } catch (err) {
@@ -275,7 +277,7 @@ function renderAchievements(data) {
   }
 
   achievements.forEach((id) => {
-    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id);
+    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id) || resolveVaultGameBadge(id);
     const label = info ? `${info.icon} ${info.title}` : id;
     addRow(container, label, '✅');
   });
@@ -300,6 +302,32 @@ function renderSideQuests(data) {
       addRow(container, quest.title, `✅ ${when}`);
     } else {
       addRow(container, quest.title, 'Not completed');
+    }
+  });
+}
+
+function renderVaultGames(data) {
+  const container = document.getElementById('vaultGamesList');
+  if (!container) return;
+  container.innerHTML = '';
+
+  const games = Object.values(VAULT_GAMES);
+  if (games.length === 0) {
+    container.innerHTML = '<p>No Vault Games yet.</p>';
+    return;
+  }
+
+  const progress = data.vaultGames || {};
+
+  games.forEach((game) => {
+    const entry = progress[game.id];
+    if (entry && entry.completed) {
+      const when = entry.completedAt ? new Date(entry.completedAt).toLocaleDateString() : '';
+      addRow(container, game.title, `✅ ${when}`);
+    } else if (!game.page) {
+      addRow(container, game.title, 'Not yet released');
+    } else {
+      addRow(container, game.title, 'Not completed');
     }
   });
 }

@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Vigil | HCDC Illumination Portal</title>
+  <link rel="stylesheet" href="style.css">
+  <script type="module" src="clickSound.js"></script>
+  <style>
+    /* ============================================
+       THE VIGIL — ported from the original component's own inline style
+       block. Scoped entirely under .lnt, so it lives here rather than in
+       the shared style.css (same pattern as vault-scriptorium.html and
+       vault-loaves.html). The source file had this whole block pasted in
+       twice back to back -- harmless (identical rules just override
+       themselves) but bloated, so it's deduplicated here.
+
+       One real bug fixed while porting: every non-nave station's
+       background rect shared the class "lnt-rock" while each also
+       defined its own distinct gradient (lnt-tufa, lnt-rock-g,
+       lnt-plaster, lnt-vat-wall) -- but since .lnt-rock was then
+       redeclared per station later in the same stylesheet, only the
+       LAST declaration (the tomb's) actually won the cascade, so
+       catacomb/basilica/vatican would have silently rendered with the
+       tomb's gradient instead of their own. Fixed by giving each
+       station's rect its own class (lnt-bg-<station>) tied to its own
+       gradient -- restoring each station's intended palette rather than
+       preserving what was clearly a copy-paste slip, not a deliberate
+       look.
+    ================================ */
+    @font-face {
+      font-family: "Broken Relent";
+      src: url("assets/fonts/broken-relent.ttf") format("truetype");
+      font-display: swap;
+    }
+
+    html, body { margin: 0; background: #0b0d16; }
+
+    .lnt {
+      --ink: #12141f;
+      --ink-2: #1b1e2e;
+      --vellum: #ded2b4;
+      --vellum-dim: #a9a289;
+      --rubric: #8f2f26;
+      --gold: #c2a13f;
+      --verdigris: #5c8f7a;
+      --rule: rgba(222,210,180,0.17);
+
+      position: relative;
+      isolation: isolate;
+      background-color: var(--ink);
+      background-image:
+        radial-gradient(38% 26% at 14% 12%, rgba(143,90,38,0.16), transparent 70%),
+        radial-gradient(30% 22% at 88% 30%, rgba(143,47,38,0.12), transparent 70%),
+        radial-gradient(44% 30% at 68% 84%, rgba(120,92,40,0.14), transparent 72%),
+        repeating-linear-gradient(180deg, rgba(222,210,180,0.035) 0px, rgba(222,210,180,0.035) 1px, transparent 1px, transparent 36px),
+        radial-gradient(130% 90% at 50% 0%, var(--ink-2), var(--ink) 62%, #0b0d16 100%);
+      color: var(--vellum);
+      font-family: Georgia, "Iowan Old Style", "Times New Roman", serif;
+      padding: 26px 20px 34px;
+      box-sizing: border-box;
+      min-height: 100vh;
+    }
+    .lnt::before {
+      content: "";
+      position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        radial-gradient(120% 80% at 50% 40%, transparent 52%, rgba(0,0,0,0.42) 100%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E");
+      background-size: auto, 180px 180px;
+      opacity: 0.55;
+      mix-blend-mode: soft-light;
+    }
+    .lnt > * { position: relative; z-index: 1; }
+
+    .lnt-head {
+      position: relative;
+      text-align: center;
+      border-bottom: 1px solid var(--rule);
+      padding: 20px 76px 20px 118px;
+      margin: -26px -20px 0;
+      background:
+        radial-gradient(62% 130% at 50% 42%, rgba(140,62,10,0.30), transparent 72%),
+        linear-gradient(180deg, #040408 0%, #08070d 58%, rgba(8,7,13,0) 100%);
+    }
+    .lnt-head-text { display: inline-block; max-width: 100%; }
+    .lnt-crest { position: relative; display: flex; align-items: center; justify-content: center; gap: 16px; }
+    .lnt-crest::before {
+      content: ""; position: absolute; left: 50%; top: 50%;
+      width: 420px; height: 150px; transform: translate(-50%,-50%);
+      background: radial-gradient(ellipse at center, rgba(226,140,44,0.22), rgba(168,72,12,0.10) 45%, transparent 70%);
+      pointer-events: none; z-index: 0;
+      animation: lnt-halo 4.5s ease-in-out infinite;
+    }
+    .lnt-flourish { width: 64px; height: 20px; flex: none; fill: #e0a35c; stroke: #e0a35c; stroke-width: 1.1; opacity: 0.8; }
+    .lnt-flourish path { fill: none; }
+    .lnt-flourish.is-right { transform: scaleX(-1); }
+    .lnt-title {
+      position: relative;
+      z-index: 1;
+      margin: 0;
+      font-family: "Broken Relent", Georgia, "Iowan Old Style", serif;
+      font-size: 46px;
+      font-weight: 400;
+      letter-spacing: 0.04em;
+      line-height: 1.12;
+      /* solid first, so the title can never come out invisible */
+      color: #f0cf90;
+      text-shadow:
+        0 -1px 0 rgba(255,238,196,0.55),
+        0 2px 1px rgba(61,34,8,0.9),
+        0 0 8px rgba(255,214,130,0.5),
+        0 0 20px rgba(226,140,44,0.5),
+        0 0 42px rgba(198,96,20,0.4);
+      animation: lnt-glow 4.5s ease-in-out infinite;
+    }
+
+    /* Where it is supported, the face becomes struck metal: dark amber at the
+       crown falling to near-white at the foot, with the heat moved onto a filter
+       so it still reads through the gradient. */
+    @supports ((-webkit-background-clip: text) or (background-clip: text)) {
+      .lnt-title {
+        background-image: linear-gradient(
+          180deg,
+          #7a3d0d 0%,
+          #b8621a 22%,
+          #e0973a 46%,
+          #f6d79b 74%,
+          #fff6dc 100%
+        );
+        -webkit-background-clip: text;
+        background-clip: text;
+        -webkit-text-fill-color: transparent;
+        text-shadow: none;
+        filter:
+          drop-shadow(0 1px 0 rgba(61,34,8,0.95))
+          drop-shadow(0 0 7px rgba(255,214,130,0.55))
+          drop-shadow(0 0 20px rgba(226,140,44,0.55))
+          drop-shadow(0 0 46px rgba(198,96,20,0.40))
+          drop-shadow(0 0 90px rgba(168,72,12,0.28));
+        animation: lnt-glow-metal 4.5s ease-in-out infinite;
+      }
+    }
+    .lnt-tagline {
+      margin: 10px auto 0;
+      font-size: 15px;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: #e0a35c;
+      text-shadow: 0 1px 0 rgba(0,0,0,0.6), 0 0 12px rgba(226,140,44,0.5);
+    }
+    .lnt-sub { margin: 10px auto 0; font-size: 14px; font-style: italic; color: var(--vellum-dim); max-width: 52ch; }
+    .lnt-exit {
+      position: absolute; top: 2px; right: 0;
+      background: none; border: 1px solid var(--rule); color: var(--vellum-dim);
+      font-family: inherit; font-size: 13px; padding: 6px 12px; border-radius: 2px; cursor: pointer;
+    }
+    .lnt-exit:hover { color: var(--vellum); border-color: var(--vellum-dim); }
+    .lnt-help {
+      position: absolute; top: 2px; left: 0;
+      background: none; border: 1px solid var(--rule); color: var(--vellum-dim);
+      font-family: inherit; font-size: 13px; padding: 6px 12px; border-radius: 2px; cursor: pointer;
+    }
+    .lnt-help:hover { color: var(--vellum); border-color: var(--vellum-dim); }
+
+    .lnt-bar {
+      display: flex;
+      align-items: stretch;
+      gap: 0;
+      margin: 16px 0 12px;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      background: rgba(8,7,13,0.72);
+      position: sticky; top: 0; z-index: 5;
+      overflow: hidden;
+    }
+    .lnt-cell {
+      flex: 1 1 0;
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      padding: 10px 14px;
+      border-right: 1px solid var(--rule);
+    }
+    .lnt-cell:last-child { border-right: none; }
+    .lnt-cell-l {
+      font-size: 10.5px;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: var(--vellum-dim);
+      white-space: nowrap;
+    }
+    .lnt-cell-v {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 26px;
+      font-size: 17px;
+      color: var(--vellum);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .lnt-cell-n { font-size: 15px; color: var(--vellum-dim); font-variant-numeric: tabular-nums; }
+    .lnt-pips { display: flex; gap: 4px; align-items: center; }
+    .lnt-pip { width: 12px; height: 3px; background: var(--rule); }
+    .lnt-pip.is-lit { background: var(--gold); }
+    .lnt-att { width: 10px; height: 10px; border-radius: 50%; border: 1px solid var(--vellum-dim); }
+    .lnt-att.is-spent { background: var(--rubric); border-color: var(--rubric); }
+
+    .lnt-cell.is-timer { flex: 0 0 auto; min-width: 150px; }
+    .lnt-clock { font-size: 22px; line-height: 1; color: var(--vellum); font-variant-numeric: tabular-nums; }
+    .lnt-clock-u { font-size: 12px; margin-left: 1px; color: var(--vellum-dim); }
+    .lnt-count-track { display: block; height: 4px; margin-top: 2px; background: rgba(222,210,180,0.18); border-radius: 2px; overflow: hidden; }
+    .lnt-count-fill { display: block; height: 100%; background: var(--gold); transition: width 1s linear; }
+    .lnt-cell.is-idle .lnt-clock, .lnt-cell.is-idle .lnt-glass { opacity: 0.45; }
+    .lnt-cell.is-idle .lnt-count-fill { background: #6b6353; }
+    .lnt-cell.is-low .lnt-clock { color: var(--rubric); }
+    .lnt-cell.is-low .lnt-count-fill { background: var(--rubric); }
+    .lnt-cell.is-low { animation: lnt-tick 1s steps(2) infinite; }
+
+    /* ---- the station scene ---- */
+    .lnt-nave {
+      display: block; width: 100%; height: auto;
+      margin: 6px 0 4px;
+      border: 1px solid var(--rule);
+      border-radius: 2px;
+      background: #0a0b0f;
+    }
+
+    /* the nave */
+    .lnt-wall { fill: url(#lnt-stone); }
+    .lnt-vault { stroke: rgba(222,210,180,0.13); stroke-width: 2; }
+    .lnt-floor { fill: url(#lnt-floor-g); }
+    .lnt-flagstone { stroke: rgba(0,0,0,0.35); stroke-width: 1.4; }
+    .lnt-arch { fill: #12100c; stroke: #5a4f39; stroke-width: 2; }
+    .lnt-arch.is-sanctuary { fill: #171309; }
+    .lnt-sanct-glow { fill: url(#lnt-sanct); }
+    .lnt-column { fill: #4b4433; stroke: #262115; stroke-width: 1.2; }
+    .lnt-rose { fill: url(#lnt-rose); }
+    .lnt-tracery { stroke: #241c12; stroke-width: 2.2; }
+    .lnt-step { fill: #3a3222; stroke: #221c12; stroke-width: 1.4; }
+    .lnt-altar { fill: #4a4130; stroke: #221c12; stroke-width: 2; }
+    .lnt-altar-cloth { fill: #cbb489; }
+    .lnt-cross { stroke: #c2a13f; stroke-width: 3; stroke-linecap: round; }
+    .lnt-gloom { fill: #05060a; transition: opacity 0.7s ease; pointer-events: none; }
+
+    /* the catacomb */
+    .lnt-bg-catacomb { fill: url(#lnt-tufa); }
+    .lnt-vault-ring { fill: none; stroke: #4a4133; stroke-width: 2.4; }
+    .lnt-deep { fill: #07060a; }
+    .lnt-farglow { fill: url(#lnt-far); }
+    .lnt-cata-floor { fill: url(#lnt-dirt); }
+    .lnt-niche { fill: #0c0a08; stroke: #4a4133; stroke-width: 2; }
+    .lnt-slab { fill: #574c39; stroke: #2a2419; stroke-width: 1.2; }
+    .lnt-graffito { stroke: #8a7647; stroke-width: 2.4; stroke-linecap: round; opacity: 0.75; }
+
+    /* the tomb */
+    .lnt-bg-tomb { fill: url(#lnt-rock-g); }
+    .lnt-chisel { stroke: rgba(222,210,180,0.09); stroke-width: 2; }
+    .lnt-doorway { fill: #0a0906; }
+    .lnt-dawn { fill: url(#lnt-dawn-g); transition: opacity 0.8s ease; }
+    .lnt-dawn-spill { fill: #f0c06a; opacity: 0.2; transition: opacity 0.8s ease; }
+    .lnt-channel { fill: #17130d; stroke: #4a4133; stroke-width: 1.4; }
+    .lnt-disc { fill: url(#lnt-stone-disc); stroke: #241d12; stroke-width: 2.4; }
+    .lnt-disc-inner { fill: none; stroke: rgba(0,0,0,0.35); stroke-width: 3; }
+    .lnt-disc-boss { fill: #4e442f; stroke: #241d12; stroke-width: 1.6; }
+    .lnt-tomb-floor-p { fill: url(#lnt-tomb-floor); }
+    .lnt-arcosolium { fill: #0d0b08; stroke: #4a4133; stroke-width: 2; }
+    .lnt-shelf { fill: #574c39; stroke: #2a2419; stroke-width: 1.4; }
+    .lnt-linen { fill: url(#lnt-linen-g); stroke: #9d9075; stroke-width: 1.2; }
+    .lnt-linen-fold { stroke: #9d9075; stroke-width: 1.2; opacity: 0.8; }
+
+    /* the ancient church */
+    .lnt-bg-basilica { fill: url(#lnt-plaster); }
+    .lnt-truss { stroke: #6b5c3f; stroke-width: 3; stroke-linecap: round; }
+    .lnt-apse { fill: #0f0d09; stroke: #5a4f39; stroke-width: 2; }
+    .lnt-apse-mosaic { fill: url(#lnt-apse-g); }
+    .lnt-mosaic-line { stroke: rgba(40,28,10,0.55); stroke-width: 2.6; }
+    .lnt-col { fill: url(#lnt-marble); stroke: #241f16; stroke-width: 1.2; }
+    .lnt-cap, .lnt-base { fill: #6a6250; stroke: #241f16; stroke-width: 1.2; }
+    .lnt-round-arch { stroke: #6a6250; stroke-width: 5; }
+    .lnt-ciborium { stroke: #8a7647; stroke-width: 3; stroke-linecap: round; }
+    .lnt-basil-floor-p { fill: url(#lnt-basil-floor); }
+
+    /* St Peter's */
+    .lnt-bg-vatican { fill: url(#lnt-vat-wall); }
+    .lnt-dome { fill: #171310; }
+    .lnt-dome-light { fill: url(#lnt-dome-g); }
+    .lnt-coffer { stroke: rgba(40,30,12,0.5); stroke-width: 2.4; }
+    .lnt-lantern { fill: #fff3d2; opacity: 0.9; }
+    .lnt-pier { fill: url(#lnt-vat-wall); stroke: #241f16; stroke-width: 1.6; }
+    .lnt-pier-arch { fill: #100d0a; stroke: #5a4f39; stroke-width: 2; }
+    .lnt-gloria { fill: url(#lnt-gloria-g); transition: opacity 0.8s ease; }
+    .lnt-rays { stroke: #f6d68a; stroke-width: 3; stroke-linecap: round; transition: opacity 0.8s ease; }
+    .lnt-dove ellipse, .lnt-dove path { fill: #fff8e2; stroke: #b99a4f; stroke-width: 1.2; }
+    .lnt-twist { stroke: url(#lnt-bronze); stroke-width: 11; stroke-linecap: round; }
+    .lnt-canopy { fill: url(#lnt-bronze); stroke: #2a2009; stroke-width: 1.6; }
+    .lnt-canopy-swag, .lnt-canopy-top { stroke: #9a7a34; stroke-width: 3; stroke-linecap: round; }
+    .lnt-vat-floor-p { fill: url(#lnt-vat-floor); }
+    .lnt-inlay { stroke: rgba(0,0,0,0.35); stroke-width: 2; }
+
+    /* ---- the candles ---- */
+    .lnt-hit { fill: transparent; }
+    .lnt-candle { cursor: pointer; }
+    .lnt-candle.is-lit { pointer-events: none; }
+    .lnt-glow, .lnt-fire, .lnt-fire-core, .lnt-pool, .lnt-marker { pointer-events: none; }
+    .lnt-candle[tabindex="-1"] { cursor: default; }
+    .lnt-candle:focus-visible { outline: none; }
+    .lnt-candle:focus-visible .lnt-wax { stroke: var(--gold); stroke-width: 2.4; }
+    .lnt-stand { fill: #7d6330; stroke: #33270f; stroke-width: 1.4; }
+    .lnt-wax { fill: #e8dec0; stroke: #9c916f; stroke-width: 1.2; }
+    .lnt-wax-run { stroke: #cfc3a0; stroke-width: 2; stroke-linecap: round; }
+    .lnt-wick { stroke: #4a4030; stroke-width: 2; stroke-linecap: round; }
+    .lnt-pool { fill: #f0c96a; opacity: 0.16; }
+    .lnt-candle:not(.is-lit) .lnt-wax { animation: lnt-await 2.8s ease-in-out infinite; }
+    .lnt-candle:not(.is-lit):hover .lnt-wax { fill: #fff6dc; stroke: var(--gold); animation: none; }
+    .lnt-candle:not(.is-lit):hover .lnt-wick { stroke: var(--gold); }
+    .lnt-fire { fill: #f6c65a; }
+    .lnt-fire-core { fill: #fff1c0; }
+    .lnt-glow { fill: #f0c96a; opacity: 0.3; }
+    .lnt-candle.is-lit .lnt-flame { animation: lnt-flicker 1.6s ease-in-out infinite; transform-origin: center bottom; }
+    .lnt-marker {
+      fill: none; stroke: var(--gold); stroke-width: 2; stroke-dasharray: 5 7;
+      animation: lnt-turn 6s linear infinite;
+      transform-box: fill-box; transform-origin: center;
+    }
+
+    @keyframes lnt-flicker {
+      0%, 100% { opacity: 1; transform: scaleY(1); }
+      45% { opacity: 0.86; transform: scaleY(0.93) translateX(0.6px); }
+      70% { opacity: 1; transform: scaleY(1.05) translateX(-0.4px); }
+    }
+    @keyframes lnt-await {
+      0%, 100% { stroke: #9c916f; }
+      50% { stroke: #c9b782; }
+    }
+    @keyframes lnt-turn { to { transform: rotate(360deg); } }
+
+    .lnt-glass { width: 26px; height: 42px; flex: none; overflow: visible; }
+    .lnt-glass-wood { fill: #6b5426; stroke: #3a2d14; stroke-width: 1.2; }
+    .lnt-glass-post { fill: #6b5426; }
+    .lnt-glass-bulb { fill: rgba(222,210,180,0.06); stroke: rgba(222,210,180,0.4); stroke-width: 1.4; }
+    .lnt-glass-shine { stroke: rgba(255,255,255,0.28); stroke-width: 1.6; stroke-linecap: round; }
+    .lnt-sandfill { fill: var(--gold); }
+    .lnt-stream { fill: var(--gold); opacity: 0.55; }
+    .lnt-grain { fill: var(--gold); animation: lnt-fall 0.75s linear infinite; }
+    .lnt-grain.g2 { animation-delay: 0.37s; }
+    .lnt-glass.is-low .lnt-sandfill, .lnt-glass.is-low .lnt-stream, .lnt-glass.is-low .lnt-grain { fill: var(--rubric); }
+    .lnt-glass.is-low { animation: lnt-shiver 1s ease-in-out infinite; }
+
+    /* ---- the scroll ---- */
+    .lnt-scroll { position: relative; margin: 20px 38px 4px; }
+    .lnt-scroll::before, .lnt-scroll::after {
+      content: ""; position: absolute; top: -12px; bottom: -12px; width: 30px; border-radius: 9px;
+      background: linear-gradient(90deg, #4a3620 0%, #7d6238 10%, #b99a66 26%, #e2cda2 46%, #d3b98d 60%, #96774a 82%, #443119 100%);
+      box-shadow: 0 8px 22px rgba(0,0,0,0.55), inset 0 0 12px rgba(0,0,0,0.35);
+    }
+    .lnt-scroll::before { left: -38px; }
+    .lnt-scroll::after { right: -38px; }
+
+    .lnt-sheet {
+      position: relative;
+      padding: 38px 34px 30px;
+      color: #3b2b16;
+      background-color: #c2a578;
+      background-image:
+        radial-gradient(38% 28% at 12% 14%, rgba(120,80,36,0.20), transparent 70%),
+        radial-gradient(32% 24% at 86% 24%, rgba(96,62,28,0.18), transparent 70%),
+        radial-gradient(44% 32% at 68% 88%, rgba(120,86,40,0.20), transparent 72%),
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='200'%3E%3Cg fill='none' stroke='%235a3c1e' stroke-opacity='0.22' stroke-width='1'%3E%3Cpath d='M10 30 L60 55 L40 110 L90 150'/%3E%3Cpath d='M60 55 L120 40 L180 70'/%3E%3Cpath d='M120 40 L150 4'/%3E%3Cpath d='M180 70 L232 118 L292 98'/%3E%3Cpath d='M180 70 L200 140 L158 196'/%3E%3Cpath d='M40 110 L2 158'/%3E%3C/g%3E%3C/svg%3E"),
+        linear-gradient(90deg, #8f7043 0%, #c9ae86 13%, #dcc59c 50%, #c4a87e 87%, #86673c 100%),
+        linear-gradient(180deg, #d6bd95 0%, #c0a377 54%, #ac8c5e 100%);
+      background-size: auto, auto, auto, 300px 200px, auto, auto;
+      box-shadow:
+        inset 30px 0 36px -22px rgba(42,26,8,0.92),
+        inset -30px 0 36px -22px rgba(42,26,8,0.92),
+        inset 0 18px 26px -14px rgba(42,26,8,0.7),
+        inset 0 -18px 26px -14px rgba(42,26,8,0.7),
+        0 12px 30px rgba(0,0,0,0.55);
+      clip-path: polygon(
+        0% 2.2%, 7% 0.5%, 14% 1.9%, 22% 0.3%, 30% 1.7%, 38% 0.6%, 46% 2.1%,
+        54% 0.4%, 62% 1.8%, 70% 0.7%, 78% 2.0%, 86% 0.5%, 93% 1.7%, 100% 0.9%,
+        100% 98.1%, 93% 99.6%, 86% 98.3%, 78% 99.7%, 70% 98.4%, 62% 99.5%,
+        54% 98.1%, 46% 99.7%, 38% 98.4%, 30% 99.5%, 22% 98.2%, 14% 99.6%,
+        7% 98.5%, 0% 99.3%
+      );
+    }
+    .lnt-sheet::before {
+      content: ""; position: absolute; inset: 0; z-index: 0; pointer-events: none;
+      background-image:
+        url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='p'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23p)'/%3E%3C/svg%3E"),
+        radial-gradient(120% 130% at 50% 50%, transparent 46%, rgba(48,30,10,0.5) 100%);
+      background-size: 150px 150px, auto;
+      opacity: 0.55;
+      mix-blend-mode: multiply;
+    }
+    .lnt-sheet > * { position: relative; z-index: 1; }
+
+    .lnt-verdict {
+      display: flex; align-items: center; gap: 12px;
+      margin: 0 8px 18px; padding: 10px 14px; border-radius: 2px;
+      animation: lnt-pop 0.35s ease-out;
+    }
+    .lnt-verdict p { margin: 0; font-size: 15px; font-style: italic; line-height: 1.55; }
+    .lnt-verdict.is-up { background: rgba(44,74,58,0.16); color: #23503c; }
+    .lnt-verdict.is-down { background: rgba(143,47,38,0.14); color: #7e2a22; }
+    .lnt-verdict .lnt-thumb { width: 30px; height: 30px; flex: none; }
+
+    .lnt-thumb { width: 22px; height: 22px; flex: none; }
+    .lnt-thumb-hand { stroke-width: 2.5; stroke-linejoin: round; }
+    .lnt-thumb-cuff { stroke-width: 2.5; }
+    .lnt-thumb.is-up .lnt-thumb-hand { fill: #4a7a62; stroke: #23503c; }
+    .lnt-thumb.is-up .lnt-thumb-cuff { fill: #23503c; stroke: #23503c; }
+    .lnt-thumb.is-down .lnt-thumb-hand { fill: #b0524a; stroke: #7e2a22; }
+    .lnt-thumb.is-down .lnt-thumb-cuff { fill: #7e2a22; stroke: #7e2a22; }
+    .lnt-stage .lnt-thumb { width: 58px; height: 58px; margin-bottom: 18px; }
+
+    @keyframes lnt-pop {
+      from { opacity: 0; transform: scale(0.94); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    /* ---- the question ---- */
+    .lnt-prompt {
+      margin: 0 8px 18px; font-size: 19px; line-height: 1.6; color: #2e1d08;
+      border-left: 3px solid rgba(143,47,38,0.6); padding: 4px 0 4px 14px;
+    }
+    .lnt-options { list-style: none; padding: 0; margin: 0 8px; display: flex; flex-direction: column; gap: 8px; }
+    .lnt-option {
+      width: 100%; text-align: left;
+      background: rgba(255,250,236,0.28);
+      border: 1px solid rgba(90,60,30,0.4);
+      border-left: 3px solid rgba(90,60,30,0.55);
+      border-radius: 2px; padding: 11px 14px;
+      font-family: inherit; font-size: 16px; color: #2e1d08; cursor: pointer;
+    }
+    .lnt-option:hover:not(:disabled) { border-color: #4e3720; background: rgba(255,250,236,0.44); }
+    .lnt-option:disabled { cursor: default; }
+    .lnt-option.is-right { border-color: #23503c; border-left-color: #23503c; background: rgba(44,74,58,0.18); color: #23503c; }
+    .lnt-option.is-wrong { border-color: #8f2f26; border-left-color: #8f2f26; background: rgba(143,47,38,0.14); color: #7e2a22; text-decoration: line-through; }
+    .lnt-option:focus-visible { outline: 2px solid #34240f; outline-offset: 2px; }
+    .lnt-idle { margin: 0 8px; font-size: 15px; font-style: italic; line-height: 1.7; color: #6b5334; max-width: 60ch; }
+
+    .lnt-done-line { margin: 0; font-size: 22px; color: var(--gold); }
+    .lnt-done-sub { margin: 10px auto 26px; max-width: 44ch; font-size: 15px; font-style: italic; line-height: 1.7; color: var(--vellum-dim); }
+    .lnt-go {
+      background: var(--gold); border: none; color: #14161f;
+      font-family: inherit; font-size: 16px; padding: 11px 22px;
+      border-radius: 2px; cursor: pointer;
+    }
+    .lnt-go:hover { background: #d4b154; }
+    .lnt-ghost {
+      background: none; border: 1px solid rgba(90,60,30,0.42); color: #6b5334;
+      font-family: inherit; font-size: 14px; padding: 9px 16px; border-radius: 2px; cursor: pointer;
+    }
+    .lnt-ghost:hover { color: #34240f; border-color: #5a3c1e; }
+
+    /* ---- stages ---- */
+    .lnt-stage { text-align: center; padding-top: 34px; }
+    .lnt-lost-line { margin: 0; font-size: 19px; font-style: italic; color: var(--rubric); }
+    .lnt-lost-sub { margin: 12px auto 26px; max-width: 46ch; font-size: 15px; line-height: 1.7; color: var(--vellum-dim); }
+    .lnt-cool-n { margin: 0; font-size: 62px; line-height: 1; color: var(--rubric); }
+    .lnt-cool-l { margin: 10px 0 0; font-size: 15px; font-style: italic; color: var(--vellum-dim); }
+    .lnt-cool-note { margin: 22px auto 0; max-width: 44ch; font-size: 14px; line-height: 1.7; color: var(--vellum-dim); }
+
+    @keyframes lnt-shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-4px); } 75% { transform: translateX(4px); } }
+    @keyframes lnt-breathe { 0%,100% { transform: scale(1); } 50% { transform: scale(1.035); } }
+    @keyframes lnt-rise { from { opacity: 0; transform: translateY(9px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes lnt-tick { 0%,100% { opacity: 1; } 50% { opacity: 0.45; } }
+    @keyframes lnt-fall { from { transform: translateY(0); opacity: 0; } 20% { opacity: 1; } to { transform: translateY(22px); opacity: 0; } }
+    @keyframes lnt-shiver { 0%,100% { transform: rotate(0deg); } 50% { transform: rotate(2.5deg); } }
+    @keyframes lnt-halo { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+    @keyframes lnt-glow-metal {
+      0%, 100% {
+        filter:
+          drop-shadow(0 1px 0 rgba(61,34,8,0.95))
+          drop-shadow(0 0 7px rgba(255,214,130,0.45))
+          drop-shadow(0 0 20px rgba(226,140,44,0.45))
+          drop-shadow(0 0 46px rgba(198,96,20,0.30))
+          drop-shadow(0 0 90px rgba(168,72,12,0.20));
+      }
+      50% {
+        filter:
+          drop-shadow(0 1px 0 rgba(61,34,8,0.95))
+          drop-shadow(0 0 10px rgba(255,228,158,0.72))
+          drop-shadow(0 0 30px rgba(232,150,50,0.68))
+          drop-shadow(0 0 64px rgba(204,104,24,0.48))
+          drop-shadow(0 0 120px rgba(176,80,14,0.32));
+      }
+    }
+    @keyframes lnt-glow {
+      0%, 100% {
+        text-shadow:
+          0 -1px 0 #ffeec4, 0 1px 0 #6b3f12, 0 2px 1px #3d2208,
+          0 0 6px rgba(255,214,130,0.45),
+          0 0 16px rgba(226,140,44,0.45),
+          0 0 34px rgba(198,96,20,0.35),
+          0 0 68px rgba(168,72,12,0.22);
+      }
+      50% {
+        text-shadow:
+          0 -1px 0 #ffeec4, 0 1px 0 #6b3f12, 0 2px 1px #3d2208,
+          0 0 9px rgba(255,224,150,0.70),
+          0 0 24px rgba(232,150,50,0.65),
+          0 0 50px rgba(204,104,24,0.50),
+          0 0 96px rgba(176,80,14,0.34);
+      }
+    }
+
+    /* ============ the "How to Play" guide & catechism ====================
+       Identical mechanism and look to the other two games' .scr-guide-* /
+       .lnf-catechism-*, ported under the .lnt- prefix. */
+    .lnt-guide-overlay {
+      position: fixed; inset: 0; z-index: 500;
+      display: flex; align-items: center; justify-content: center;
+      padding: 24px; box-sizing: border-box;
+      background: rgba(5,7,15,0.78);
+      animation: lnt-fade-in 0.25s ease;
+    }
+    .lnt-guide-card {
+      width: min(480px, 100%);
+      margin: 0;
+      animation: lnt-rise-in 0.3s cubic-bezier(.2,.9,.3,1.2);
+    }
+    .lnt-guide-step-label { margin: 0 0 8px; font-size: 12px; font-style: italic; letter-spacing: 0.04em; color: #6b5334; }
+    .lnt-guide-title { margin: 0 0 10px; font-family: Georgia, "Iowan Old Style", serif; font-size: 21px; font-weight: 700; color: #241708; }
+    .lnt-guide-body { margin: 0; font-size: 15px; line-height: 1.7; color: #3b2b16; }
+    .lnt-guide-dots { display: flex; gap: 7px; margin: 22px 0 20px; }
+    .lnt-guide-dot { width: 7px; height: 7px; border-radius: 50%; background: rgba(90,60,30,0.28); }
+    .lnt-guide-dot.is-active { background: var(--rubric); }
+    .lnt-guide-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+    .lnt-guide-actions .lnt-ghost { margin-top: 0; }
+    .lnt-guide-skip {
+      display: block; margin: 16px auto 0; background: none; border: none;
+      color: #7d6238; font-family: inherit; font-size: 13px;
+      text-decoration: underline; cursor: pointer; padding: 4px;
+    }
+    .lnt-guide-skip:hover { color: #4a3620; }
+
+    .lnt-catechism-card { width: min(560px, 100%); max-height: min(640px, 85vh); display: flex; flex-direction: column; }
+    .lnt-catechism-scroll { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding-right: 6px; margin-bottom: 14px; }
+    .lnt-catechism-intro { margin: 0 0 18px; font-size: 14px; font-style: italic; color: #6b5334; }
+    .lnt-catechism-section { margin-bottom: 22px; }
+    .lnt-catechism-section:last-child { margin-bottom: 0; }
+    .lnt-catechism-heading { margin: 0 0 8px; font-family: Georgia, "Iowan Old Style", serif; font-size: 16px; font-weight: 700; color: #241708; }
+    .lnt-catechism-list { margin: 0; padding-left: 20px; font-size: 15px; line-height: 1.7; color: #3b2b16; }
+    .lnt-catechism-list li { margin-bottom: 10px; }
+    .lnt-catechism-list li:last-child { margin-bottom: 0; }
+    .lnt-catechism-list strong { color: #241708; }
+    .lnt-catechism-quote { margin: 12px 0 0; padding-left: 14px; border-left: 3px solid var(--rubric); font-style: italic; color: var(--rubric); font-size: 14px; line-height: 1.6; }
+    .lnt-catechism-quote cite { display: block; margin-top: 6px; font-style: normal; font-size: 12px; color: #6b5334; }
+    .lnt-catechism-footer {
+      flex: 0 0 auto;
+      display: flex; align-items: center; justify-content: space-between; gap: 14px;
+      padding-top: 14px; border-top: 1px solid rgba(90,60,30,0.25);
+    }
+    .lnt-catechism-status { margin: 0; font-size: 13px; font-style: italic; color: #6b5334; }
+    .lnt-catechism-footer .lnt-go { flex-shrink: 0; }
+
+    @keyframes lnt-fade-in { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes lnt-rise-in {
+      from { opacity: 0; transform: translateY(14px) scale(0.98); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .lnt-candle .lnt-flame, .lnt-candle:not(.is-lit) .lnt-wax, .lnt-marker { animation: none; }
+      .lnt-title, .lnt-crest::before, .lnt-glass.is-low, .lnt-cell.is-low { animation: none; }
+      .lnt-verdict { animation: none; }
+      .lnt-grain { animation: none; opacity: 0; }
+    }
+
+    @media (max-width: 560px) {
+      .lnt { padding: 20px 14px 28px; }
+      .lnt-head { padding: 14px 0 16px; margin: -20px -14px 0; }
+      .lnt-title { font-size: 30px; letter-spacing: 0.03em; }
+      .lnt-tagline { font-size: 12px; letter-spacing: 0.2em; }
+      .lnt-crest { gap: 10px; }
+      .lnt-flourish { width: 34px; }
+      .lnt-help, .lnt-exit { position: static; margin: 12px 6px 0; }
+      .lnt-bar { flex-wrap: wrap; }
+      .lnt-cell { flex: 1 1 44%; border-right: none; border-bottom: 1px solid var(--rule); }
+      .lnt-cell:nth-child(2n) { border-left: 1px solid var(--rule); }
+      .lnt-cell:nth-last-child(-n+2) { border-bottom: none; }
+      .lnt-cell.is-timer { flex: 1 1 44%; min-width: 0; }
+      .lnt-clock { font-size: 20px; }
+      .lnt-scroll { margin: 18px 22px 4px; }
+      .lnt-scroll::before { left: -22px; width: 18px; }
+      .lnt-scroll::after { right: -22px; width: 18px; }
+      .lnt-sheet { padding: 30px 18px 24px; }
+      .lnt-prompt, .lnt-options, .lnt-idle, .lnt-verdict { margin-left: 0; margin-right: 0; }
+      .lnt-cool-n { font-size: 52px; }
+      .lnt-catechism-card { max-height: 90vh; }
+      .lnt-catechism-footer { flex-direction: column-reverse; align-items: stretch; gap: 10px; }
+      .lnt-catechism-footer .lnt-go { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div class="lnt" id="lntRoot"></div>
+  <script type="module" src="vigil.js"></script>
+</body>
+</html>

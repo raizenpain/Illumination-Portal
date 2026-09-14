@@ -123,6 +123,17 @@
 
     <div class="dashboard-main">
 
+      <section class="puzzle-section vault-section hidden" id="vaultSection">
+        <div class="section-title">
+          <span class="section-kicker">🗝️ Always Open</span>
+          <h2>THE SANCTUARIUM</h2>
+          <p class="section-tagline">Where Faith Becomes an Adventure</p>
+          <p class="section-subtitle">One-time challenges, ready whenever you are — beat one and its treasure is yours for good.</p>
+        </div>
+
+        <div class="puzzle-grid" id="vaultGamesGrid"></div>
+      </section>
+
       <section class="puzzle-section">
         <div class="section-title">
           <span class="section-kicker">Formation Journey</span>
@@ -304,6 +315,8 @@
     <p class="dashboard-footer-credits">
       Game concept inspired by Dota 2, © Valve Corporation. Artifact and Side Quest treasure icons © Valve Corporation.
       Avatar illustrations by Freepik. Background music via Pixabay. Sound effects via Mixkit.
+      The Evangelization sprites and tiles adapted from the Liberated Pixel Cup Base Assets by Lanea Zimmerman,
+      Stephen Challener, and Manuel Riecke, licensed CC-BY-SA 3.0 / OGA-BY 3.0.
     </p>
   </footer>
 
@@ -386,6 +399,7 @@ import { initDashboardTour } from './dashboardTour.js';
 import { initClassChat } from './classChat.js';
 import { initDashboardMusic } from './dashboardMusic.js';
 import { getFeaturedQuest, getQuestStatus, resolveSideQuestBadge } from './sideQuests.js';
+import { VAULT_GAMES, VAULT_UNLOCKED, resolveVaultGameBadge } from './vaultGames.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -581,6 +595,7 @@ async function loadStudentCard() {
 
     initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
     renderSideQuestBanner(data);
+    renderVaultGames(data);
 
     // Admins have no students/{email} doc (no fixed teacherEmail/
     // section), so their chat bubble runs in "admin mode" instead --
@@ -671,6 +686,74 @@ function renderSideQuestBanner(data) {
   if (status === 'upcoming') setInterval(paint, 60000);
 }
 
+// Unlike the Side Quest banner (one featured quest at a time, date-
+// gated), every Vault Game shows at once, permanently -- so this just
+// builds one card per registry entry rather than picking a "current"
+// one. The whole section stays hidden while VAULT_GAMES is empty, so
+// nothing shows on the live site before a first game is actually
+// registered.
+function renderVaultGames(data) {
+  const section = document.getElementById('vaultSection');
+  const grid = document.getElementById('vaultGamesGrid');
+  if (!section || !grid) return;
+
+  const games = Object.values(VAULT_GAMES);
+  if (games.length === 0) {
+    section.classList.add('hidden');
+    return;
+  }
+
+  const kicker = section.querySelector('.section-kicker');
+  if (kicker) kicker.textContent = VAULT_UNLOCKED ? '🗝️ Always Open' : '🔒 Coming Soon';
+
+  const progress = data.vaultGames || {};
+  grid.innerHTML = '';
+
+  games.forEach((game) => {
+    const completed = !!(progress[game.id] || {}).completed;
+    const card = document.createElement('div');
+
+    if (!game.page) {
+      card.className = 'puzzle-card state-locked';
+      card.innerHTML = `
+        <div class="puzzle-icon-chip">${game.icon || '<span class="puzzle-icon">🎮</span>'}</div>
+        <h3>${game.title}</h3>
+        <p>Coming soon</p>
+        <span class="status-badge status-locked">Locked</span>
+      `;
+    } else if (!VAULT_UNLOCKED) {
+      card.className = 'puzzle-card state-locked';
+      card.innerHTML = `
+        <div class="puzzle-icon-chip">${game.icon || '<span class="puzzle-icon">🎮</span>'}</div>
+        <h3>${game.title}</h3>
+        <p>${game.subtitle || ''}</p>
+        <span class="status-badge status-locked">Not Yet Open</span>
+      `;
+    } else if (completed) {
+      card.className = 'puzzle-card state-locked';
+      card.innerHTML = `
+        <div class="puzzle-icon-chip">${game.icon || '<span class="puzzle-icon">🎮</span>'}</div>
+        <h3>${game.title}</h3>
+        <p>Already conquered — no replay</p>
+        <span class="status-badge status-completed">✅ Completed</span>
+      `;
+    } else {
+      card.className = 'puzzle-card state-challenge';
+      card.innerHTML = `
+        <div class="puzzle-icon-chip">${game.icon || '<span class="puzzle-icon">🎮</span>'}</div>
+        <h3>${game.title}</h3>
+        <p>${game.subtitle || ''}</p>
+        <span class="status-badge status-challenge">Play Now</span>
+      `;
+      card.onclick = () => { window.location.href = `${game.page}?game=${game.id}`; };
+    }
+
+    grid.appendChild(card);
+  });
+
+  section.classList.remove('hidden');
+}
+
 function renderBadges(achievements) {
   const badgeContainer = document.getElementById('badgeContainer');
 
@@ -682,7 +765,7 @@ function renderBadges(achievements) {
   badgeContainer.innerHTML = '';
 
   achievements.forEach(id => {
-    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id);
+    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id) || resolveVaultGameBadge(id);
     if (!info) return;
 
     const badge = document.createElement('div');

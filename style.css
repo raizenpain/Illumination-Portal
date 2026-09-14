@@ -911,6 +911,18 @@ body {
   font-size: 14px;
 }
 
+/* A short evocative line under a section's h2, above its plainer
+   .section-subtitle -- e.g. The Sanctuarium's "Where Faith Becomes an
+   Adventure". Optional: most .section-title blocks skip it and go
+   straight from h2 to .section-subtitle. */
+.section-tagline {
+  margin: 0 0 6px 0;
+  font-family: 'Cinzel', serif;
+  font-style: italic;
+  color: #B8860B;
+  font-size: 14px;
+}
+
 /* ================================
    PUZZLE SECTION (dashboard cards)
 ================================ */
@@ -1224,6 +1236,10 @@ body {
   background: rgba(240,169,78,0.16);
 }
 
+.activity-icon[data-type="vaultgame"] {
+  background: rgba(176,132,240,0.16);
+}
+
 /* ================================
    DASHBOARD PAGE (dashboard.html)
 ================================ */
@@ -1253,6 +1269,10 @@ body.dashboard-page {
 
 .dashboard-page .section-subtitle {
   color: #9CA9C4;
+}
+
+.dashboard-page .section-tagline {
+  color: #FBBF24;
 }
 
 /* ================================
@@ -3529,6 +3549,49 @@ body.teacher-page {
   box-shadow: 0 0 10px rgba(251,191,36,0.3);
 }
 
+/* Vault Game icon inside its dashboard card's .puzzle-icon-chip (a
+   72px circle) -- sized to sit inside it the way the emoji
+   .puzzle-icon does. */
+.vault-game-icon {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+}
+
+/* The Sanctuarium's own grid overrides .puzzle-grid's auto-fit with
+   auto-fill, and shrinks the column floor from 220px to 160px. The
+   target is 5 Vault Games sitting side by side in one row -- 160px
+   keeps that true down to ~1280px-wide browser windows (a very common
+   laptop size), not just the dashboard's full ~940px main-column width
+   at 1400px+. auto-fill already reserves 5 tracks at this floor even
+   while fewer games are registered, so a lone card sits in the first
+   slot with more visibly held open rather than stretching to fill the
+   section. Narrower windows than that drop to fewer columns per row
+   and wrap, same as any other auto-fill grid. */
+#vaultGamesGrid {
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+}
+
+/* Five games in, titles range from "The Vigil" to "Loaves and Fishes" and
+   "The Evangelization" -- too long to reliably fit one line at this card
+   width. Smaller, tighter type lets most of them fit in one line; the
+   fixed min-height keeps every card's title block the same height (2
+   lines' worth) even on the ones that still wrap, so the "Play Now"
+   button lines up across the whole row regardless of title length. */
+#vaultGamesGrid .puzzle-card {
+  padding-left: 16px;
+  padding-right: 16px;
+}
+#vaultGamesGrid .puzzle-card h3 {
+  font-size: 14.5px;
+  line-height: 1.25;
+  letter-spacing: 0.01em;
+  min-height: 2.5em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Inline replacement for an emoji glyph -- sized in em so it scales
    with whatever text it sits next to, same as a text character would.
    Bigger than 1em on purpose: these are detailed illustrated icons,
@@ -5233,6 +5296,14 @@ body.season-page {
   border: 1px solid rgba(251,191,36,0.4);
   box-shadow: 0 0 22px rgba(251,191,36,0.18);
   animation: sidequest-banner-pulse 3.2s ease-in-out infinite;
+}
+
+/* Same cascade trap as .chat-emoji-picker/.popup-overlay above: .hidden
+   is declared earlier in this file, so without this combined selector
+   .sidequest-banner's own display:flex (equal specificity, later rule)
+   would always win and the banner could never actually be hidden. */
+.sidequest-banner.hidden {
+  display: none;
 }
 
 @keyframes sidequest-banner-pulse {

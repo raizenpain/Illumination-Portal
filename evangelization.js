@@ -18,8 +18,8 @@ import { logActivity } from './activity.js';
 import { showTreasureReveal } from './treasureReveal.js';
 import {
   TILE, WORLD_COLS, WORLD_ROWS, MAP_REGIONS, START_TILE, CHECKPOINTS,
-  BOX_TILES, BUFFS, SINS, TIME_LIMIT_SECONDS, GAME_OVER_COOLDOWN_SECONDS,
-  MAX_HP, DAMAGE_PER_CATCH, START_REVIVE_POTIONS, REVIVE_HEAL_AMOUNT,
+  BOX_TILES, EMPTY_BOX_TILES, BUFFS, SINS, TIME_LIMIT_SECONDS, GAME_OVER_COOLDOWN_SECONDS,
+  MAX_HP, DAMAGE_PER_CATCH, START_REVIVE_POTIONS, REVIVE_HEAL_AMOUNT, BIRDS, BIRD_DAMAGE, SHEEP,
   SOLDIER_PATROLS, VILLAGE_TRIGGER, CROSS_OF_SALVATION_REWARD,
   TREASURE_ICON, GUIDE_STEPS, CATECHISM, CATECHISM_MIN_SECONDS, TICKETS
 } from './evangelizationContent.js';
@@ -198,12 +198,22 @@ function generateBoxes() {
   const tiles = shuffle(BOX_TILES);
   const crossIndex = Math.floor(Math.random() * tiles.length);
 
-  return tiles.map((tile, i) => ({
+  const realBoxes = tiles.map((tile, i) => ({
     col: tile.col,
     row: tile.row,
     content: i === crossIndex ? { type: 'cross' } : (shuffledPool[i > crossIndex ? i - 1 : i] || { type: 'empty' }),
     opened: false
   }));
+  // A second, fixed set of always-empty decoy boxes -- separate from the
+  // shuffled pool above so they never eat into the odds of a real box
+  // holding the Cross/a Buff/a Sin, just more ground worth exploring.
+  const emptyBoxes = EMPTY_BOX_TILES.map((tile) => ({
+    col: tile.col,
+    row: tile.row,
+    content: { type: 'empty' },
+    opened: false
+  }));
+  return [...realBoxes, ...emptyBoxes];
 }
 
 /* ===========================================================================
@@ -229,6 +239,8 @@ function freshState() {
     revealed: [],
     keys: new Set(),
     boxes: generateBoxes(),
+    birds: BIRDS.map(([x0, y0, range, speed]) => ({ x0, y0, range, speed, x: x0, y: y0, ph: Math.random() * 6, hitCooldown: 0, clock: 0 })),
+    sheep: SHEEP.map(([x0, y0]) => ({ x0, y0, x: x0, y: y0, ph: Math.random() * 6, clock: 0 })),
     hp: MAX_HP,
     revivePotions: START_REVIVE_POTIONS,
     activeBuffs: {},
@@ -460,6 +472,31 @@ function updateSoldiers(dt) {
   state.soldiers.forEach((s) => updateOneSoldier(s, dt, wrath));
 }
 
+const BIRD_CATCH_RADIUS = 18;
+function updateBirds(dt) {
+  const p = state.player;
+  state.birds.forEach((b) => {
+    b.clock = (b.clock || 0) + dt;
+    b.x = b.x0 + Math.sin(b.clock * b.speed + b.ph) * b.range;
+    b.y = b.y0 + Math.sin(b.clock * 2 + b.ph) * 4;
+    if (b.hitCooldown > 0) { b.hitCooldown -= dt; return; }
+    if (Math.hypot(p.x - b.x, p.y - b.y) < BIRD_CATCH_RADIUS) {
+      b.hitCooldown = 1.5;
+      handleBirdHit();
+    }
+  });
+}
+
+// Purely decorative -- no collision, just wanders slowly around its own
+// home point so the meadow doesn't feel empty.
+function updateSheep(dt) {
+  state.sheep.forEach((s) => {
+    s.clock = (s.clock || 0) + dt;
+    s.x = s.x0 + Math.sin(s.clock * 0.3 + s.ph) * 14;
+    s.y = s.y0 + Math.sin(s.clock * 0.22 + s.ph * 1.4) * 6;
+  });
+}
+
 /* ===========================================================================
  * CATCH / DAMAGE / DEATH — no combat either direction. Getting caught costs
  * health and sends the player back to their last checkpoint; it never
@@ -478,6 +515,21 @@ function handleCatch() {
   }
   applyDamage(DAMAGE_PER_CATCH, 'Caught by the soldier');
   respawnAtCheckpoint();
+}
+
+// Unlike handleCatch(), a bird hit does NOT respawn the player to a
+// checkpoint -- it only costs HP. Losing the mission from birds alone
+// still has to go through hitting 0 HP (handleDeath, via applyDamage),
+// same as every other damage source.
+function handleBirdHit() {
+  if (hasBuff('guardian_angel')) {
+    if (performance.now() - state.lastGuardianToast > 3000) {
+      showToast('😇 Guardian Angel shields you from the bird!', 'good');
+      state.lastGuardianToast = performance.now();
+    }
+    return;
+  }
+  applyDamage(BIRD_DAMAGE, 'Struck by a bird');
 }
 
 function respawnAtCheckpoint() {
@@ -649,6 +701,27 @@ function drawSprite(sheet, entity, offsetX, offsetY) {
   ctx.drawImage(sheet, frameCol * 64, row * 64, 64, 64, entity.x - offsetX, entity.y - offsetY - 24, 64, 64);
 }
 
+// Plain canvas shapes, not a sprite sheet -- purely decorative, so no
+// asset was worth adding just for this.
+function drawSheep(s, offsetX, offsetY) {
+  const x = s.x - offsetX, y = s.y - offsetY;
+  ctx.fillStyle = '#e8e4d8';
+  ctx.beginPath(); ctx.ellipse(x, y, 11, 8, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = '#2a2622';
+  ctx.beginPath(); ctx.ellipse(x + 10, y - 2, 4.5, 4, 0, 0, Math.PI * 2); ctx.fill();
+  ctx.fillRect(x - 7, y + 6, 2, 5); ctx.fillRect(x + 4, y + 6, 2, 5);
+}
+
+function drawBird(b, offsetX, offsetY) {
+  const x = b.x - offsetX, y = b.y - offsetY;
+  const flap = Math.sin(b.clock * 9) * 6;
+  ctx.strokeStyle = 'rgba(10,10,12,.92)'; ctx.lineWidth = 2.4; ctx.lineCap = 'round';
+  ctx.beginPath();
+  ctx.moveTo(x - 10, y + flap * .6); ctx.quadraticCurveTo(x - 4, y - 3, x, y);
+  ctx.quadraticCurveTo(x + 4, y - 3, x + 10, y + flap * .6);
+  ctx.stroke();
+}
+
 function render(camX, camY) {
   ctx.clearRect(0, 0, VIEW_W, VIEW_H);
   ctx.drawImage(staticLayer, camX, camY, VIEW_W, VIEW_H, 0, 0, VIEW_W, VIEW_H);
@@ -665,10 +738,14 @@ function render(camX, camY) {
 
   const sheet = state.character === 'paul' ? assets.paul : assets.peter;
   const entities = [
-    ...state.soldiers.map((s) => ({ e: s, sheet: assets.soldierImg })),
-    { e: state.player, sheet }
-  ].sort((a, b) => a.e.y - b.e.y);
-  entities.forEach(({ e, sheet }) => drawSprite(sheet, e, camX, camY));
+    ...state.soldiers.map((s) => ({ y: s.y, draw: () => drawSprite(assets.soldierImg, s, camX, camY) })),
+    ...state.sheep.map((s) => ({ y: s.y, draw: () => drawSheep(s, camX, camY) })),
+    { y: state.player.y, draw: () => drawSprite(sheet, state.player, camX, camY) }
+  ].sort((a, b) => a.y - b.y);
+  entities.forEach((it) => it.draw());
+
+  // birds fly above everything else
+  state.birds.forEach((b) => drawBird(b, camX, camY));
 
   renderMinimap();
 }
@@ -717,6 +794,13 @@ function renderMinimap() {
   state.soldiers.forEach((s) => {
     minimapCtx.beginPath();
     minimapCtx.arc((s.x + 32) / TILE * sx, (s.y + 48) / TILE * sy, 2.2, 0, Math.PI * 2);
+    minimapCtx.fill();
+  });
+
+  minimapCtx.fillStyle = '#1a1a1e';
+  state.birds.forEach((b) => {
+    minimapCtx.beginPath();
+    minimapCtx.arc(b.x / TILE * sx, b.y / TILE * sy, 1.8, 0, Math.PI * 2);
     minimapCtx.fill();
   });
 
@@ -1023,6 +1107,8 @@ function loop(ts) {
     updateTimedEffects(dt);
     updatePlayer(dt);
     updateSoldiers(dt);
+    updateBirds(dt);
+    updateSheep(dt);
     updateCheckpoints();
     updateBoxes();
     updateVillage();

@@ -74,7 +74,19 @@ export const MAP_REGIONS = [
     [26, 19], [27, 22], [22, 9], [27, 9],
     [8, 22], [10, 16], [14, 13], [15, 16], [10, 10],
     [36, 20], [37, 22], [36, 24], [32, 23], [34, 20],
-    [8, 27], [12, 27], [16, 27], [20, 27], [24, 27], [28, 27], [32, 27]
+    [8, 27], [12, 27], [16, 27], [20, 27], [24, 27], [28, 27], [32, 27],
+    // second density pass -- 40 more, randomized-then-spread across all
+    // four map quadrants (not just scan order, which clustered badly
+    // along the top border on a first attempt) and BFS-verified from
+    // START_TILE afterward to confirm every checkpoint, box (real and
+    // empty), patrol waypoint, and the village trigger all stay
+    // reachable, per this map's standard verification step
+    [1, 2], [24, 3], [38, 1], [16, 5], [33, 7], [30, 1], [33, 18], [37, 27],
+    [34, 26], [31, 10], [26, 26], [11, 3], [7, 18], [22, 12], [37, 8],
+    [1, 13], [38, 18], [27, 7], [10, 28], [18, 27], [36, 3], [15, 8],
+    [22, 1], [19, 13], [24, 8], [13, 11], [1, 6], [4, 1], [12, 16], [5, 5],
+    [26, 13], [10, 14], [13, 1], [30, 28], [19, 1], [11, 20], [1, 17],
+    [14, 21], [21, 20], [4, 17]
   ] },
   // freestanding rock outcrops -- small obstacles out in the open, distinct
   // from the border wall and the clearing's bounding cliff
@@ -138,6 +150,26 @@ export const BOX_TILES = [
   { col: 26, row: 16 }
 ];
 
+// A second, separate set of 8 box spots that always come up empty --
+// pure decoys, not part of generateBoxes()'s cross/buff/sin shuffle, so
+// they never dilute the odds on the original 8. Doubles how much of the
+// map is worth exploring without changing what any one "real" box can
+// hold. Same verification standard as BOX_TILES/SOLDIER_PATROLS: every
+// tile confirmed walkable and BFS-reachable from START_TILE against the
+// actual terrain grid, spread across map areas the original 8 don't
+// already cover, and kept off village floor (that's the delivery
+// destination, not a hidden spot).
+export const EMPTY_BOX_TILES = [
+  { col: 6, row: 9 },
+  { col: 14, row: 4 },
+  { col: 9, row: 5 },
+  { col: 22, row: 25 },
+  { col: 31, row: 25 },
+  { col: 36, row: 6 },
+  { col: 22, row: 3 },
+  { col: 19, row: 20 }
+];
+
 // Buffs are support/protection ONLY, per design -- none of them let the
 // player fight or harm the soldier, only evade or recover more easily.
 export const BUFFS = [
@@ -175,6 +207,35 @@ export const MAX_HP = 100;
 export const DAMAGE_PER_CATCH = 25;
 export const START_REVIVE_POTIONS = 1;
 export const REVIVE_HEAL_AMOUNT = 50;
+
+// Flying black birds -- a lighter, always-active hazard alongside the 3
+// soldiers. Touching one costs a flat 10% of max HP (Guardian Angel
+// blocks it, same immunity as a soldier catch) but, unlike a soldier
+// catch, does NOT send the player back to their checkpoint -- only
+// running out of HP does that, via the existing Game Over flow.
+// [centerX,centerY,rangeX,speed] in pixel space, sine-driven patrol
+// lanes laid over the routes the player actually walks (the corridor,
+// the clearing, the row-14 path to the river, the village approach),
+// not hidden off in blocked terrain no one would ever cross.
+export const BIRD_DAMAGE = MAX_HP * 0.10;
+export const BIRDS = [
+  [304, 592, 80, 1.1],
+  [816, 464, 288, 0.9],
+  [656, 272, 112, 1.2],
+  [1008, 496, 80, 1.0]
+];
+
+// A purely decorative flock -- no collision, no damage, just life on the
+// map in the quiet meadow strip near the player's own starting point.
+// Each sheep wanders slowly around its own home point rather than
+// patrolling a fixed lane. [homeX,homeY] in pixel space.
+export const SHEEP = [
+  [2 * TILE + 16, 22 * TILE + 16],
+  [2 * TILE + 16, 23 * TILE + 16],
+  [2 * TILE + 16, 24 * TILE + 16],
+  [3 * TILE + 16, 20 * TILE + 16],
+  [3 * TILE + 16, 24 * TILE + 16]
+];
 
 export const CROSS_OF_SALVATION_REWARD = {
   tickets: [

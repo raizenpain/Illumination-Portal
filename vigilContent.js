@@ -69,7 +69,7 @@ export const QUESTIONS = [
   { id: "q27", source: "coursepack", prompt: "The first believers in Acts were together and had:", options: ["All things in common", "One mind and one law", "Neither silver nor gold", "A house in every city"], answer: 0 },
   { id: "q28", source: "cited", prompt: "Isaiah 65:17 promises, at that pivotal time:", options: ["A new heaven and a new earth", "A throne set in the temple", "A return from exile", "A covenant written on the heart"], answer: 0 },
   { id: "q29", source: "cited", prompt: "Ecclesiastes 3 opens by saying there is:", options: ["A time for everything, and a season for every matter under the heavens", "Nothing new under the sun", "A remembrance of former things", "Vanity in all the works of men"], answer: 0 },
-  { id: "q30", source: "cited", prompt: "Jacob was renamed Israel because he had striven with God and had:", options: ["Prevailed", "Repented", "Been humbled", "Been forgiven"], answer: 0 },
+  { id: "q30", source: "cited", prompt: "Jacob was renamed Israel because he had striven with God and with men, and had:", options: ["Prevailed", "Repented", "Been humbled", "Been forgiven"], answer: 0 },
 
   /* ---- revelation, tradition and faith ---- */
   { id: "q31", source: "coursepack", prompt: "The Greek word paradosis, behind our word tradition, literally means:", options: ["To hand on, or to pass down", "To write down", "To gather together", "To keep secret"], answer: 0 },

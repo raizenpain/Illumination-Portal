@@ -305,7 +305,7 @@ export const SAMPLE_POOL = [
     id: "p3f",
     level: 3,
     source: "cited",
-    text: "Your name shall no longer be Jacob, but {0}, for you have striven with God and have {1}.",
+    text: "Your name shall no longer be Jacob, but {0}, for you have striven with God and with men, and have {1}.",
     answers: ["Israel", "prevailed"],
     accepted: { 0: ["israel"] },
     typed: [0],
@@ -401,7 +401,7 @@ export const SAMPLE_POOL = [
     level: 4,
     source: "cited",
     text:
-      "Ever since the creation of the world his invisible {0} have been understood through the things he has {1}.",
+      "Ever since the creation of the world his invisible {0} — his eternal power and divine nature — have been understood through the things he has {1}.",
     answers: ["attributes", "made"],
     accepted: { 0: ["attributes", "qualities"], 1: ["made", "created"] },
     typed: [0, 1],

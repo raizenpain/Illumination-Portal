@@ -25,7 +25,8 @@ import {
   orderBy,
   limit,
   increment,
-  runTransaction
+  runTransaction,
+  Timestamp
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 // Your Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -68,5 +69,6 @@ export {
   orderBy,
   limit,
   increment,
-  runTransaction
+  runTransaction,
+  Timestamp
 };

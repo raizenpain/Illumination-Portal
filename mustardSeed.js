@@ -19,7 +19,7 @@
 // anything to "unlock" it themselves.
 // ============================================
 
-import { db, doc, getDoc, updateDoc, runTransaction, serverTimestamp, increment, arrayUnion } from './firebase.js';
+import { db, doc, getDoc, updateDoc, runTransaction, serverTimestamp, increment, arrayUnion, Timestamp } from './firebase.js';
 import { logActivity } from './activity.js';
 import {
   GROWTH_STAGES, stageAfter, FERTILIZE_COOLDOWN_DAYS,
@@ -276,6 +276,34 @@ export async function resetMustardSeed({ studentEmail, adminEmail, adminName }) 
     title: `Reset a Mustard Seed for ${studentEmail}`,
     type: 'mustardseed', icon: '🔧'
   });
+}
+
+/** Admin-only testing tool -- backdates plantedAt so the next
+ *  checkAndAdvanceStage() catch-up jumps straight to whatever real
+ *  elapsed time would now imply, and clears today's dailyCare/
+ *  lastCareDate so water()/fertilize()/reflect() are immediately usable
+ *  again rather than reporting "already done today". This rides the
+ *  SAME admin write branch resetMustardSeed() above already uses (see
+ *  firestore.rules' isAdmin() update clause) -- it does NOT go through
+ *  isValidMustardSeedWrite() at all, which is exactly why this only
+ *  ever works for a real isAdmin() account and can never be reached by
+ *  a student, even via devtools. Never call this from anything a
+ *  non-admin can trigger. */
+export async function debugSkipDays({ email, days = 7 }) {
+  const ref = studentRefFor(email);
+  const snap = await getDoc(ref);
+  const ms = (snap.data() || {}).mustardSeed;
+  if (!ms || !ms.plantedAt) return false;
+
+  const plantedMs = ms.plantedAt.toMillis ? ms.plantedAt.toMillis() : new Date(ms.plantedAt).getTime();
+  const newPlantedMs = plantedMs - days * 86400000;
+
+  await updateDoc(ref, {
+    'mustardSeed.plantedAt': Timestamp.fromMillis(newPlantedMs),
+    'mustardSeed.dailyCare': {},
+    'mustardSeed.lastCareDate': null
+  });
+  return true;
 }
 
 export function todaysReflectionPrompt() {

@@ -20,7 +20,7 @@ import {
   plant, water, fertilize, submitReflection, claimFruit, checkAndAdvanceStage,
   currentStageInfo, nextStageCountdown, daysSincePlanted,
   hasWateredToday, hasFertilizedToday, hasReflectedToday, isFertilizeOnCooldown,
-  todaysReflectionPrompt
+  todaysReflectionPrompt, debugSkipDays, resetMustardSeed
 } from './mustardSeed.js';
 import { INTRO_TEXT, GROWTH_STAGES, MESSAGES, MAX_HEALTH, FERTILIZE_COOLDOWN_DAYS, MUSTARD_SEED_UNLOCKED } from './mustardSeedContent.js';
 
@@ -48,11 +48,12 @@ async function init({ email, name }) {
   // load -- doing it again here means opening the game page directly
   // (not via the dashboard card) still catches a student up.
   const advancedTo = await checkAndAdvanceStage({ email, name: data.name || name, data });
+  const isAdmin = ADMIN_EMAILS.includes(email);
 
-  render({ email, name: data.name || name, data, advancedTo });
+  render({ email, name: data.name || name, data, advancedTo, isAdmin });
 }
 
-function render({ email, name, data, advancedTo }) {
+function render({ email, name, data, advancedTo, isAdmin }) {
   const root = document.getElementById('msdRoot');
   const ms = data.mustardSeed;
 
@@ -61,10 +62,10 @@ function render({ email, name, data, advancedTo }) {
     return;
   }
   if (ms.gameStatus === 'completed') {
-    renderCompleted(root);
+    renderCompleted(root, { email, name, isAdmin });
     return;
   }
-  renderGarden(root, { email, name, data });
+  renderGarden(root, { email, name, data, isAdmin });
 
   if (advancedTo) {
     const stage = GROWTH_STAGES.find((s) => s.id === advancedTo);
@@ -92,18 +93,20 @@ function renderIntro(root, { email, name }) {
   });
 }
 
-function renderCompleted(root) {
+function renderCompleted(root, { email, name, isAdmin }) {
   root.innerHTML = `
     <div class="msd-intro msd-completed">
       <div class="msd-stage-icon">🍎</div>
       <h1>${MESSAGES.completionHeading}</h1>
       <p class="msd-intro-body">${MESSAGES.completionBody}</p>
       <a class="msd-btn msd-btn-primary" href="dashboard.html">Back to Dashboard</a>
+      ${isAdmin ? debugPanelMarkup() : ''}
     </div>
   `;
+  if (isAdmin) wireDebugPanel(root, { email, name });
 }
 
-function renderGarden(root, { email, name, data }) {
+function renderGarden(root, { email, name, data, isAdmin }) {
   const ms = data.mustardSeed;
   const stageInfo = currentStageInfo(ms);
   const countdown = nextStageCountdown(ms);
@@ -154,6 +157,8 @@ function renderGarden(root, { email, name, data }) {
       ${canClaim ? '<button type="button" class="msd-btn msd-btn-claim" id="msdClaimBtn">🍎 Claim the Forbidden Fruit of Knowledge</button>' : ''}
 
       <p class="msd-toast" id="msdToast" hidden></p>
+
+      ${isAdmin ? debugPanelMarkup() : ''}
     </div>
   `;
 
@@ -211,6 +216,45 @@ function renderGarden(root, { email, name, data }) {
       const claimed = await claimFruit({ email, name });
       if (claimed) { await init({ email, name }); }
       else { claimBtn.disabled = false; toast('Not ready yet.'); }
+    });
+  }
+
+  if (isAdmin) wireDebugPanel(root, { email, name });
+}
+
+// Admin-only testing controls -- lets a real isAdmin() account (see
+// firestore.rules) play through the full 49-day arc in minutes instead
+// of waiting on the real calendar, by backdating plantedAt through the
+// same admin write path resetMustardSeed() already uses. Never rendered
+// for a student; the rules would reject the writes even if it were.
+function debugPanelMarkup() {
+  return `
+    <div class="msd-debug">
+      <p class="msd-debug-label">🛠️ Admin Testing</p>
+      <div class="msd-debug-actions">
+        <button type="button" class="msd-btn" id="msdSkipBtn">⏩ Skip 7 Days</button>
+        <button type="button" class="msd-btn" id="msdResetBtn">🔄 Reset &amp; Replant</button>
+      </div>
+    </div>
+  `;
+}
+
+function wireDebugPanel(root, { email, name }) {
+  const skipBtn = root.querySelector('#msdSkipBtn');
+  if (skipBtn) {
+    skipBtn.addEventListener('click', async () => {
+      skipBtn.disabled = true;
+      await debugSkipDays({ email, days: 7 });
+      await init({ email, name });
+    });
+  }
+  const resetBtn = root.querySelector('#msdResetBtn');
+  if (resetBtn) {
+    resetBtn.addEventListener('click', async () => {
+      resetBtn.disabled = true;
+      await resetMustardSeed({ studentEmail: email, adminEmail: email, adminName: name });
+      await plant({ email, name });
+      await init({ email, name });
     });
   }
 }

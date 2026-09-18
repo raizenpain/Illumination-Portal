@@ -6067,6 +6067,134 @@ body.season-page {
   .fiesta-skip-btn { padding: 13px 22px; font-size: 15px; }
 }
 
+/* ================================
+   LEGENDARY COUNTDOWN — full-screen, unclosable, z-index above every
+   other overlay in the site (.tour-overlay 10050, .fiesta-popup
+   10100) since this one is meant to block the entire portal, not
+   stack alongside anything else.
+   ================================ */
+.legendary-countdown-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20000;
+  background: radial-gradient(ellipse at center, #1D2233 0%, #05070d 80%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  box-sizing: border-box;
+  animation: fadeIn 0.4s ease;
+}
+
+.legendary-countdown-card {
+  width: min(560px, 100%);
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+  text-align: center;
+  background: linear-gradient(160deg, #1D2233 0%, #0A0F22 100%);
+  border: 2px solid #FBBF24;
+  border-radius: 24px;
+  padding: 36px 28px;
+  box-sizing: border-box;
+  box-shadow: 0 0 0 1px rgba(251,191,36,0.2), 0 0 100px rgba(251,191,36,0.15);
+  animation: popupScale 0.4s cubic-bezier(.2,.9,.3,1.2);
+}
+
+.legendary-countdown-kicker {
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #FBBF24;
+  margin: 0 0 10px;
+}
+
+.legendary-countdown-heading {
+  margin: 0 0 14px;
+  font-size: 26px;
+  color: #FDE68A;
+  text-shadow: 0 0 24px rgba(251,191,36,0.4);
+}
+
+.legendary-countdown-sub {
+  margin: 0 0 26px;
+  font-size: 14.5px;
+  line-height: 1.6;
+  color: #D7E3F0;
+}
+
+.legendary-countdown-timer {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.legendary-countdown-unit {
+  background: rgba(251,191,36,0.08);
+  border: 1px solid rgba(251,191,36,0.35);
+  border-radius: 14px;
+  padding: 12px 14px;
+  min-width: 64px;
+}
+
+.legendary-countdown-unit span {
+  display: block;
+  font-family: 'Cinzel', serif;
+  font-size: 26px;
+  font-weight: 700;
+  color: #FBBF24;
+  text-shadow: 0 0 14px rgba(251,191,36,0.4);
+  font-variant-numeric: tabular-nums;
+}
+
+.legendary-countdown-unit.legendary-countdown-ms span {
+  font-size: 20px;
+  color: #9CA9C4;
+  text-shadow: none;
+}
+
+.legendary-countdown-unit label {
+  display: block;
+  font-size: 10.5px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #9CA9C4;
+  margin-top: 4px;
+}
+
+.legendary-countdown-note {
+  font-size: 12.5px;
+  color: #9CA9C4;
+  margin: 0 0 16px;
+}
+
+.legendary-countdown-signout {
+  background: rgba(255,255,255,0.08);
+  color: white;
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 12px;
+  padding: 12px 24px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.legendary-countdown-signout:hover {
+  background: rgba(255,255,255,0.14);
+}
+
+@media (max-width: 480px) {
+  .legendary-countdown-card { padding: 26px 18px; }
+  .legendary-countdown-heading { font-size: 21px; }
+  .legendary-countdown-sub { font-size: 13.5px; }
+  .legendary-countdown-unit { min-width: 50px; padding: 9px 8px; }
+  .legendary-countdown-unit span { font-size: 19px; }
+  .legendary-countdown-unit.legendary-countdown-ms span { font-size: 15px; }
+  .legendary-countdown-timer { gap: 6px; }
+}
+
 @media (max-width: 700px) {
   .shore-area {
     flex-direction: column;

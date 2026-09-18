@@ -264,8 +264,20 @@ function renderQuizModal(node) {
 
   // A shuffled-order copy, not node.questions directly — awardNode()
   // and the cooldown helpers only ever read nodeId/ticketReward/type/
-  // title, so this shallow copy flows through them safely.
-  const displayNode = { ...node, questions: shuffleArray(node.questions) };
+  // title, so this shallow copy flows through them safely. Question
+  // order was already shuffled here; each question's own CHOICE order
+  // was not, so the correct answer always sat in the same position for
+  // a given question regardless of question order -- easy to memorize
+  // by position alone without reading the question. Now shuffles each
+  // question's choices too, remapping correctIndex to wherever the
+  // originally-correct choice landed, so handleQuizSubmit's grading
+  // (which just compares against q.correctIndex) keeps working
+  // unchanged against the new positions.
+  const shuffleChoices = (q) => {
+    const order = shuffleArray(q.choices.map((_, i) => i));
+    return { ...q, choices: order.map((i) => q.choices[i]), correctIndex: order.indexOf(q.correctIndex) };
+  };
+  const displayNode = { ...node, questions: shuffleArray(node.questions).map(shuffleChoices) };
 
   nodeModalBox.innerHTML = `
     <h2>${NODE_TYPE_HEADING_ICON[node.type]} ${node.title}</h2>

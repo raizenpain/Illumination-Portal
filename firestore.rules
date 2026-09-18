@@ -56,7 +56,7 @@ service cloud.firestore {
         'hasSeenDashboardTour', 'avatarImage',
         'sideQuests', 'vaultGames', 'seenGameGuides',
         'vaultCapstoneGranted', 'vaultCapstoneKeyUsed',
-        'hasSeenFiesta75Announcement'
+        'hasSeenFiesta75Announcement', 'legendaryCountdownStartedAt'
       ];
     }
 

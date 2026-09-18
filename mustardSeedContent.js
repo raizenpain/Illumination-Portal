@@ -12,6 +12,13 @@
 // everything else rather than buried in a page's markup.
 // ============================================
 
+// Master switch: while false, students see a locked "Coming Soon" card
+// on the dashboard and the dedicated page redirects them straight back
+// -- admins (ADMIN_EMAILS) bypass this so testing can happen before
+// launch. Hand-flipped, not date-gated like VAULT_UNLOCKED, since
+// there's no announced release date yet -- flip to true when ready.
+export const MUSTARD_SEED_UNLOCKED = false;
+
 export const INTRO_TEXT = {
   heading: 'Every great tree begins with a seed.',
   body: 'Growth takes patience. What you nurture today may bear fruit tomorrow.',

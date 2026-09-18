@@ -15,16 +15,26 @@
 
 import { db, doc, getDoc } from './firebase.js';
 import { requireLogin } from './auth.js';
+import { ADMIN_EMAILS } from './admins.js';
 import {
   plant, water, fertilize, submitReflection, claimFruit, checkAndAdvanceStage,
   currentStageInfo, nextStageCountdown, daysSincePlanted,
   hasWateredToday, hasFertilizedToday, hasReflectedToday, isFertilizeOnCooldown,
   todaysReflectionPrompt
 } from './mustardSeed.js';
-import { INTRO_TEXT, GROWTH_STAGES, MESSAGES, MAX_HEALTH, FERTILIZE_COOLDOWN_DAYS } from './mustardSeedContent.js';
+import { INTRO_TEXT, GROWTH_STAGES, MESSAGES, MAX_HEALTH, FERTILIZE_COOLDOWN_DAYS, MUSTARD_SEED_UNLOCKED } from './mustardSeedContent.js';
 
 const user = requireLogin();
-if (user) init(user);
+// Locked for everyone except admins while MUSTARD_SEED_UNLOCKED is
+// false -- same "typed the URL directly" defense the Vault Games pages
+// already use (see e.g. evangelization.js), except this one also lets
+// an admin straight through, so testing doesn't need the flag flipped
+// live for every student first.
+if (user && (MUSTARD_SEED_UNLOCKED || ADMIN_EMAILS.includes(user.email))) {
+  init(user);
+} else if (user) {
+  window.location.href = 'dashboard.html';
+}
 
 async function init({ email, name }) {
   const root = document.getElementById('msdRoot');

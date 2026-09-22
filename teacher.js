@@ -162,13 +162,23 @@ if (user) {
   let currentTeacher = null; // { email, name }
   let currentSection = null;
 
+  // completed:true with count < 9 can't happen through any real write
+  // path (app.js/healStuckPuzzleCompletions/vaultCapstone all only set
+  // the flag alongside a full 9-piece array) -- Firestore rules only
+  // validate field NAMES, not values, so this combination means the
+  // flag was set directly (e.g. via devtools), not earned. Flagged here
+  // so it's visible while paging the roster, since rank.js no longer
+  // trusts the flag for star/rank purposes either way.
   function progressPill(count, completed) {
-    const state = completed ? 'complete' : count > 0 ? 'in-progress' : '';
+    const mismatch = completed && count < 9;
+    const state = mismatch ? 'flagged' : completed ? 'complete' : count > 0 ? 'in-progress' : '';
     const label = `${count}/9${completed ? ' ✅' : ''}`;
-    return `<span class="progress-pill${state ? ' ' + state : ''}">${label}</span>`;
+    const title = mismatch ? ' title="Flagged as completed but fewer than 9 pieces on record — likely edited outside the app"' : '';
+    return `<span class="progress-pill${state ? ' ' + state : ''}"${title}>${label}</span>`;
   }
 
   function progressText(count, completed) {
+    if (completed && count < 9) return `${count}/9 (FLAGGED — completed but incomplete)`;
     return completed ? `${count}/9 (Completed)` : `${count}/9`;
   }
 
@@ -344,11 +354,23 @@ if (user) {
     ['scrap_ticket', '♻️ Ember Shard']
   ];
 
+  // Puzzles whose completedField is true despite fewer than 9 pieces on
+  // record -- can't happen through any real write path (see the comment
+  // on progressPill above), so this is what the roster's Fix Flagged
+  // Completion action targets.
+  function findFlaggedPuzzles(data) {
+    return Object.values(PUZZLE_CONFIG).filter((config) => {
+      const count = pieceCount(data, config.piecesField);
+      return !!data[config.completedField] && count < config.totalPieces;
+    });
+  }
+
   function openContextMenu(event, data, section) {
     contextMenuStudent = data;
     contextMenuSection = section;
 
     contextMenu.classList.remove('hidden');
+    document.getElementById('ctxFixFlag').classList.toggle('hidden', findFlaggedPuzzles(data).length === 0);
 
     const menuWidth = 200;
     const menuHeight = 160;
@@ -379,6 +401,41 @@ if (user) {
     closeContextMenu();
     if (contextMenuStudent) openGiftModal(contextMenuStudent);
   };
+
+  document.getElementById('ctxFixFlag').onclick = () => {
+    closeContextMenu();
+    if (contextMenuStudent) fixFlaggedCompletion(contextMenuStudent, contextMenuSection);
+  };
+
+  // Clears a *Completed flag that's out of sync with actual pieces
+  // collected -- e.g. set directly via devtools rather than earned.
+  // Only ever writes `false`; firestore.rules' isValidAdminCompletionFix()
+  // enforces that server-side too, so this can't be used to fake a
+  // completion the other direction. Doesn't touch pieces, tickets, or
+  // achievements -- rank.js already ignores the flag either way (see
+  // isPuzzleComplete()), so this is purely a data-hygiene cleanup.
+  async function fixFlaggedCompletion(data, section) {
+    const flagged = findFlaggedPuzzles(data);
+    if (!flagged.length) return;
+
+    const label = data.name || data.email || data._docId;
+    const titles = flagged.map((config) => config.title).join(', ');
+    if (!confirm(`Clear the completed flag for ${titles} on ${label}?\n\nTheir pieces, tickets, and achievements are untouched -- this only corrects a flag that no longer matches how many pieces they've actually collected.`)) {
+      return;
+    }
+
+    const updates = {};
+    flagged.forEach((config) => { updates[config.completedField] = false; });
+
+    try {
+      await setDoc(doc(db, 'students', data._docId || data.email), updates, { merge: true });
+      flagged.forEach((config) => { data[config.completedField] = false; });
+      showRoster(section);
+    } catch (err) {
+      console.error('Failed to fix flagged completion:', err);
+      alert("Could not update this student's record. Please try again.");
+    }
+  }
 
   // --- Re-assign Class ---
   // Section (class offering) is scoped to whichever teacher is being

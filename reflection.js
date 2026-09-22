@@ -1,18 +1,13 @@
 import { db, doc, getDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
-import { PUZZLE_CONFIG } from './puzzles.js';
 import { containsBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
-import { getRankProgress, getSeasonStars, isSeasonChaptersComplete, RANK_TIERS } from './rank.js';
+import { getRankProgress, getSeasonStars, isSeasonChaptersComplete, isPrelimSeasonDone, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 
 // ================================
 // SETTINGS — adjust freely
 // ================================
 const MIN_LENGTH = 150; // characters required before a reflection counts as "written"
-
-function prelimSeasonDone(data) {
-  return Object.values(PUZZLE_CONFIG).every((config) => !!data[config.completedField]);
-}
 
 // One entry per capstone reflection. "midterm" is the original Prelim
 // exit gate; the rest were added later, gating Semifinal/Final and,
@@ -24,7 +19,7 @@ const GATE_INFO = {
     title: 'Prelim Reflection',
     subtitle: 'Look back before you move forward',
     placeholder: 'What did you learn about yourself, your faith, or your formation journey this Prelim Season?',
-    prerequisite: (data) => prelimSeasonDone(data),
+    prerequisite: (data) => isPrelimSeasonDone(data),
     textField: 'puzzle3Reflection',
     unlockField: 'midtermUnlocked',
     timestampField: 'puzzle3ReflectionSubmittedAt',

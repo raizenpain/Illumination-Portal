@@ -180,6 +180,22 @@ service cloud.firestore {
       ];
     }
 
+    // An admin correcting a *Completed flag that's out of sync with
+    // actual pieces collected (teacher.js's roster "Fix Flagged
+    // Completion" action, for exactly the kind of devtools tampering
+    // rank.js's isPuzzleComplete()/isPrelimSeasonDone() now defend
+    // against on the read side) may only ever clear a flag to false,
+    // never set one true -- a real completion only ever happens through
+    // app.js's own piece-count-gated write. Checks each completion
+    // field independently so fixing just one puzzle doesn't require the
+    // others in the same payload.
+    function isValidAdminCompletionFix() {
+      let touched = request.resource.data.diff(resource.data).affectedKeys();
+      return (!('puzzle1Completed' in touched) || request.resource.data.puzzle1Completed == false) &&
+             (!('puzzle2Completed' in touched) || request.resource.data.puzzle2Completed == false) &&
+             (!('puzzle3Completed' in touched) || request.resource.data.puzzle3Completed == false);
+    }
+
     // Students collection — doc ID is the student's email
     match /students/{studentId} {
       // A student can read their own record, and so can an admin (for the progress table)
@@ -202,8 +218,9 @@ service cloud.firestore {
       // writes it anymore, but it's still sitting there) must never
       // block that student from making any further progress. Admins
       // can also update, but only the specific fields Gift Tickets,
-      // Re-assign Class, and a Mustard Seed reset actually touch —
-      // never progress, achievements, or artifacts.
+      // Re-assign Class, a Mustard Seed reset, and the roster's Fix
+      // Flagged Completion action actually touch — never real progress,
+      // achievements, or artifacts.
       //
       // The mustardSeed field name alone being on studentSelfFields()
       // only stops an unrelated made-up field name -- it can't tell a
@@ -212,7 +229,10 @@ service cloud.firestore {
       // the game, so isValidMustardSeedWrite() (see above, verified
       // against 11 scenarios via the Firestore rules emulator before
       // this was ever deployed) is required whenever 'mustardSeed' is
-      // one of the touched keys.
+      // one of the touched keys. Same idea for the *Completed fields
+      // and isValidAdminCompletionFix() -- being legal key names alone
+      // can't stop an admin write from setting one true, so that
+      // function is what actually restricts it to clearing, not setting.
       allow update: if request.auth != null &&
                        ((request.auth.token.email == studentId &&
                          request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
@@ -222,7 +242,9 @@ service cloud.firestore {
                           isValidMustardSeedWrite())) ||
                         (isAdmin() &&
                          request.resource.data.diff(resource.data).affectedKeys()
-                           .hasOnly(['teacherEmail', 'teacherName', 'section', 'tickets', 'mustardSeed'])));
+                           .hasOnly(['teacherEmail', 'teacherName', 'section', 'tickets', 'mustardSeed',
+                                     'puzzle1Completed', 'puzzle2Completed', 'puzzle3Completed']) &&
+                         isValidAdminCompletionFix()));
 
       // Admins can delete a student record (e.g. a student who enrolled
       // under the wrong teacher/class offering) — but not edit progress

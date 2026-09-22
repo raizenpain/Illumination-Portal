@@ -406,7 +406,7 @@ import { initTicketTrader } from './ticketTrader.js';
 import { initCrafting } from './crafting.js';
 import { initLeaderboard } from './leaderboard.js';
 import { containsBannedWord } from './contentFilter.js';
-import { getRankProgress } from './rank.js';
+import { getRankProgress, isPuzzleComplete, isPrelimSeasonDone } from './rank.js';
 import { initDashboardTour } from './dashboardTour.js';
 import { initClassChat } from './classChat.js';
 import { initDashboardMusic } from './dashboardMusic.js';
@@ -595,8 +595,8 @@ async function loadStudentCard() {
     setupMidtermCard(data);
     setupSemifinalAndFinalCards(data);
     setupReflectionSymbol(data);
-    initTicketTrader({ email, studentData: data, prelimDone: isSeasonPreviewAdmin || prelimSeasonDone(data) });
-    initCrafting({ email, name: data.name || name, studentData: data, prelimDone: isSeasonPreviewAdmin || prelimSeasonDone(data) });
+    initTicketTrader({ email, studentData: data, prelimDone: isSeasonPreviewAdmin || isPrelimSeasonDone(data) });
+    initCrafting({ email, name: data.name || name, studentData: data, prelimDone: isSeasonPreviewAdmin || isPrelimSeasonDone(data) });
     initLeaderboard({
       email,
       name: data.name || name,
@@ -900,10 +900,10 @@ function setupPuzzleCard(puzzleNumber, data, previousPuzzleNumber) {
   const icon = card.querySelector('.puzzle-icon');
   const badge = card.querySelector('.status-badge');
 
-  const completed = !!data[config.completedField];
+  const completed = isPuzzleComplete(config, data);
   const unlocked = !config.requiresGate || !!data[config.requiresGate];
   const previousCompleted = previousPuzzleNumber
-    ? !!data[PUZZLE_CONFIG[previousPuzzleNumber].completedField]
+    ? isPuzzleComplete(PUZZLE_CONFIG[previousPuzzleNumber], data)
     : true; // Puzzle 1 has no prerequisite
 
   let state;
@@ -926,13 +926,9 @@ function setupPuzzleCard(puzzleNumber, data, previousPuzzleNumber) {
   }
 }
 
-function prelimSeasonDone(data) {
-  return Object.values(PUZZLE_CONFIG).every((config) => !!data[config.completedField]);
-}
-
 // A season is "complete" once every node in every chapter is in the
 // student's completedNodes map — derived, not stored, same style as
-// prelimSeasonDone() above. Uses the JS defaults (not admin overrides)
+// isPrelimSeasonDone() in rank.js. Uses the JS defaults (not admin overrides)
 // since node ids are what matter here, not their current text.
 function isSeasonComplete(seasonId, data) {
   const content = SEASON_CONTENT[seasonId];
@@ -964,7 +960,7 @@ function calculateOverallProgress(data) {
     });
   });
 
-  const prelimDone = prelimSeasonDone(data);
+  const prelimDone = isPrelimSeasonDone(data);
   const midtermDone = isSeasonComplete('midterm', data);
   const semifinalDone = isSeasonComplete('semifinal', data);
   const finalDone = isSeasonComplete('final', data);
@@ -1050,7 +1046,7 @@ function setupMidtermCard(data) {
 
   if (data.midtermUnlocked || isSeasonPreviewAdmin) {
     renderUnlockedSeasonCard('midterm', 'midtermSeasonBtn', data);
-  } else if (prelimSeasonDone(data)) {
+  } else if (isPrelimSeasonDone(data)) {
     renderReflectionChallengeCard('midtermSeasonBtn', 'midterm');
   } else {
     renderLockedSeasonCard('midtermSeasonBtn', 'Complete Prelim Season first to unlock this season.');
@@ -1079,7 +1075,7 @@ function setupReflectionSymbol(data) {
   const symbol = document.getElementById('reflectionSymbol');
   if (!symbol) return;
 
-  if (prelimSeasonDone(data)) {
+  if (isPrelimSeasonDone(data)) {
     symbol.classList.remove('locked');
     symbol.textContent = '📝';
     symbol.title = data.puzzle3Reflection ? 'Revisit your reflection' : 'Write your reflection';
@@ -1370,7 +1366,7 @@ if (reflectionSymbol) {
   reflectionSymbol.addEventListener('click', (event) => {
     event.stopPropagation();
 
-    if (!prelimSeasonDone(studentData)) {
+    if (!isPrelimSeasonDone(studentData)) {
       alert('Finish all three Prelim puzzles to unlock your reflection.');
     } else if (!studentData.puzzle3Reflection) {
       window.location.href = 'reflection.html';

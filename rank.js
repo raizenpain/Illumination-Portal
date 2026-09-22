@@ -58,9 +58,29 @@ function bonusStarEarned(seasonId, data) {
   return gate ? !!data[gate.unlockField] : false;
 }
 
+// Whether a specific Prelim puzzle is ACTUALLY done -- piece count,
+// not the completedField flag. Every legitimate write path (app.js,
+// the dashboard's healStuckPuzzleCompletions, vaultCapstone's grant)
+// only ever sets completedField alongside a full piece array, so this
+// is equivalent for real students -- but Firestore rules only validate
+// field NAMES, not values (see studentSelfFields() in firestore.rules),
+// so a student can set completedField:true via devtools without ever
+// finishing the puzzle. Trusting piece count instead closes that route
+// to a fake rank-up, and is also what gates puzzle-to-puzzle unlocking
+// and the Prelim capstone reflection (see isPrelimSeasonDone below) --
+// anywhere completedField used to be trusted for gameplay, not just
+// display.
+export function isPuzzleComplete(config, data) {
+  return (data[config.piecesField] || []).length >= config.totalPieces;
+}
+
+export function isPrelimSeasonDone(data) {
+  return Object.values(PUZZLE_CONFIG).every((config) => isPuzzleComplete(config, data));
+}
+
 function filledStars(seasonId, data) {
   if (seasonId === 'prelim') {
-    return Object.values(PUZZLE_CONFIG).filter((c) => !!data[c.completedField]).length;
+    return Object.values(PUZZLE_CONFIG).filter((c) => isPuzzleComplete(c, data)).length;
   }
   return chaptersDone(seasonId, data) + (bonusStarEarned(seasonId, data) ? 1 : 0);
 }

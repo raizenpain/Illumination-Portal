@@ -83,7 +83,7 @@ async function init() {
 
 // ================================
 // GATING / COMPLETION (derived, nothing stored redundantly —
-// mirrors the existing prelimSeasonDone() pattern in dashboard.html)
+// mirrors the existing isPrelimSeasonDone() pattern in rank.js)
 // ================================
 
 function isSeasonUnlocked(id, data) {

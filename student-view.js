@@ -97,7 +97,12 @@ function renderProfile(data, studentEmail) {
   });
 }
 
-function progressPillClass(count, total) {
+// See the matching comment in teacher.js's progressPill() -- completed
+// true with count short of total can only happen from a direct write
+// outside any real code path (e.g. devtools), since rules validate
+// field names, not values.
+function progressPillClass(count, total, completed) {
+  if (completed && count < total) return 'progress-pill flagged';
   if (count >= total && total > 0) return 'progress-pill complete';
   if (count > 0) return 'progress-pill in-progress';
   return 'progress-pill';
@@ -119,8 +124,11 @@ function renderPrelimProgress(data) {
     label.textContent = `${config.title} — ${config.subtitle}`;
 
     const pill = document.createElement('span');
-    pill.className = progressPillClass(count, config.totalPieces);
+    pill.className = progressPillClass(count, config.totalPieces, completed);
     pill.textContent = `${count}/${config.totalPieces}${completed ? ' ✅' : ''}`;
+    if (completed && count < config.totalPieces) {
+      pill.title = 'Flagged as completed but fewer than 9 pieces on record — likely edited outside the app';
+    }
 
     row.appendChild(label);
     row.appendChild(pill);

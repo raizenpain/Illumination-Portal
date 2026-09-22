@@ -2491,6 +2491,13 @@ body.teacher-page {
   color: #FBBF24;
 }
 
+.progress-pill.flagged {
+  background: rgba(248,113,113,0.15);
+  color: #F87171;
+  border: 1px solid rgba(248,113,113,0.4);
+  cursor: help;
+}
+
 .roster-delete-btn {
   margin: 0;
   padding: 6px 10px;

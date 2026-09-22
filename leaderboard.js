@@ -1,11 +1,13 @@
 // ============================================
 // LEADERBOARD — community-wide Top 5, restricted to students with a
 // completely clean record (never gotten a quiz question, puzzle code,
-// journal, or reflection wrong/rejected), ranked among themselves by
-// pace (overall progress % divided by days since enrollment). One
-// mistake, anywhere, and a student is simply not eligible — this isn't
-// a tiebreaker, it's a hard filter. Shown on the dashboard beside the
-// Community Activity feed.
+// journal, or reflection wrong/rejected). One mistake, anywhere, and a
+// student is simply not eligible — this isn't a tiebreaker, it's a hard
+// filter. Among eligible students, ranked first by rank tier (Apostle >
+// Missionary > Disciple > Seeker), then by stars earned within that
+// tier, then by pace (overall progress % divided by days since
+// enrollment) only as a final tiebreaker. Shown on the dashboard beside
+// the Community Activity feed.
 //
 // Reads/writes a slim public "leaderboard" collection — name, rank,
 // star count, mistake count, progressPercent, and createdAt, one doc
@@ -33,7 +35,12 @@
 // ============================================
 
 import { db, doc, setDoc, increment, runTransaction, collection, getDocs } from './firebase.js';
-import { RANK_ICON as RANK_TIER_ICON } from './rank.js';
+import { RANK_ICON as RANK_TIER_ICON, RANK_TIERS } from './rank.js';
+
+// Index into RANK_TIERS (Seeker=0 .. Apostle=3) so a higher rank always
+// outranks a lower one regardless of pace. Unknown/legacy rank strings
+// sort as Seeker rather than throwing.
+const RANK_TIER_INDEX = Object.fromEntries(RANK_TIERS.map((t, i) => [t.rank, i]));
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const PLACE_ICON = ['🥇', '🥈', '🥉'];
@@ -115,17 +122,25 @@ export async function initLeaderboard(info) {
 
       const pace = paceFor(data);
       if (pace !== null && pace > 0) {
+        const rank = data.rank || 'Seeker';
         entries.push({
           email: docSnap.id,
           name: data.name || 'A Seeker',
           pace,
-          rank: data.rank || 'Seeker',
+          rank,
+          rankTierIndex: RANK_TIER_INDEX[rank] ?? 0,
           starsEarned: typeof data.starsEarned === 'number' ? data.starsEarned : 0
         });
       }
     });
 
-    entries.sort((a, b) => b.pace - a.pace);
+    // Higher rank tier wins outright, then more stars within that tier,
+    // then pace only breaks ties between otherwise-equal students.
+    entries.sort((a, b) =>
+      b.rankTierIndex - a.rankTierIndex ||
+      b.starsEarned - a.starsEarned ||
+      b.pace - a.pace
+    );
     const top5 = entries.slice(0, 5);
     renderTopStudents(listEl, top5);
 

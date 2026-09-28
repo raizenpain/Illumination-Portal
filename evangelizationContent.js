@@ -300,7 +300,7 @@ export const CATECHISM = {
   sections: [
     {
       heading: 'Where It Began',
-      body: "Before he ascended, Jesus gave his apostles one final instruction: go, and do not stop at the borders of Israel — carry this to everyone, everywhere. Fifty days later, at Pentecost, the apostles stepped out in public for the first time and thousands believed in a single day (Acts 2). From there the mission spread fast and far: Paul alone crossed the Roman world on foot and by ship, through the same empire whose soldiers you were avoiding, risking arrest, shipwreck, and eventually his own life to bring the message to cities that had never heard it.",
+      body: "Before he ascended, Jesus gave his apostles one final instruction: go, and do not stop at the borders of Israel — carry this to everyone, everywhere. Ten days later, at Pentecost, the apostles stepped out in public for the first time and thousands believed in a single day (Acts 2). From there the mission spread fast and far: Paul alone crossed the Roman world on foot and by ship, through the same empire whose soldiers you were avoiding, risking arrest, shipwreck, and eventually his own life to bring the message to cities that had never heard it.",
       quote: 'Go therefore and make disciples of all nations, baptizing them in the name of the Father and of the Son and of the Holy Spirit.',
       quoteSource: 'Matthew 28:19'
     },

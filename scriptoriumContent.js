@@ -560,7 +560,7 @@ export const CATECHISM = {
     },
     {
       heading: "Especially for You, Baptized in Christ",
-      body: "If you are a baptized Catholic, Scripture is not optional reading — it is part of what you were claimed for at the font. Faith is not only believing a set of facts; it grows the way it was given: through hearing and reading the Word. A Doctor of the Church put it more bluntly than most homilies dare to.",
+      body: "If you are a baptized Catholic, Scripture is not optional reading — it is part of what you were claimed for at the font. Faith is not only believing a set of facts; it grows the way it was given: through hearing and reading the Word. St Paul put it more plainly than most homilies dare to.",
       quote: "Faith comes from what is heard, and what is heard comes through the word of Christ.",
       quoteSource: "Romans 10:17"
     },

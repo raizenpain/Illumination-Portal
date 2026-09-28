@@ -1105,8 +1105,20 @@ function showCatechism(onDone) {
       reachedEnd = true;
       updateButton();
     }
-  }, { root: scrollEl, threshold: 0.99 });
+  // threshold 0.99 on a zero-height marker is all-or-nothing, and browsers
+  // round the max scroll offset to whole pixels while the marker sits at a
+  // fractional layout bottom -- on some screens it never fired and the
+  // student was stuck on "Scroll to the end". rootMargin gives it slack, and
+  // the scroll check below is a second, independent way to notice the end.
+  }, { root: scrollEl, threshold: 0, rootMargin: '0px 0px 4px 0px' });
   observer.observe(endMarker);
+  const checkScrolledToEnd = () => {
+    if (!reachedEnd && scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 4) {
+      reachedEnd = true;
+      updateButton();
+    }
+  };
+  scrollEl.addEventListener('scroll', checkScrolledToEnd, { passive: true });
 
   continueBtn.addEventListener('click', () => {
     if (continueBtn.disabled) return;

@@ -128,7 +128,7 @@ export const STATIONS = [
     key: "catacomb",
     name: "The Catacomb",
     art: "catacomb",
-    line: "Down among the graves, where the vigil was first kept in secret.",
+    line: "Down among the graves, where the earliest Christians laid their dead and kept vigil.",
     note: "From the 2nd to the 5th century Roman Christians buried their dead in galleries cut through the soft tufa outside the city walls, such as the Catacomb of Callixtus on the Via Appia, where several 3rd-century popes were laid. They were cemeteries and places of prayer at the martyrs' graves; the notion that Christians lived hidden in them during persecution is a later legend.",
     spots: [
       { x: 286, y: 268, s: 0.5 }, { x: 354, y: 268, s: 0.5 },
@@ -213,7 +213,7 @@ export const CATECHISM = {
   sections: [
     {
       heading: "Five Places, One Watch",
-      body: "The five stations you just passed through are real places, in the order the Church actually occupied them: a hidden grave in the catacombs, an empty tomb outside Jerusalem, the first legal basilica, a Gothic cathedral, and finally the dome of St Peter's. It's the same vigil the whole way — first kept in secret out of necessity, later kept in the open in the sight of the whole world. The building changed. What the Church was doing inside it did not.",
+      body: "The five stations you just passed through are real places from the Church's history: a Gothic cathedral, the catacombs beneath Rome, an empty tomb outside Jerusalem, the first legal basilica, and the dome of St Peter's. It's the same vigil the whole way — kept among the graves of the dead, later kept in the open in the sight of the whole world. The building changed. What the Church was doing inside it did not.",
     },
     {
       heading: "Could You Not Keep Watch One Hour?",
@@ -238,7 +238,7 @@ export const CATECHISM = {
       list: [
         { label: "Staying alert", body: "Noticing when your attention, your patience, or your prayer life is starting to drift, instead of only noticing after it's gone." },
         { label: "Being ready before you're asked", body: "The five prepared bridesmaids didn't know exactly when the bridegroom was coming either — they were just ready regardless." },
-        { label: "Persevering somewhere uncomfortable", body: "The earliest Christians kept faith in burial tunnels, not cathedrals. Watchfulness doesn't wait for ideal conditions." },
+        { label: "Persevering somewhere uncomfortable", body: "The earliest Christians kept faith in borrowed homes and among the graves of their dead, not in cathedrals. Watchfulness doesn't wait for ideal conditions." },
         { label: "Waiting without proof", body: "A vigil is kept before the thing you're waiting for has arrived. If you already had it, you wouldn't need to watch." }
       ]
     },

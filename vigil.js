@@ -59,11 +59,20 @@ function esc(s) {
  * student would meet the same question twice inside one vigil.
  */
 function pick(pool, n, asked = []) {
+  const take = (bag, count, out) => {
+    for (let i = 0; i < count && bag.length; i++) {
+      out.push(bag.splice(Math.floor(Math.random() * bag.length), 1)[0]);
+    }
+  };
   const fresh = pool.filter((q) => !asked.includes(q.id));
-  const bag = fresh.length >= n ? [...fresh] : [...pool];
   const out = [];
-  for (let i = 0; i < n && bag.length; i++) {
-    out.push(bag.splice(Math.floor(Math.random() * bag.length), 1)[0]);
+  take(fresh, n, out);
+  // A retried station can leave fewer than n unseen questions. Top up from
+  // the already-asked ones (never repeating within this draw) instead of
+  // throwing away the unseen preference for the whole draw, which let a
+  // question already answered earlier in the run come straight back.
+  if (out.length < n) {
+    take(pool.filter((q) => !out.includes(q)), n - out.length, out);
   }
   return out;
 }
@@ -249,8 +258,20 @@ function showCatechism(onDone) {
       reachedEnd = true;
       updateButton();
     }
-  }, { root: scrollEl, threshold: 0.99 });
+  // threshold 0.99 on a zero-height marker is all-or-nothing, and browsers
+  // round the max scroll offset to whole pixels while the marker sits at a
+  // fractional layout bottom -- on some screens it never fired and the
+  // student was stuck on "Scroll to the end". rootMargin gives it slack, and
+  // the scroll check below is a second, independent way to notice the end.
+  }, { root: scrollEl, threshold: 0, rootMargin: '0px 0px 4px 0px' });
   observer.observe(endMarker);
+  const checkScrolledToEnd = () => {
+    if (!reachedEnd && scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 4) {
+      reachedEnd = true;
+      updateButton();
+    }
+  };
+  scrollEl.addEventListener('scroll', checkScrolledToEnd, { passive: true });
 
   continueBtn.addEventListener('click', () => {
     if (continueBtn.disabled) return;
@@ -719,7 +740,8 @@ let attemptsLeft = ATTEMPTS_PER_VIGIL;
 let marks = 0;
 let vigilsLost = 0;
 let litFirstTry = 0;
-let missedHere = false;
+let stationFirstTry = 0;
+let candleMissed = [];
 let verdict = null; // { up, text }
 let picked = null;
 let shownQ = null;
@@ -747,7 +769,8 @@ function beginStation(idx) {
   openCandle = null;
   attemptsLeft = ATTEMPTS_PER_VIGIL;
   verdict = null;
-  missedHere = false;
+  stationFirstTry = 0;
+  candleMissed = Array(n).fill(false);
   seconds = TIME_PER_QUESTION;
   cool = COOLDOWN;
   screen = 'nave';
@@ -756,7 +779,6 @@ function beginStation(idx) {
 function openIt(i) {
   if (screen !== 'nave' || lit[i]) return;
   openCandle = i;
-  missedHere = false;
   seconds = TIME_PER_QUESTION;
   verdict = null;
   picked = null;
@@ -771,13 +793,17 @@ function spend(text) {
   const left = attemptsLeft - 1;
   marks += 1;
   attemptsLeft = left;
-  missedHere = true;
+  candleMissed[openCandle] = true;
   verdict = { up: false, text };
   seconds = TIME_PER_QUESTION;
   stopTimer();
 
   if (left <= 0) {
     vigilsLost += 1;
+    // This station starts over, so its first-try candles no longer count
+    // toward the total (it could otherwise read "48 of 45 lit first try").
+    litFirstTry -= stationFirstTry;
+    stationFirstTry = 0;
     cool = COOLDOWN;
     screen = 'cooldown';
     render();
@@ -806,7 +832,9 @@ function answer(i) {
     stopTimer();
     lit = [...lit];
     lit[openCandle] = true;
-    if (!missedHere) litFirstTry += 1;
+    // First asking = this candle has never been missed, however many times
+    // it was reopened (missing it then reopening used to count as first try).
+    if (!candleMissed[openCandle]) { litFirstTry += 1; stationFirstTry += 1; }
     verdict = { up: true, text: 'The wick takes, and the light spreads.' };
     shownQ = question;
     screen = 'answered';
@@ -1038,7 +1066,10 @@ function render() {
                 // candle instead of testing whether they actually know it.
                 const cls = 'lnt-option' +
                   (screen === 'answered' && i === onShow.answer ? ' is-right' : '') +
-                  (marking && i === picked ? ' is-wrong' : '');
+                  // wrong styling only for a wrong pick -- picked is also set on
+                  // a CORRECT answer, which used to paint it red and struck
+                  // through as well as green
+                  (screen === 'marking' && i === picked ? ' is-wrong' : '');
                 return `<li><button type="button" class="${cls}" data-opt="${i}" ${marking ? 'disabled' : ''}>${esc(opt)}</button></li>`;
               }).join('')}
             </ul>
@@ -1065,12 +1096,17 @@ function render() {
       <div class="lnt-stage">
         ${thumbSvg(true)}
         <p class="lnt-done-line">The vigil is kept.</p>
-        <p class="lnt-done-sub">${marks === 0 ? 'Seven candles, seven answers, and no wick lit twice.' : `${litFirstTry} of ${TOTAL_CANDLES} lit at the first asking.`}</p>
+        <p class="lnt-done-sub">${marks === 0 ? `${TOTAL_CANDLES} candles, ${TOTAL_CANDLES} answers, and no wick lit twice.` : `${litFirstTry} of ${TOTAL_CANDLES} lit at the first asking.`}</p>
         ${awardState === 'failed' ? '<p class="lnt-done-sub">Your reward could not be saved. Check your connection and try again — nothing is lost.</p><button type="button" class="lnt-go" id="lntRetry">Try saving again</button>' : awardState === 'pending' ? '<p class="lnt-done-sub">Kindling your reward…</p>' : ''}
         <button type="button" class="lnt-go" id="lntReturn"${awardState === 'pending' ? ' disabled' : ''}>Return to the Cloister</button>
       </div>
     `;
   }
+
+  // The guide and catechism overlays are appended to root, so wiping
+  // root.innerHTML (the countdown/advance timers re-render) used to destroy
+  // an open one without calling its onDone. Carry them across the re-render.
+  const openOverlays = [...root.querySelectorAll(':scope > .lnt-guide-overlay')];
 
   root.innerHTML = `
     <header class="lnt-head">
@@ -1096,6 +1132,7 @@ function render() {
     </header>
     ${body}
   `;
+  openOverlays.forEach((el) => root.appendChild(el));
 
   wireEvents();
 }

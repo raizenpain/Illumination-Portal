@@ -58,12 +58,23 @@ function norm(s) {
   return s.trim().toLowerCase().replace(/[.,;:!?]/g, "");
 }
 
+// Seeded so a passage's options keep the same order across re-renders.
+// mulberry32, not the old `s * 1103515245 + 12345` LCG: that product
+// overflows 2^53 after one step, zeroing the low bits, so `s % (i+1)` was
+// heavily skewed -- measured over 200k runs the correct book never landed
+// on the first button and a leaf's correct word sat 4th about 80% of the
+// time, letting students answer by position alone.
 function shuffle(arr, seed) {
   const a = [...arr];
-  let s = seed || 1;
+  let s = (seed || 1) >>> 0;
+  const rand = () => {
+    s = (s + 0x6D2B79F5) >>> 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
   for (let i = a.length - 1; i > 0; i--) {
-    s = (s * 1103515245 + 12345) & 0x7fffffff;
-    const j = s % (i + 1);
+    const j = Math.floor(rand() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
@@ -274,8 +285,20 @@ function showCatechism(onDone) {
       reachedEnd = true;
       updateButton();
     }
-  }, { root: scrollEl, threshold: 0.99 });
+  // threshold 0.99 on a zero-height marker is all-or-nothing, and browsers
+  // round the max scroll offset to whole pixels while the marker sits at a
+  // fractional layout bottom -- on some screens it never fired and the
+  // student was stuck on "Scroll to the end". rootMargin gives it slack, and
+  // the scroll check below is a second, independent way to notice the end.
+  }, { root: scrollEl, threshold: 0, rootMargin: '0px 0px 4px 0px' });
   observer.observe(endMarker);
+  const checkScrolledToEnd = () => {
+    if (!reachedEnd && scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 4) {
+      reachedEnd = true;
+      updateButton();
+    }
+  };
+  scrollEl.addEventListener('scroll', checkScrolledToEnd, { passive: true });
 
   continueBtn.addEventListener('click', () => {
     if (continueBtn.disabled) return;
@@ -726,7 +749,7 @@ function render() {
               </div>
             `}
 
-            ${!passage.bank && !margin ? `<button type="button" class="scr-ghost" id="scrMarginBtn">Consult the margin (1 mark)</button>` : ''}
+            ${!passage.bank && !margin && passage.answers.some((_, i) => !typedSlots.includes(i) && !filled[i]) ? `<button type="button" class="scr-ghost" id="scrMarginBtn">Consult the margin (1 mark)</button>` : ''}
 
             ${!focusIsTyped && bankOpen && typedSlots.length > 0 ? `
               <p class="scr-note">Blanks drawn with a double rule are not in the bank. Those must be written.</p>
@@ -796,6 +819,12 @@ function render() {
     `;
   }
 
+  // The guide and catechism overlays are appended to root, so wiping
+  // root.innerHTML (a delayed ding() re-render, a timer tick) used to
+  // destroy an open one without ever calling its onDone -- leaving the
+  // leaf's countdown paused for good. Carry them across the re-render.
+  const openOverlays = [...root.querySelectorAll(':scope > .scr-guide-overlay')];
+
   root.innerHTML = `
     <header class="scr-head">
       <div class="scr-head-text">
@@ -819,6 +848,7 @@ function render() {
     </header>
     ${body}
   `;
+  openOverlays.forEach((el) => root.appendChild(el));
 
   wireEvents();
 }

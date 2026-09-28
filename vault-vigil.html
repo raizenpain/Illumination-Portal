@@ -451,7 +451,10 @@
       font-family: inherit; font-size: 16px; padding: 11px 22px;
       border-radius: 2px; cursor: pointer;
     }
-    .lnt-go:hover { background: #d4b154; }
+    .lnt-go:hover:not(:disabled) { background: #d4b154; }
+    /* the catechism Continue is disabled for 100s+ and used to look exactly
+       like a live button, so students tapped it and reported being stuck */
+    .lnt-go:disabled { opacity: .35; cursor: not-allowed; }
     .lnt-ghost {
       background: none; border: 1px solid rgba(90,60,30,0.42); color: #6b5334;
       font-family: inherit; font-size: 14px; padding: 9px 16px; border-radius: 2px; cursor: pointer;

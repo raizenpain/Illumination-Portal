@@ -231,8 +231,20 @@ function showCatechism(onDone) {
       reachedEnd = true;
       updateButton();
     }
-  }, { root: scrollEl, threshold: 0.99 });
+  // threshold 0.99 on a zero-height marker is all-or-nothing, and browsers
+  // round the max scroll offset to whole pixels while the marker sits at a
+  // fractional layout bottom -- on some screens it never fired and the
+  // student was stuck on "Scroll to the end". rootMargin gives it slack, and
+  // the scroll check below is a second, independent way to notice the end.
+  }, { root: scrollEl, threshold: 0, rootMargin: '0px 0px 4px 0px' });
   observer.observe(endMarker);
+  const checkScrolledToEnd = () => {
+    if (!reachedEnd && scrollEl.scrollTop + scrollEl.clientHeight >= scrollEl.scrollHeight - 4) {
+      reachedEnd = true;
+      updateButton();
+    }
+  };
+  scrollEl.addEventListener('scroll', checkScrolledToEnd, { passive: true });
 
   continueBtn.addEventListener('click', () => {
     if (continueBtn.disabled) return;
@@ -434,13 +446,13 @@ function miss(gname, text) {
 function choose(g, i) {
   if (screen !== 'play' || wrong.includes(g.name)) return;
   if (i === round.correctIndex) {
-    verdict = { up: true, text: `${g.name} are fed first, and rightly.` };
+    verdict = { up: true, text: `${g.name}: fed first, and rightly.` };
     screen = 'right';
     stopTimer();
     render();
     startAdvance();
   } else {
-    miss(g.name, `Not ${g.name}. Look again at what is asked.`);
+    miss(g.name, `Not ${g.name}. Try another group.`);
   }
 }
 
@@ -672,7 +684,7 @@ function render() {
         <p class="lnf-lost-line">Three attempts spent. The crowd drifts away still hungry.</p>
         <p class="lnf-cool-n">${cool}</p>
         <p class="lnf-cool-l">They gather again in ${cool === 1 ? 'a second' : `${cool} seconds`}.</p>
-        <p class="lnf-cool-note">The next crowd is arranged differently, and asks something else of you.</p>
+        <p class="lnf-cool-note">The next crowd is arranged differently.</p>
       </div>
     `;
   } else if (screen === 'done') {
@@ -686,6 +698,11 @@ function render() {
       </div>
     `;
   }
+
+  // The guide and catechism overlays are appended to root, so wiping
+  // root.innerHTML (the cooldown/answer timers re-render) used to destroy an
+  // open one without calling its onDone. Carry them across the re-render.
+  const openOverlays = [...root.querySelectorAll(':scope > .lnf-guide-overlay')];
 
   root.innerHTML = `
     <header class="lnf-head">
@@ -710,6 +727,7 @@ function render() {
     </header>
     ${body}
   `;
+  openOverlays.forEach((el) => root.appendChild(el));
 
   wireEvents();
 }

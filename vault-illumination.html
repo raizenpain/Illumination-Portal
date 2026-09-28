@@ -32,7 +32,6 @@
     user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent}
   .btn:active{background:rgba(243,180,95,.28)}
   .btn.wide{width:84px}
-  @media (hover:hover){#pad{display:none !important}}
   @media (prefers-reduced-motion:reduce){canvas{box-shadow:none}}
 
   /* ---------- portal integration ---------- */
@@ -190,8 +189,20 @@ function showGate(heading, text) {
 // Reflections can't be skipped -- they hold the screen for a fixed
 // read time, then dismiss themselves. No click can close them early.
 let reflectTimer = null;
+
+// Pause is a lock COUNT, not a boolean: a reflection and a treasure popup
+// can be open at the same moment (the 6th shard opens both), and whichever
+// closed first used to clear the pause while the other was still blocking
+// the screen -- the game kept simulating invisibly underneath it. Starts at
+// 1 because the page is paused until init() has checked the student's
+// saved progress.
+let pauseLocks = 1;
+function pauseGame() { pauseLocks += 1; window.__gamePaused = true; }
+function resumeGame() { pauseLocks = Math.max(0, pauseLocks - 1); window.__gamePaused = pauseLocks > 0; }
+
+let reflectionHolding = false;
 function showReflection(kicker, heading, text, durationMs) {
-  window.__gamePaused = true;
+  if (!reflectionHolding) { reflectionHolding = true; pauseGame(); }
   reflectKickerEl.textContent = kicker;
   reflectHeadingEl.textContent = heading;
   reflectBodyEl.textContent = text;
@@ -207,7 +218,7 @@ function showReflection(kicker, heading, text, durationMs) {
     if (remain <= 0) {
       clearInterval(reflectTimer);
       reflectEl.classList.remove('on');
-      window.__gamePaused = false;
+      if (reflectionHolding) { reflectionHolding = false; resumeGame(); }
     }
   };
   tick();
@@ -298,9 +309,11 @@ window.onShardPicked = async (index) => {
 // instead of the old index-based guess inside onShardPicked above.
 window.onShardsComplete = async () => {
   const isNewGrant = !studentState.shardsCompleted;
+  // Pause BEFORE awaiting the write, not after -- the game used to keep
+  // running for the whole round trip.
+  if (isNewGrant) pauseGame();
   const ok = await grantOnce('shardsCompleted', SHARDS_REWARD);
   if (isNewGrant) {
-    window.__gamePaused = true;
     if (ok) {
       await showTreasureReveal({
         iconSrc: TREASURE_ICON,
@@ -309,23 +322,24 @@ window.onShardsComplete = async () => {
         subheading: 'A treasure has been earned along the way.',
         chips: rewardChips(SHARDS_REWARD)
       });
-      // showTreasureReveal never touches __gamePaused itself -- without
-      // this the game stayed frozen forever after the popup closed,
-      // permanently blocking the walk to the Beacon (and its reward).
-      window.__gamePaused = false;
     } else {
       showReflection('Hold On', "Your Reward Didn't Save",
         'Something interrupted the connection just now. Nothing was lost -- reload this page and gather all six Light Shards again to receive it.',
         20000);
     }
+    // Releases only THIS handler's lock -- an open reflection (the 6th
+    // shard's 25s one) holds its own and keeps the game paused until it ends.
+    resumeGame();
   }
 };
 
 window.onBeaconReached = async () => {
   const isNewGrant = !studentState.beaconCompleted;
+  // Pause before the write so key-repeat or a tap can't restart the level
+  // (win -> title -> play) while the reward is still being saved.
+  if (isNewGrant) pauseGame();
   const ok = await grantOnce('beaconCompleted', BEACON_REWARD);
   if (isNewGrant) {
-    window.__gamePaused = true;
     if (ok) {
       await showTreasureReveal({
         iconSrc: TREASURE_ICON,
@@ -338,10 +352,12 @@ window.onBeaconReached = async () => {
       showReflection('Hold On', "Your Reward Didn't Save",
         'Something interrupted the connection just now. Reload this page, walk back to the Beacon, and it will grant your reward.',
         20000);
+      resumeGame();
       return;
     }
   }
   showReflection('The Beacon', BEACON_REFLECTION.heading, BEACON_REFLECTION.text, 120000);
+  if (isNewGrant) resumeGame();
 };
 
 async function init() {
@@ -355,7 +371,12 @@ async function init() {
     const snap = await getDoc(doc(db, 'students', email));
     data = snap.exists() ? snap.data() : {};
   } catch (err) {
+    // Can't tell whether this climb was already finished, and defaulting to
+    // "not completed" would let a finished student replay a one-time game
+    // for the whole page session -- so stay paused and say so instead.
     console.error('Failed to load student record:', err);
+    showGate('Could Not Check Your Progress', 'The connection dropped before your saved progress could load. Reload this page to try again.');
+    return;
   }
 
   const saved = (data.vaultGames || {}).illumination;
@@ -376,7 +397,7 @@ async function init() {
     return;
   }
 
-  window.__gamePaused = false;
+  resumeGame();
 }
 
 init();
@@ -414,6 +435,11 @@ addEventListener('keydown',e=>{
   if(state==='win'&&(e.code==='Space'||e.code==='Enter')) {state='title';reset();}
 },{passive:false});
 addEventListener('keyup',e=>{ if(map[e.code]) K[map[e.code]]=0; });
+// A keyup that lands in another window never reaches us, so a held arrow
+// would stay "pressed" and run the player off a ledge or into a bird.
+const releaseAllKeys=()=>{ K.left=K.right=K.jump=K.flare=0; };
+addEventListener('blur',releaseAllKeys);
+document.addEventListener('visibilitychange',()=>{ if(document.hidden) releaseAllKeys(); });
 document.querySelectorAll('#pad .btn').forEach(b=>{
   const k=b.dataset.k;
   const on=e=>{e.preventDefault();K[k]=1;K.any=1;audioUnlock();
@@ -424,7 +450,13 @@ document.querySelectorAll('#pad .btn').forEach(b=>{
   b.addEventListener('touchend',off,{passive:false});
   b.addEventListener('touchcancel',off,{passive:false});
 });
-if(matchMedia('(hover:none)').matches) document.getElementById('pad').classList.add('on');
+// Show the touch pad on any touch-capable device, not just hover:none ones --
+// touchscreen Chromebooks and tablets with a trackpad report hover:hover and
+// used to get no controls at all. Also appears the first time a finger
+// touches the page, for a device that only turns out to be touch later.
+const padEl=document.getElementById('pad');
+if(matchMedia('(hover:none)').matches||matchMedia('(pointer:coarse)').matches||navigator.maxTouchPoints>0) padEl.classList.add('on');
+addEventListener('touchstart',()=>padEl.classList.add('on'),{once:true,passive:true});
 cv.addEventListener('pointerdown',()=>{audioUnlock(); if(window.__gamePaused) return; if(state==='title')startGame(); else if(state==='win'){state='title';reset();}});
 
 /* ---------- tiny audio ---------- */
@@ -508,6 +540,9 @@ function reset(){
   checkpoint={x:210,y:1830};
   timer=0; fade=0; msg={text:'Hold the lantern high. The dark hides the road.',life:280};
   BEACON.lit=false;
+  // A restart is a fresh climb -- carrying the previous run's empty lantern
+  // back to the start left the student stranded without light.
+  L.oil=100; L.flare=0;
 }
 function startGame(){ if(state!=='play'){ reset(); state='play'; } }
 
@@ -564,7 +599,14 @@ function update(){
     p.dead--;
     if(p.dead===0){
       if(p.birdHit){ reset(); }
-      else { p.x=checkpoint.x; p.y=checkpoint.y; p.vx=p.vy=0; fade=1; }
+      else {
+        p.x=checkpoint.x; p.y=checkpoint.y; p.vx=p.vy=0; fade=1;
+        // The lamp you're returned to is already lit, so it can't refill the
+        // oil again -- a student who ran dry between lamps could otherwise
+        // respawn with no light, fall through every veiled ledge, and be
+        // unable to recover short of pressing R.
+        L.oil=Math.max(L.oil,50);
+      }
     }
     return;
   }
@@ -1204,7 +1246,25 @@ function render(){
 }
 
 reset();
-(function loop(){ update(); render(); requestAnimationFrame(loop); })();
+// Fixed 60Hz simulation step, independent of the display's refresh rate.
+// Gravity, speeds, oil drain, respawn timers and the HUD clock are all
+// per-update constants, so running update() once per animation frame made
+// a 120/144Hz screen play at 2-2.4x speed (oil gone in ~15s instead of
+// ~37s). The accumulator runs as many 1/60s steps as real time owes, capped
+// so a long stall (hidden tab) can't fast-forward the game.
+const STEP_MS=1000/60;
+let lastFrameTs=0, stepAcc=0;
+function loop(ts){
+  if(!lastFrameTs) lastFrameTs=ts;
+  stepAcc+=Math.min(ts-lastFrameTs,100);
+  lastFrameTs=ts;
+  let steps=0;
+  while(stepAcc>=STEP_MS && steps<6){ update(); stepAcc-=STEP_MS; steps++; }
+  if(steps===6) stepAcc=0;
+  render();
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
 })();
 </script>
 </body>

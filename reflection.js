@@ -1,6 +1,6 @@
 import { db, doc, getDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
-import { containsBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
+import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
 import { getRankProgress, getSeasonStars, isSeasonChaptersComplete, isPrelimSeasonDone, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 
@@ -144,8 +144,11 @@ async function handleSubmit() {
     return;
   }
 
-  if (containsBannedWord(text)) {
-    statusEl.textContent = "That reflection contains language that isn't allowed here — please rewrite it.";
+  const bannedWord = findBannedWord(text, { coursework: true });
+  if (bannedWord) {
+    // Name the word: the generic message left students unable to tell what
+    // to change, so they were stuck on the reflection that opens the next season.
+    statusEl.textContent = `Your reflection contains a word that isn't allowed here: "${bannedWord}". Please reword that part and try again.`;
     recordMistake();
     return;
   }

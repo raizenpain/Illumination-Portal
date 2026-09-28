@@ -5,7 +5,7 @@ import { CHAPTER_LESSONS } from './chapterLessons.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
-import { containsBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
+import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
 import { getRankProgress, getSeasonStars, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 import { TICKET_INFO } from './ticketTrader.js';
@@ -431,8 +431,9 @@ function renderTextModal(node, { minLength }) {
       return;
     }
 
-    if (containsBannedWord(text)) {
-      hint.textContent = "That response contains language that isn't allowed here — please rewrite it.";
+    const bannedWord = findBannedWord(text, { coursework: true });
+    if (bannedWord) {
+      hint.textContent = `Your response contains a word that isn't allowed here: "${bannedWord}". Please reword that part and try again.`;
       recordMistake();
       return;
     }

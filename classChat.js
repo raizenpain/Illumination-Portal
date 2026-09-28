@@ -28,7 +28,7 @@
 // ============================================
 
 import { db, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, getDocs, serverTimestamp } from './firebase.js';
-import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
+import { findBannedWord, looksLikeGibberish } from './contentFilter.js';
 import { maybePostDailyGreeting } from './dailyGreeting.js';
 
 const MAX_MESSAGES = 50;
@@ -260,8 +260,9 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
       showError("That doesn't look like a real message — try again.");
       return;
     }
-    if (containsBannedWord(text)) {
-      showError('That message contains language that isn’t allowed here.');
+    const bannedWord = findBannedWord(text);
+    if (bannedWord) {
+      showError(`That message contains a word that isn’t allowed here: “${bannedWord}”.`);
       return;
     }
 

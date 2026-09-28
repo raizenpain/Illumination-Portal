@@ -37,7 +37,7 @@
 
 const BANNED_WORDS = [
   // English profanity
-  'fuck', 'fucking', 'fuck you', 'shit', 'bullshit', 'bs', 'asshole',
+  'fuck', 'fucking', 'fuckin', 'fuck you', 'shit', 'bullshit', 'bs', 'asshole',
   'bitch', 'bastard', 'dick', 'piss', 'cunt', 'whore', 'slut',
   'douche', 'motherfucker', 'retard', 'nigga', 'faggot', 'crap',
   'stfu', 'fml', 'af', 'wth', 'wtf', 'screw you', 'stupid', 'idiot',
@@ -103,9 +103,36 @@ function escapeRegExp(str) {
   return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
-export function containsBannedWord(text) {
-  const normalized = text.toLowerCase();
-  return BANNED_WORDS.some((word) => new RegExp(`\\b${escapeRegExp(word)}\\b`, 'i').test(normalized));
+// Ordinary English words that are ALSO on the slang list above, but that a
+// reflection on Catholic formation uses in their normal sense all the time
+// ("tongues of fire", "carry my cross", "feed the hungry", "Jesus ate with
+// sinners", "I can relate", "based on the Gospel", "mid-term"). Run against
+// real coursework sentences, the full list rejected nine of ten -- and a
+// rejected reflection blocks the student from unlocking the next season.
+// These are exempt ONLY for graded coursework (reflections, season
+// journals), never for the class chat, where the slang meaning is exactly
+// what the filter is there to stop. Edit this set to tune it.
+const COURSEWORK_EXEMPT = new Set([
+  'fire', 'carry', 'feed', 'feeding', 'ate', 'relate', 'based', 'valid',
+  'mid', 'pre', 'push', 'wipe', 'cook', 'cap', 'bet', 'buff', 'ratio', 'diff', 'op'
+]);
+
+// "Fr." before a name is Father (Fr. Pedro), not the slang "fr" (for real).
+const FATHER_TITLE = /\bFr\.?(?=\s+[A-Z])/g;
+
+/** The first banned word found in `text`, or null. `coursework: true`
+ *  applies COURSEWORK_EXEMPT (see above). */
+export function findBannedWord(text, { coursework = false } = {}) {
+  const normalized = text.replace(FATHER_TITLE, ' ').toLowerCase();
+  const match = BANNED_WORDS.find((word) =>
+    !(coursework && COURSEWORK_EXEMPT.has(word)) &&
+    new RegExp(`\\b${escapeRegExp(word)}\\b`, 'i').test(normalized)
+  );
+  return match || null;
+}
+
+export function containsBannedWord(text, options) {
+  return findBannedWord(text, options) !== null;
 }
 
 // Catches keyboard-mashing ("asdfasdf", "kjkjkjkj", one huge spaceless

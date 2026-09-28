@@ -42,6 +42,11 @@ function loadImage(src) {
   });
 }
 
+// `complete` is true for an image that FAILED to load too, and drawImage on
+// a broken image throws -- which would kill startup or freeze the frame
+// loop on one flaky asset. naturalWidth is 0 for a broken image.
+function imgOk(img) { return !!img && img.complete && img.naturalWidth > 0; }
+
 async function loadAssets() {
   const [peter, paul, soldierImg, crossImg, treetop, trunk, mountains, bridges, house, chests] = await Promise.all([
     loadImage('assets/evangelization/st_peter.png'),
@@ -92,6 +97,15 @@ function isBlockedBox(grid, x, y, w, h) {
 
 function tileCenter(col, row) { return { x: col * TILE + TILE / 2, y: row * TILE + TILE / 2 }; }
 
+// Sprite origin that puts an entity's 20x16 hitbox (origin + 22,42) dead
+// centre on a tile -- the same (-32,-48) offset respawnAtCheckpoint uses
+// for the player. An off-centre target straddled a 2x2 block of tiles, so
+// any adjacent tree or water kept the soldier from ever arriving.
+function patrolTarget(wp) {
+  const c = tileCenter(wp.col, wp.row);
+  return { x: c.x - 32, y: c.y - 48 };
+}
+
 /* ===========================================================================
  * STATIC WORLD LAYER (pre-rendered once -- ground + trees + rock + water +
  * bridge + house -- so the per-frame render is just a camera-cropped blit
@@ -124,7 +138,7 @@ function renderStaticLayer(grid, assets) {
   }
 
   // bridge deck (stretched crop over every 'R' tile run)
-  if (assets.bridges.complete) {
+  if (imgOk(assets.bridges)) {
     for (let r = 0; r < WORLD_ROWS; r++) {
       for (let c = 0; c < WORLD_COLS; c++) {
         if (grid[r][c] === 'R') ctx.drawImage(assets.bridges, 0, 96, 64, 64, c * TILE, r * TILE, TILE, TILE);
@@ -133,7 +147,7 @@ function renderStaticLayer(grid, assets) {
   }
 
   // mountain / rock faces
-  if (assets.mountains.complete) {
+  if (imgOk(assets.mountains)) {
     for (let r = 0; r < WORLD_ROWS; r++) {
       for (let c = 0; c < WORLD_COLS; c++) {
         if (grid[r][c] === 'M') {
@@ -146,7 +160,7 @@ function renderStaticLayer(grid, assets) {
   }
 
   // house walls + roof + door (drawn as one composed block over the H/V footprint)
-  if (assets.house.complete) {
+  if (imgOk(assets.house)) {
     for (let r = 0; r < WORLD_ROWS; r++) {
       for (let c = 0; c < WORLD_COLS; c++) {
         if (grid[r][c] === 'H') ctx.drawImage(assets.house, 0, 0, 96, 96, c * TILE, r * TILE, TILE, TILE);
@@ -158,7 +172,7 @@ function renderStaticLayer(grid, assets) {
   }
 
   // trees (trunk + rounded pine top, drawn per 'T' cell)
-  if (assets.treetop.complete && assets.trunk.complete) {
+  if (imgOk(assets.treetop) && imgOk(assets.trunk)) {
     for (let r = 0; r < WORLD_ROWS; r++) {
       for (let c = 0; c < WORLD_COLS; c++) {
         if (grid[r][c] === 'T') {
@@ -191,8 +205,10 @@ function generateBoxes() {
   const pool = [
     { type: 'buff', def: BUFFS[0] }, { type: 'buff', def: BUFFS[1] },
     { type: 'buff', def: BUFFS[2] }, { type: 'buff', def: BUFFS[3] },
-    { type: 'sin', def: SINS[0] }, { type: 'sin', def: SINS[1] },
-    { type: 'sin', def: SINS[2] }
+    // Three of the seven sins per game, drawn at random -- a fixed first
+    // three meant sloth/greed/gluttony/lust could never appear at all,
+    // despite the guide describing all seven.
+    ...shuffle(SINS).slice(0, 3).map((def) => ({ type: 'sin', def }))
   ];
   const shuffledPool = shuffle(pool);
   const tiles = shuffle(BOX_TILES);
@@ -226,8 +242,8 @@ function freshState() {
   const s = {
     player: { x: START_TILE.col * TILE, y: START_TILE.row * TILE, dir: 'down', frame: 0, frameTimer: 0, moving: false, carrying: false },
     soldiers: SOLDIER_PATROLS.map((patrol) => ({
-      x: patrol[0].col * TILE, y: patrol[0].row * TILE, dir: 'down', frame: 0, frameTimer: 0,
-      patrol, patrolIndex: 0, mode: 'patrol', searchTimer: 0, lastSeen: null
+      x: patrolTarget(patrol[0]).x, y: patrolTarget(patrol[0]).y, dir: 'down', frame: 0, frameTimer: 0,
+      patrol, patrolIndex: 0, mode: 'patrol', searchTimer: 0, lastSeen: null, stuckTimer: 0
     })),
     itemCollected: false,
     checkpoint: { id: 'start', pos: tileCenter(START_TILE.col, START_TILE.row), hadItem: false },
@@ -249,6 +265,7 @@ function freshState() {
     timerWarned60: false,
     timerWarned30: false,
     gameOver: null,
+    lastDamageReason: null,
     cooldownRemaining: 0,
     lastGuardianToast: 0
   };
@@ -368,6 +385,10 @@ const KEY_MAP = {
 };
 window.addEventListener('keydown', (e) => { if (KEY_MAP[e.code]) { state.keys.add(KEY_MAP[e.code]); e.preventDefault(); } });
 window.addEventListener('keyup', (e) => { if (KEY_MAP[e.code]) state.keys.delete(KEY_MAP[e.code]); });
+// A keyup that lands in another window/tab never reaches us, so a held key
+// would stay "pressed" and walk the apostle into a soldier on its own.
+window.addEventListener('blur', () => state.keys.clear());
+document.addEventListener('visibilitychange', () => { if (document.hidden) state.keys.clear(); });
 
 function wireTouchPad() {
   document.querySelectorAll('#evgPad .evg-pad-btn').forEach((btn) => {
@@ -444,10 +465,11 @@ function updateOneSoldier(s, dt, wrath) {
     if (s.searchTimer <= 0 || Math.hypot(targetX - s.x, targetY - s.y) < 6) s.mode = 'patrol';
   } else {
     const wp = s.patrol[s.patrolIndex];
-    const c = tileCenter(wp.col, wp.row);
-    targetX = c.x - 16; targetY = c.y - 32;
+    const t = patrolTarget(wp);
+    targetX = t.x; targetY = t.y;
     if (Math.hypot(targetX - s.x, targetY - s.y) < 4) s.patrolIndex = (s.patrolIndex + 1) % s.patrol.length;
   }
+  const beforeX = s.x, beforeY = s.y;
 
   const ddx = targetX - s.x, ddy = targetY - s.y;
   const dd = Math.hypot(ddx, ddy);
@@ -462,6 +484,20 @@ function updateOneSoldier(s, dt, wrath) {
     tryMove(s, mx, my);
   }
   animate(s, dt, moving);
+
+  // A soldier that gave up a chase can end up somewhere the straight line
+  // back to its waypoint runs into a tree or the river. If a patrolling
+  // soldier makes no headway for 2s, put it back on its route instead of
+  // leaving it parked forever.
+  if (s.mode === 'patrol' && moving && Math.hypot(s.x - beforeX, s.y - beforeY) < speed * dt * 0.2) {
+    s.stuckTimer += dt;
+    if (s.stuckTimer > 2) {
+      s.x = targetX; s.y = targetY;
+      s.stuckTimer = 0;
+    }
+  } else {
+    s.stuckTimer = 0;
+  }
 
   if (state.respawnGrace > 0) return;
   if (Math.hypot(p.x - s.x, p.y - s.y) < CATCH_RADIUS) handleCatch();
@@ -481,7 +517,10 @@ function updateBirds(dt) {
     b.y = b.y0 + Math.sin(b.clock * 2 + b.ph) * 4;
     if (b.hitCooldown > 0) { b.hitCooldown -= dt; return; }
     if (state.respawnGrace > 0) return;
-    if (Math.hypot(p.x - b.x, p.y - b.y) < BIRD_CATCH_RADIUS) {
+    // Feet point (p.x+32, p.y+48), like every other pickup/trigger --
+    // p.x/p.y is the sprite's top-left, which put the hit zone a tile left
+    // and a tile and a half above where the bird is actually drawn.
+    if (Math.hypot(p.x + 32 - b.x, p.y + 48 - b.y) < BIRD_CATCH_RADIUS) {
       b.hitCooldown = 1.5;
       handleBirdHit();
     }
@@ -511,7 +550,8 @@ function handleCatch() {
       showToast('😇 Guardian Angel shields you from the soldier!', 'good');
       state.lastGuardianToast = performance.now();
     }
-    respawnAtCheckpoint();
+    // The buff promises "the soldier cannot catch you" -- no damage AND no
+    // trip back to a checkpoint (which could also drop the Cross).
     return;
   }
   applyDamage(DAMAGE_PER_CATCH, 'Caught by the soldier');
@@ -535,6 +575,13 @@ function handleBirdHit() {
 
 function respawnAtCheckpoint() {
   const cp = state.checkpoint;
+  // Losing the Cross to a respawn must put it back in its box -- the box
+  // stays opened forever otherwise, so the Cross could never be found
+  // again and the mission became unwinnable.
+  if (state.player.carrying && !cp.hadItem) {
+    const crossBox = state.boxes.find((b) => b.content.type === 'cross');
+    if (crossBox) crossBox.opened = false;
+  }
   state.player.x = cp.pos.x - 32;
   state.player.y = cp.pos.y - 48;
   state.player.carrying = cp.hadItem;
@@ -548,10 +595,13 @@ function respawnAtCheckpoint() {
   state.respawnGrace = 1.5;
 }
 
-function applyDamage(amount, reason) {
+function applyDamage(amount, reason, quiet = false) {
   if (state.gameOver) return;
   state.hp = Math.max(0, state.hp - amount);
-  showToast(`${reason}! -${amount} HP`, 'bad');
+  state.lastDamageReason = reason;
+  // Gluttony drains a fraction of an HP every frame -- a toast per frame
+  // would just flicker "-0.05 HP" over the whole screen.
+  if (!quiet) showToast(`${reason}! -${amount} HP`, 'bad');
   updateHud();
   if (state.hp <= 0) handleDeath();
 }
@@ -630,7 +680,7 @@ function updateTimedEffects(dt) {
     if (state.activeBuffs[id] <= 0) delete state.activeBuffs[id];
   });
   Object.keys(state.activeSins).forEach((id) => {
-    if (id === 'gluttony') applyDamage(SINS.find((s) => s.id === 'gluttony').dps * dt, 'Gluttony');
+    if (id === 'gluttony') applyDamage(SINS.find((s) => s.id === 'gluttony').dps * dt, 'Gluttony', true);
     state.activeSins[id] -= dt;
     if (state.activeSins[id] <= 0) delete state.activeSins[id];
   });
@@ -643,6 +693,10 @@ function updateCheckpoints() {
     if (d < 24 && state.lastCheckpointId !== cp.id) {
       state.lastCheckpointId = cp.id;
       state.checkpoint = { id: cp.id, pos: c, hadItem: state.player.carrying };
+    } else if (d < 24 && state.player.carrying && !state.checkpoint.hadItem) {
+      // Walking back over the current checkpoint WITH the Cross must bank
+      // it -- the guide promises checkpoints save whether you're carrying it.
+      state.checkpoint.hadItem = true;
     }
   });
 }
@@ -696,7 +750,7 @@ function updateTimer(dt) {
  * ========================================================================= */
 
 function drawSprite(sheet, entity, offsetX, offsetY) {
-  if (!sheet || !sheet.complete) return;
+  if (!imgOk(sheet)) return;
   const row = DIR_ROW[entity.dir];
   const frameCol = entity.frame % 8;
   ctx.drawImage(sheet, frameCol * 64, row * 64, 64, 64, entity.x - offsetX, entity.y - offsetY - 24, 64, 64);
@@ -729,7 +783,7 @@ function render(camX, camY) {
 
   // Mystery Treasure Boxes -- closed until opened; contents are never
   // shown on the box itself, only in the toast at the moment it opens.
-  if (assets.chests.complete) {
+  if (imgOk(assets.chests)) {
     state.boxes.forEach((box) => {
       const c = tileCenter(box.col, box.row);
       const sy = box.opened ? 32 : 0;
@@ -941,7 +995,10 @@ function triggerGameOver(reason) {
     messageEl.textContent = 'You failed to return the Cross to the village in time.';
   } else {
     headingEl.textContent = 'YOUR MISSION HAS ENDED';
-    messageEl.textContent = 'The soldier caught you once too often, and no Revive Potion remained.';
+    const cause = state.lastDamageReason === 'Struck by a bird' ? 'The birds wore down your strength'
+      : state.lastDamageReason === 'Gluttony' ? 'Gluttony drained your strength'
+      : 'The soldier caught you once too often';
+    messageEl.textContent = `${cause}, and no Revive Potion remained.`;
   }
 
   state.cooldownRemaining = GAME_OVER_COOLDOWN_SECONDS;
@@ -969,7 +1026,9 @@ function restartMission() {
 
   gameOverModal.classList.remove('on');
   toastEl.classList.remove('on');
+  const chosenCharacter = state.character;
   state = freshState();
+  state.character = chosenCharacter;
   updateHud();
   setObjective('Find the Mystery Treasure Box with the Cross.');
   setItemStatus('Not carrying an item');

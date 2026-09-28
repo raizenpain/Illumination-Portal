@@ -112,10 +112,16 @@ export const SOLDIER_PATROLS = [
   // trees, so the soldier could approach but never fully reach it, stalling
   // its patrol loop indefinitely at that corner
   [{ col: 19, row: 6 }, { col: 23, row: 6 }, { col: 23, row: 10 }, { col: 18, row: 10 }],
-  // guards the forest cluster (boxes at 6,20 / 13,23)
-  [{ col: 5, row: 19 }, { col: 14, row: 19 }, { col: 14, row: 24 }, { col: 5, row: 24 }],
-  // guards the east side, between the clearing and the river (boxes at 33,20 / 26,16 / 22,22)
-  [{ col: 24, row: 15 }, { col: 31, row: 15 }, { col: 31, row: 21 }, { col: 24, row: 21 }]
+  // guards the forest cluster (boxes at 6,20 / 13,23) -- all four edges are
+  // tree/rock/water-free (the old loop ran along row 19 into the tree at
+  // 13,19 and stalled there); checked by simulating the real hitbox/collision
+  // code for laps, not by eye
+  [{ col: 5, row: 21 }, { col: 13, row: 21 }, { col: 13, row: 25 }, { col: 5, row: 25 }],
+  // guards the west bank just before the river (boxes at 26,16 / 22,22) --
+  // the old loop's bottom leg (31,21)->(24,21) crossed the river, which is
+  // only passable at the bridge (rows 13-15), so that soldier could never
+  // finish a lap and sat at the bridge mouth instead
+  [{ col: 23, row: 15 }, { col: 25, row: 15 }, { col: 25, row: 22 }, { col: 23, row: 22 }]
 ];
 
 export const VILLAGE_TRIGGER = { col: 34, row: 14 };

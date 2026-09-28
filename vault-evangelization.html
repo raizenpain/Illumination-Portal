@@ -32,7 +32,13 @@
   #evgHud { display: none; flex-direction: column; align-items: center; gap: 10px; }
   #evgHud.on { display: flex; }
 
-  #evgTopBar { width: 800px; max-width: 96vw; display: flex; justify-content: space-between; align-items: flex-start; }
+  /* The canvas is 800x576 internally; this scales it down (never up) to fit
+     the viewport width AND height so the HUD, canvas and touch pad are all
+     reachable on phones and short laptop screens instead of being clipped by
+     the page's overflow:hidden. 200px is roughly the HUD bar above it. */
+  #evgHud { --evg-w: min(800px, 96vw, max(240px, calc((100vh - 200px) * 1.3889))); }
+  #evgTopBar { width: var(--evg-w); display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+  #evgTitleBlock { min-width: 0; }
   #evgTitleBlock h1 { font-family: 'Broken Relent', serif; color: var(--gold); font-size: 20px; margin: 0; letter-spacing: 0.03em; }
   #evgTitleBlock p { margin: 2px 0 0 0; font-size: 12px; color: rgba(246,230,194,0.7); }
   #evgObjective { font-size: 13.5px; color: var(--cream); margin: 6px 0 0 0; }
@@ -47,8 +53,8 @@
   #evgMinimap { background: #000; border: 2px solid rgba(243,180,95,0.5); border-radius: 6px; image-rendering: pixelated; }
   #evgMinimapLegend { font-size: 9.5px; color: rgba(246,230,194,0.6); text-align: right; line-height: 1.4; }
 
-  #evgCanvasWrap { position: relative; }
-  #evgCanvas { display: block; background: #000; border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,0.6); image-rendering: pixelated; }
+  #evgCanvasWrap { position: relative; width: var(--evg-w); }
+  #evgCanvas { display: block; width: 100%; height: auto; background: #000; border-radius: 8px; box-shadow: 0 12px 40px rgba(0,0,0,0.6); image-rendering: pixelated; }
 
   #evgToast {
     position: absolute; top: 12px; left: 50%; transform: translateX(-50%) translateY(-10px);
@@ -264,7 +270,7 @@
     <div id="evgTopBar">
       <div id="evgTitleBlock">
         <h1>THE EVANGELIZATION</h1>
-        <p>Mission 1 of 5 — The Cross</p>
+        <p>Mission 1 — The Cross</p>
         <p id="evgObjective">Find the Mystery Treasure Box with the Cross.</p>
         <p id="evgItemStatus">Not carrying an item</p>
         <p id="evgVillages">Villages Evangelized: 0/1</p>

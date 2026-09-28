@@ -22,15 +22,15 @@ import {
   hasWateredToday, hasFertilizedToday, hasReflectedToday, isFertilizeOnCooldown,
   todaysReflectionPrompt, debugSkipDays, resetMustardSeed
 } from './mustardSeed.js';
-import { INTRO_TEXT, GROWTH_STAGES, MESSAGES, MAX_HEALTH, FERTILIZE_COOLDOWN_DAYS, MUSTARD_SEED_UNLOCKED } from './mustardSeedContent.js';
+import { INTRO_TEXT, GROWTH_STAGES, MESSAGES, MAX_HEALTH, FERTILIZE_COOLDOWN_DAYS, MUSTARD_SEED_UNLOCKED, MUSTARD_SEED_PREVIEW_EMAILS } from './mustardSeedContent.js';
 
 const user = requireLogin();
-// Locked for everyone except admins while MUSTARD_SEED_UNLOCKED is
-// false -- same "typed the URL directly" defense the Vault Games pages
-// already use (see e.g. evangelization.js), except this one also lets
-// an admin straight through, so testing doesn't need the flag flipped
-// live for every student first.
-if (user && (MUSTARD_SEED_UNLOCKED || ADMIN_EMAILS.includes(user.email))) {
+// Locked for everyone except the MUSTARD_SEED_PREVIEW_EMAILS accounts
+// while MUSTARD_SEED_UNLOCKED is false -- same "typed the URL directly"
+// defense the Vault Games pages already use (see e.g. evangelization.js),
+// except this one also lets a preview account straight through, so
+// testing doesn't need the flag flipped live for every student first.
+if (user && (MUSTARD_SEED_UNLOCKED || MUSTARD_SEED_PREVIEW_EMAILS.includes(user.email))) {
   init(user);
 } else if (user) {
   window.location.href = 'dashboard.html';

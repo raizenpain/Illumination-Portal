@@ -412,7 +412,7 @@ import { initClassChat } from './classChat.js';
 import { initDashboardMusic } from './dashboardMusic.js';
 import { getFeaturedQuest, getQuestStatus, resolveSideQuestBadge } from './sideQuests.js';
 import { VAULT_GAMES, VAULT_UNLOCKED, resolveVaultGameBadge } from './vaultGames.js';
-import { resolveMustardSeedBadge, MUSTARD_SEED_UNLOCKED } from './mustardSeedContent.js';
+import { resolveMustardSeedBadge, MUSTARD_SEED_UNLOCKED, MUSTARD_SEED_PREVIEW_EMAILS } from './mustardSeedContent.js';
 import { checkAndAdvanceStage, currentStageInfo, nextStageCountdown } from './mustardSeed.js';
 import { checkVaultCapstone, maybeShowCapstonePreview } from './vaultCapstone.js';
 import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
@@ -737,7 +737,7 @@ function renderMustardSeed(data) {
   const ms = data.mustardSeed;
   const card = document.createElement('div');
 
-  if (!MUSTARD_SEED_UNLOCKED && !isSeasonPreviewAdmin) {
+  if (!MUSTARD_SEED_UNLOCKED && !MUSTARD_SEED_PREVIEW_EMAILS.includes(email)) {
     card.className = 'puzzle-card state-locked';
     card.innerHTML = `
       <div class="puzzle-icon-chip"><span class="puzzle-icon">🌰</span></div>

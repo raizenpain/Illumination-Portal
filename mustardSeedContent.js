@@ -14,10 +14,16 @@
 
 // Master switch: while false, students see a locked "Coming Soon" card
 // on the dashboard and the dedicated page redirects them straight back
-// -- admins (ADMIN_EMAILS) bypass this so testing can happen before
-// launch. Hand-flipped, not date-gated like VAULT_UNLOCKED, since
-// there's no announced release date yet -- flip to true when ready.
+// -- only the accounts in MUSTARD_SEED_PREVIEW_EMAILS bypass this so
+// testing can happen before launch. Hand-flipped, not date-gated like
+// VAULT_UNLOCKED, since there's no announced release date yet -- flip to
+// true when ready.
 export const MUSTARD_SEED_UNLOCKED = false;
+
+// Deliberately NOT every admin (ADMIN_EMAILS also includes Prof. Iris
+// Miranda): while the game is still being tested, only Jornie gets in.
+// Add another email here to let someone else preview it.
+export const MUSTARD_SEED_PREVIEW_EMAILS = ['jornie.hinay@hcdc.edu.ph'];
 
 export const INTRO_TEXT = {
   heading: 'Every great tree begins with a seed.',

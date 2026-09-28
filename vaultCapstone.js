@@ -261,14 +261,21 @@ function showSilverKeyPicker({ email, name, data, preview = false }) {
           return true;
         });
         if (wroteIt && toGrant.length) {
-          logActivity({
+          await logActivity({
             email, name, type: 'artifact',
             title: `Turned the Silver Key and claimed ${toGrant.length} free artifact${toGrant.length > 1 ? 's' : ''}`,
             icon: '🗝️'
           });
         }
       } catch (err) {
+        // Keep the picker open with the student's picks intact instead of
+        // resolving -- resolving here made checkVaultCapstone reload the
+        // page, which re-opened the same picker with nothing saved and no
+        // explanation.
         console.error('Failed to grant Silver Key artifacts:', err);
+        confirmBtn.textContent = 'Could not save — tap to try again';
+        confirmBtn.disabled = false;
+        return;
       }
       overlay.remove();
       resolve();

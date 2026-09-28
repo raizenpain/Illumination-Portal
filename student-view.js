@@ -21,6 +21,20 @@ import { PRELIM_BADGE_INFO } from './prelimBadges.js';
 import { resolveSeasonBadge } from './seasonBadges.js';
 import { SIDE_QUESTS, resolveSideQuestBadge } from './sideQuests.js';
 import { VAULT_GAMES, resolveVaultGameBadge } from './vaultGames.js';
+import { resolveMustardSeedBadge } from './mustardSeedContent.js';
+
+// Student records are student-writable (rules validate field names, not
+// values), so any id/name read off one must be escaped before it goes
+// through innerHTML -- otherwise a planted string runs as script in an
+// admin's session when they open that student.
+function escapeHtml(value) {
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 const user = requireAdmin(ADMIN_EMAILS);
 
@@ -224,8 +238,8 @@ function renderArtifacts(data) {
       node.className = `crafting-chain-node ${artifactOwned ? 'state-owned' : 'state-pending'}`;
       node.title = artifact ? artifact.name : id;
       node.innerHTML = `
-        <div class="crafting-chain-icon-frame"><img src="${artifactIconPath(id)}" alt=""></div>
-        <span class="crafting-chain-label">${artifact ? artifact.name : id}</span>
+        <div class="crafting-chain-icon-frame"><img src="${escapeHtml(artifactIconPath(id))}" alt=""></div>
+        <span class="crafting-chain-label">${escapeHtml(artifact ? artifact.name : id)}</span>
       `;
       row.appendChild(node);
 
@@ -263,8 +277,8 @@ function renderArtifacts(data) {
     card.className = 'artifact-card state-owned';
     if (tierInfo) card.style.setProperty('--tier-accent', tierInfo.accent);
     card.innerHTML = `
-      <div class="artifact-icon-frame"><img src="${artifactIconPath(id)}" alt=""></div>
-      <div class="artifact-name">${artifact ? artifact.name : id}</div>
+      <div class="artifact-icon-frame"><img src="${escapeHtml(artifactIconPath(id))}" alt=""></div>
+      <div class="artifact-name">${escapeHtml(artifact ? artifact.name : id)}</div>
       <span class="artifact-status-badge">${tierInfo ? tierInfo.name : '—'}</span>
     `;
     grid.appendChild(card);
@@ -285,8 +299,8 @@ function renderAchievements(data) {
   }
 
   achievements.forEach((id) => {
-    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id) || resolveVaultGameBadge(id);
-    const label = info ? `${info.icon} ${info.title}` : id;
+    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id) || resolveVaultGameBadge(id) || resolveMustardSeedBadge(id);
+    const label = info ? `${info.icon} ${info.title}` : escapeHtml(id);
     addRow(container, label, '✅');
   });
 }

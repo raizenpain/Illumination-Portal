@@ -820,21 +820,49 @@ function triggerMissionComplete() {
   state.keys.clear();
   setObjective('Mission Complete!');
   if (villagesEl) villagesEl.textContent = 'Villages Evangelized: 1/1';
-  awardCompletion().then(() => {
-    showMissionCompletePopup(() => {
-      showCatechism(() => {
-        showTreasureReveal({
-          iconSrc: TREASURE_ICON,
-          kicker: 'The Evangelization Complete',
-          heading: 'The Cross of Salvation',
-          subheading: 'The first village has been evangelized.',
-          chips: [
-            ...CROSS_OF_SALVATION_REWARD.tickets.map(({ key, count }) => `+${count} ${TICKETS[key].name}`),
-            `+${CROSS_OF_SALVATION_REWARD.unlockTokens} Artifact Unlock Tokens`
-          ]
-        });
+  saveRewardThenReveal();
+}
+
+// The reward popup only follows a write that actually landed. On a failed
+// write the student gets a plain retry card instead of a "reward" that
+// was never saved.
+async function saveRewardThenReveal() {
+  const result = await awardCompletion();
+  if (result === 'failed') {
+    showAwardFailedCard(saveRewardThenReveal);
+    return;
+  }
+  showMissionCompletePopup(() => {
+    if (result !== 'granted') return;
+    showCatechism(() => {
+      showTreasureReveal({
+        iconSrc: TREASURE_ICON,
+        kicker: 'The Evangelization Complete',
+        heading: 'The Cross of Salvation',
+        subheading: 'The first village has been evangelized.',
+        chips: [
+          ...CROSS_OF_SALVATION_REWARD.tickets.map(({ key, count }) => `+${count} ${TICKETS[key].name}`),
+          `+${CROSS_OF_SALVATION_REWARD.unlockTokens} Artifact Unlock Tokens`
+        ]
       });
     });
+  });
+}
+
+function showAwardFailedCard(onRetry) {
+  const card = document.createElement('div');
+  card.className = 'evg-mission-complete';
+  card.innerHTML = `
+    <div class="evg-mission-complete-icon">✝️</div>
+    <p class="evg-mission-complete-title">MISSION COMPLETE</p>
+    <p class="evg-mission-complete-sub">Your reward could not be saved. Check your connection and try again — nothing is lost.</p>
+    <button type="button" class="evg-locked-btn" id="evgAwardRetry">Try saving again</button>
+    <a class="evg-locked-btn" href="dashboard.html">Leave</a>
+  `;
+  document.body.appendChild(card);
+  card.querySelector('#evgAwardRetry').addEventListener('click', () => {
+    card.remove();
+    onRetry();
   });
 }
 
@@ -883,8 +911,10 @@ async function awardCompletion() {
     if (!alreadyDone) {
       logActivity({ email, name, type: 'vaultgame', title: 'Carried the Cross safely to the village and opened the Cross of Salvation', icon: '✝' });
     }
+    return alreadyDone ? 'already' : 'granted';
   } catch (err) {
     console.error('Failed to award Evangelization completion:', err);
+    return 'failed';
   }
 }
 

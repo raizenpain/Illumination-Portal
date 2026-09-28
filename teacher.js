@@ -241,7 +241,7 @@ if (user) {
       card.className = 'roster-nav-card';
       card.innerHTML = `
         ${isRealTeacher ? '<div class="roster-teacher-avatar">🧙</div>' : ''}
-        <h3 class="${isRealTeacher ? 'roster-teacher-name' : ''}">${group.name}</h3>
+        <h3 class="${isRealTeacher ? 'roster-teacher-name' : ''}">${escapeHtml(group.name)}</h3>
         <p>${count} seeker${count === 1 ? '' : 's'}</p>
       `;
       card.onclick = () => showClassList(teacherEmail);
@@ -249,8 +249,21 @@ if (user) {
     });
   }
 
+  // Student records are student-writable (rules validate field names, not
+  // values), so name/email/section must be escaped before innerHTML --
+  // otherwise a planted string runs as script in an admin's session.
+  function escapeHtml(value) {
+    return String(value)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
   function teacherNameHtml(name, isRealTeacher) {
-    return isRealTeacher ? `<span class="roster-teacher-name">${name}</span>` : name;
+    const safe = escapeHtml(name);
+    return isRealTeacher ? `<span class="roster-teacher-name">${safe}</span>` : safe;
   }
 
   function showClassList(teacherEmail) {
@@ -277,7 +290,7 @@ if (user) {
       const card = document.createElement('div');
       card.className = 'roster-nav-card';
       card.innerHTML = `
-        <h3>${section}</h3>
+        <h3>${escapeHtml(section)}</h3>
         <p>${list.length} seeker${list.length === 1 ? '' : 's'}</p>
       `;
       card.onclick = () => showRoster(section);
@@ -289,7 +302,7 @@ if (user) {
     currentSection = section;
     const students = teacherGroups[currentTeacher.email].bySection[section] || [];
 
-    rosterSubtitle.innerHTML = `${teacherNameHtml(currentTeacher.name, currentTeacher.isRealTeacher)} — ${section} (${students.length} seeker${students.length === 1 ? '' : 's'})`;
+    rosterSubtitle.innerHTML = `${teacherNameHtml(currentTeacher.name, currentTeacher.isRealTeacher)} — ${escapeHtml(section)} (${students.length} seeker${students.length === 1 ? '' : 's'})`;
     classListView.classList.add('hidden');
     rosterView.classList.remove('hidden');
 
@@ -303,8 +316,8 @@ if (user) {
 
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${data.name || '(no name)'}</td>
-        <td>${data.email || data._docId || ''}</td>
+        <td>${escapeHtml(data.name || '(no name)')}</td>
+        <td>${escapeHtml(data.email || data._docId || '')}</td>
         <td>${progressPill(p1, data.puzzle1Completed)}</td>
         <td>${progressPill(p2, data.puzzle2Completed)}</td>
         <td>${progressPill(p3, data.puzzle3Completed)}</td>

@@ -358,6 +358,7 @@ let chapterPick = null;
 
 let marks = 0;
 let lostLeaves = 0;
+let awardState = 'idle'; // 'pending' | 'failed' | 'done' -- only meaningful on the sealed screen
 let streak = 0; // consecutive leaves lost
 let flash = null;
 let attempts = {}; // slot -> wrong tries
@@ -560,8 +561,9 @@ function startCooldown() {
  * FIRESTORE — award once, guarded on vaultGames.scriptorium.completed
  * ========================================================================= */
 
-/** Writes the reward exactly once. Returns true if this call was the one
- *  that actually granted it (false if some earlier session already had). */
+/** Writes the reward exactly once. Returns 'granted' if this call wrote it,
+ *  'already' if some earlier session already had, or 'failed' if the write
+ *  itself errored (offline, quota, permissions) so nothing was saved. */
 async function awardCompletion() {
   const studentRef = doc(db, 'students', email);
 
@@ -593,18 +595,25 @@ async function awardCompletion() {
         icon: '🗝️'
       });
     }
-    return !alreadyDone;
+    return alreadyDone ? 'already' : 'granted';
   } catch (err) {
     console.error('Failed to award Scriptorium completion:', err);
-    return false;
+    return 'failed';
   }
 }
 
 /** The manuscript is sealed. Award the reward immediately (safe even if
  *  the student closes the tab during the catechism that follows), then
- *  make them sit with the catechism before they ever see the popup. */
+ *  make them sit with the catechism before they ever see the popup. If the
+ *  write fails, say so and offer a retry instead of showing a reward that
+ *  was never saved. */
 async function revealTreasure() {
-  await awardCompletion();
+  awardState = 'pending';
+  render();
+  const result = await awardCompletion();
+  awardState = result === 'failed' ? 'failed' : 'done';
+  render();
+  if (result !== 'granted') return;
   showCatechism(() => {
     showTreasureReveal({
       iconSrc: 'assets/book-of-knowledge.jpg',
@@ -780,8 +789,9 @@ function render() {
     body += `
       <div class="scr-stage">
         <p class="scr-lost-line" style="color: var(--gold); font-style: normal;">The manuscript is whole again.</p>
-        <p class="scr-lost-sub">Five leaves restored${marks === 0 ? ', not one mark against you' : ` — ${marks} mark${marks === 1 ? '' : 's'} in the margin`}. The Book of Knowledge is opening.</p>
-        <button type="button" class="scr-go" id="scrReturn">Return to the Cloister</button>
+        <p class="scr-lost-sub">Five leaves restored${marks === 0 ? ', not one mark against you' : ` — ${marks} mark${marks === 1 ? '' : 's'} in the margin`}. ${awardState === 'failed' ? 'Your reward could not be saved. Check your connection and try again — nothing is lost.' : awardState === 'pending' ? 'Sealing your reward…' : 'The Book of Knowledge is opening.'}</p>
+        ${awardState === 'failed' ? '<button type="button" class="scr-go" id="scrRetry">Try saving again</button>' : ''}
+        <button type="button" class="scr-go" id="scrReturn"${awardState === 'pending' ? ' disabled' : ''}>Return to the Cloister</button>
       </div>
     `;
   }
@@ -805,7 +815,7 @@ function render() {
         <p class="scr-sub">${subLine()}</p>
       </div>
       <button type="button" class="scr-help" id="scrHelp">How to Play</button>
-      <button type="button" class="scr-exit" id="scrExit">Leave</button>
+      <button type="button" class="scr-exit" id="scrExit"${screen === 'sealed' && awardState === 'pending' ? ' disabled' : ''}>Leave</button>
     </header>
     ${body}
   `;
@@ -852,6 +862,9 @@ function wireEvents() {
 
   const continueLostBtn = root.querySelector('#scrContinueLost');
   if (continueLostBtn) continueLostBtn.addEventListener('click', continueFromLost);
+
+  const retryBtn = root.querySelector('#scrRetry');
+  if (retryBtn) retryBtn.addEventListener('click', revealTreasure);
 
   const returnBtn = root.querySelector('#scrReturn');
   if (returnBtn) returnBtn.addEventListener('click', () => { window.location.href = 'dashboard.html'; });

@@ -725,6 +725,7 @@ let picked = null;
 let shownQ = null;
 let seconds = TIME_PER_QUESTION;
 let screen = 'nave'; // nave | asking | answered | marking | cooldown | done
+let awardState = 'idle'; // 'pending' | 'failed' | 'done' -- only meaningful on the done screen
 let cool = COOLDOWN;
 
 let timerHandle = null;
@@ -914,18 +915,25 @@ async function awardCompletion() {
         icon: '🗝️'
       });
     }
-    return !alreadyDone;
+    return alreadyDone ? 'already' : 'granted';
   } catch (err) {
     console.error('Failed to award Vigil completion:', err);
-    return false;
+    return 'failed';
   }
 }
 
 /** The vigil is kept. Award the reward immediately (safe even if the
  *  student closes the tab during the catechism that follows), then make
- *  them sit with the catechism before they ever see the popup. */
+ *  them sit with the catechism before they ever see the popup. If the
+ *  write fails, say so and offer a retry instead of showing a reward that
+ *  was never saved. */
 async function revealTreasure() {
-  await awardCompletion();
+  awardState = 'pending';
+  render();
+  const result = await awardCompletion();
+  awardState = result === 'failed' ? 'failed' : 'done';
+  render();
+  if (result !== 'granted') return;
   showCatechism(() => {
     showTreasureReveal({
       iconSrc: 'assets/sacred-light.jpg',
@@ -1058,7 +1066,8 @@ function render() {
         ${thumbSvg(true)}
         <p class="lnt-done-line">The vigil is kept.</p>
         <p class="lnt-done-sub">${marks === 0 ? 'Seven candles, seven answers, and no wick lit twice.' : `${litFirstTry} of ${TOTAL_CANDLES} lit at the first asking.`}</p>
-        <button type="button" class="lnt-go" id="lntReturn">Return to the Cloister</button>
+        ${awardState === 'failed' ? '<p class="lnt-done-sub">Your reward could not be saved. Check your connection and try again — nothing is lost.</p><button type="button" class="lnt-go" id="lntRetry">Try saving again</button>' : awardState === 'pending' ? '<p class="lnt-done-sub">Kindling your reward…</p>' : ''}
+        <button type="button" class="lnt-go" id="lntReturn"${awardState === 'pending' ? ' disabled' : ''}>Return to the Cloister</button>
       </div>
     `;
   }
@@ -1083,7 +1092,7 @@ function render() {
         <p class="lnt-sub">${subLine()}</p>
       </div>
       <button type="button" class="lnt-help" id="lntHelp">How to Play</button>
-      <button type="button" class="lnt-exit" id="lntExit">Leave</button>
+      <button type="button" class="lnt-exit" id="lntExit"${screen === 'done' && awardState === 'pending' ? ' disabled' : ''}>Leave</button>
     </header>
     ${body}
   `;
@@ -1101,6 +1110,9 @@ function wireEvents() {
   root.querySelectorAll('.lnt-option[data-opt]:not(:disabled)').forEach((btn) => {
     btn.addEventListener('click', () => answer(Number(btn.dataset.opt)));
   });
+
+  const retryBtn = root.querySelector('#lntRetry');
+  if (retryBtn) retryBtn.addEventListener('click', revealTreasure);
 
   const returnBtn = root.querySelector('#lntReturn');
   if (returnBtn) returnBtn.addEventListener('click', () => { window.location.href = 'dashboard.html'; });

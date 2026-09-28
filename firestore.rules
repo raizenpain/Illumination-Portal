@@ -298,10 +298,20 @@ service cloud.firestore {
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                        request.resource.data.userId == request.auth.token.email &&
                        request.resource.data.keys().hasOnly(['userId', 'studentName', 'type', 'title', 'icon', 'timestamp']) &&
-                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact', 'sidequest', 'vaultgame', 'mustardseed'];
+                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact', 'sidequest', 'vaultgame', 'mustardseed'] &&
+                       // The feed orders by timestamp, so it must be a real
+                       // server time (serverTimestamp() resolves to
+                       // request.time) -- a string or far-future value
+                       // would blank or pin the whole school's feed for good.
+                       request.resource.data.timestamp == request.time &&
+                       request.resource.data.studentName is string && request.resource.data.studentName.size() <= 120 &&
+                       request.resource.data.title is string && request.resource.data.title.size() <= 300 &&
+                       request.resource.data.icon is string && request.resource.data.icon.size() <= 200;
 
-      // Immutable log — no edits or deletes
-      allow update, delete: if false;
+      // Immutable log for everyone but admins -- no edits, but an admin can
+      // remove a bad entry without going through the Firebase console.
+      allow update: if false;
+      allow delete: if isAdmin();
     }
 
     // Per-class chat — private to students who share the same
@@ -363,8 +373,12 @@ service cloud.firestore {
     // day both reads and writes this inside a transaction, so it needs
     // the same class-membership check as the messages themselves.
     match /classChatGreetings/{roomId} {
+      // resource is null until the room's first greeting is written --
+      // without the null check, isInCallerClass(resource.data) errors on
+      // the missing doc, the transaction's tx.get is denied, and a student
+      // can never be the one to create it.
       allow read: if request.auth != null &&
-                     (isAdmin() || isInCallerClass(resource.data));
+                     (resource == null || isAdmin() || isInCallerClass(resource.data));
 
       allow create: if request.auth != null &&
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&

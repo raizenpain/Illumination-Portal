@@ -395,6 +395,7 @@ let roundsLost = 0;
 
 let seconds = TIME_PER_GUESS;
 let screen = 'play'; // play | right | cooldown | done
+let awardState = 'idle'; // 'pending' | 'failed' | 'done' -- only meaningful on the done screen
 let cool = COOLDOWN;
 let verdict = null; // { up, text }
 
@@ -544,18 +545,25 @@ async function awardCompletion() {
         icon: '🗝️'
       });
     }
-    return !alreadyDone;
+    return alreadyDone ? 'already' : 'granted';
   } catch (err) {
     console.error('Failed to award Loaves and Fishes completion:', err);
-    return false;
+    return 'failed';
   }
 }
 
 /** Every hillside is fed. Award the reward immediately (safe even if the
  *  student closes the tab during the catechism that follows), then make
- *  them sit with the catechism before they ever see the popup. */
+ *  them sit with the catechism before they ever see the popup. If the
+ *  write fails, say so and offer a retry instead of showing a reward that
+ *  was never saved. */
 async function revealTreasure() {
-  await awardCompletion();
+  awardState = 'pending';
+  render();
+  const result = await awardCompletion();
+  awardState = result === 'failed' ? 'failed' : 'done';
+  render();
+  if (result !== 'granted') return;
   showCatechism(() => {
     showTreasureReveal({
       iconSrc: 'assets/arcane-of-generosity.jpg',
@@ -672,8 +680,9 @@ function render() {
       <div class="lnf-stage">
         ${thumbSvg(true)}
         <p class="lnf-done-line">Every hillside fed.</p>
-        <p class="lnf-done-sub">${marks === 0 ? 'Not one wrong hand chosen.' : `${marks} ${marks === 1 ? 'mark' : 'marks'} against you along the way.`}</p>
-        <button type="button" class="lnf-go" id="lnfReturn">Return to the Cloister</button>
+        <p class="lnf-done-sub">${marks === 0 ? 'Not one wrong hand chosen.' : `${marks} ${marks === 1 ? 'mark' : 'marks'} against you along the way.`}${awardState === 'failed' ? ' Your reward could not be saved. Check your connection and try again — nothing is lost.' : awardState === 'pending' ? ' Gathering your reward…' : ''}</p>
+        ${awardState === 'failed' ? '<button type="button" class="lnf-go" id="lnfRetry">Try saving again</button>' : ''}
+        <button type="button" class="lnf-go" id="lnfReturn"${awardState === 'pending' ? ' disabled' : ''}>Return to the Cloister</button>
       </div>
     `;
   }
@@ -697,7 +706,7 @@ function render() {
         <p class="lnf-sub">${subLine()}</p>
       </div>
       <button type="button" class="lnf-help" id="lnfHelp">How to Play</button>
-      <button type="button" class="lnf-exit" id="lnfExit">Leave</button>
+      <button type="button" class="lnf-exit" id="lnfExit"${screen === 'done' && awardState === 'pending' ? ' disabled' : ''}>Leave</button>
     </header>
     ${body}
   `;
@@ -709,6 +718,9 @@ function wireEvents() {
   root.querySelectorAll('.lnf-group:not(:disabled)').forEach((btn) => {
     btn.addEventListener('click', () => choose(round.groups[Number(btn.dataset.index)], Number(btn.dataset.index)));
   });
+
+  const retryBtn = root.querySelector('#lnfRetry');
+  if (retryBtn) retryBtn.addEventListener('click', revealTreasure);
 
   const returnBtn = root.querySelector('#lnfReturn');
   if (returnBtn) returnBtn.addEventListener('click', () => { window.location.href = 'dashboard.html'; });

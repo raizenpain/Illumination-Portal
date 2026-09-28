@@ -34,13 +34,24 @@
 // re-entering on a later day starts earning again.
 // ============================================
 
-import { db, doc, setDoc, increment, runTransaction, collection, getDocs } from './firebase.js';
+import { db, doc, setDoc, increment, runTransaction, collection, getDocs, query, orderBy, limit } from './firebase.js';
 import { RANK_ICON as RANK_TIER_ICON, RANK_TIERS } from './rank.js';
 
 // Index into RANK_TIERS (Seeker=0 .. Apostle=3) so a higher rank always
 // outranks a lower one regardless of pace. Unknown/legacy rank strings
 // sort as Seeker rather than throwing.
 const RANK_TIER_INDEX = Object.fromEntries(RANK_TIERS.map((t, i) => [t.rank, i]));
+
+const LEADERBOARD_READ_LIMIT = 100;
+
+// Coarse server-sortable version of the tier -> stars ordering (pace is
+// applied client-side within the fetched slice). Any student with a
+// mistake scores -1 so they sort last and are dropped by the clean-record
+// filter anyway.
+function rankScoreFor(info) {
+  if ((info.mistakeCount || 0) > 0) return -1;
+  return (RANK_TIER_INDEX[info.rank] ?? 0) * 1000 + (info.starsEarned || 0);
+}
 
 const MS_PER_DAY = 24 * 60 * 60 * 1000;
 const PLACE_ICON = ['🥇', '🥈', '🥉'];
@@ -105,7 +116,8 @@ export async function initLeaderboard(info) {
         createdAt: info.createdAt,
         rank: info.rank,
         starsEarned: info.starsEarned,
-        mistakeCount: info.mistakeCount || 0
+        mistakeCount: info.mistakeCount || 0,
+        rankScore: rankScoreFor(info)
       }, { merge: true });
     } catch (err) {
       console.error('Failed to update leaderboard entry:', err);
@@ -113,7 +125,18 @@ export async function initLeaderboard(info) {
   }
 
   try {
-    const snap = await getDocs(collection(db, 'leaderboard'));
+    // Only the top slice by rankScore is read, not the whole collection --
+    // reading one doc per student on every dashboard load (~1000 reads)
+    // exhausted the free daily read quota after ~50 loads, which is what
+    // made unrelated writes fail silently app-wide. The client sort below
+    // still applies the exact tier/stars/pace ordering within this slice.
+    // A student whose entry predates rankScore only appears once they've
+    // loaded their own dashboard again.
+    const snap = await getDocs(query(
+      collection(db, 'leaderboard'),
+      orderBy('rankScore', 'desc'),
+      limit(LEADERBOARD_READ_LIMIT)
+    ));
     const entries = [];
 
     snap.forEach((docSnap) => {

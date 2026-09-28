@@ -263,7 +263,8 @@ service cloud.firestore {
       allow create, update: if request.auth != null &&
                       request.auth.token.email == studentId &&
                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
-                      request.resource.data.keys().hasOnly(['name', 'progressPercent', 'createdAt', 'rank', 'starsEarned', 'mistakeCount']);
+                      request.resource.data.keys().hasOnly(['name', 'progressPercent', 'createdAt', 'rank', 'starsEarned', 'mistakeCount', 'rankScore']) &&
+                      (!('rankScore' in request.resource.data) || request.resource.data.rankScore is number);
 
       // Admins can remove a leaderboard entry (e.g. after deleting the
       // matching student record) so it doesn't linger in the public

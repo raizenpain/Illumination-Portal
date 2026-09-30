@@ -1,7 +1,9 @@
 import { db, doc, getDoc, setDoc } from './firebase.js';
+import { enforcePrelimLockout } from './prelimDeadline.js';
 
 const email = localStorage.getItem('studentEmail');
 const name = localStorage.getItem('studentName');
+enforcePrelimLockout(email);
 
 if (!email) {
 window.location.href = 'login.html';

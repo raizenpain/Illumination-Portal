@@ -417,6 +417,7 @@ import { checkAndAdvanceStage, currentStageInfo, nextStageCountdown } from './mu
 import { checkVaultCapstone, maybeShowCapstonePreview } from './vaultCapstone.js';
 import { TICKETS } from './vaultTickets.js';
 import { showTreasureReveal } from './treasureReveal.js';
+import { maybeShowPrelimReminder } from './prelimDeadline.js';
 import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
 const { email, name } = requireLogin();
@@ -698,6 +699,12 @@ async function loadStudentCard() {
       hasSeen: !!data.hasSeenFiesta75Announcement,
       isAdmin: isSeasonPreviewAdmin
     }).then(async () => {
+      await maybeShowPrelimReminder({
+        email,
+        midtermUnlocked: !!data.midtermUnlocked,
+        hasSeen: !!data.hasSeenPrelimReminder,
+        isAdmin: isSeasonPreviewAdmin
+      });
       if (discipleBonusJustGranted) await showDiscipleBonusReveal();
       initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
       maybeShowCapstonePreview({ email, name: data.name || name, data }).then((shown) => {

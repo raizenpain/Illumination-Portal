@@ -12,6 +12,16 @@ service cloud.firestore {
              ];
     }
 
+    // The Prelim Season locks for good at 2026-10-05 00:00 Philippine
+    // time (= 1791129600000 ms, mirrored from PRELIM_LOCKS_AT in
+    // prelimDeadline.js). From then on, a student can only write their
+    // own record if midtermUnlocked was ALREADY true -- which also means
+    // midtermUnlocked can never be flipped false -> true after the lock,
+    // by the app or by devtools. No new student records after the lock.
+    function prelimLockPassed() {
+      return request.time >= timestamp.value(1791129600000);
+    }
+
     // Mustard Seed growth-stage schedule, mirrored from
     // mustardSeedContent.js (rules can't import JS) -- keep these two
     // in sync whenever a stage's day threshold changes.
@@ -175,6 +185,7 @@ service cloud.firestore {
         'hasSeenDashboardTour', 'avatarImage',
         'sideQuests', 'vaultGames', 'seenGameGuides',
         'vaultCapstoneGranted', 'vaultCapstoneKeyUsed', 'discipleBonusGranted',
+        'hasSeenPrelimReminder',
         'hasSeenFiesta75Announcement', 'legendaryCountdownStartedAt',
         'mustardSeed'
       ];
@@ -207,7 +218,8 @@ service cloud.firestore {
       allow create: if request.auth != null &&
                        request.auth.token.email == studentId &&
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
-                       request.resource.data.keys().hasOnly(studentSelfFields());
+                       request.resource.data.keys().hasOnly(studentSelfFields()) &&
+                       !prelimLockPassed();
 
       // A student can freely update their OWN record's real fields
       // (progress, tickets, artifacts, etc.) — never anyone else's,
@@ -236,6 +248,7 @@ service cloud.firestore {
       allow update: if request.auth != null &&
                        ((request.auth.token.email == studentId &&
                          request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                         (!prelimLockPassed() || resource.data.get('midtermUnlocked', false) == true) &&
                          request.resource.data.diff(resource.data).affectedKeys()
                            .hasOnly(studentSelfFields()) &&
                          (!('mustardSeed' in request.resource.data.diff(resource.data).affectedKeys()) ||

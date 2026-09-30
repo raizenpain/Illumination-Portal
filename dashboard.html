@@ -415,6 +415,8 @@ import { VAULT_GAMES, VAULT_UNLOCKED, resolveVaultGameBadge } from './vaultGames
 import { resolveMustardSeedBadge, MUSTARD_SEED_UNLOCKED, MUSTARD_SEED_PREVIEW_EMAILS } from './mustardSeedContent.js';
 import { checkAndAdvanceStage, currentStageInfo, nextStageCountdown } from './mustardSeed.js';
 import { checkVaultCapstone, maybeShowCapstonePreview } from './vaultCapstone.js';
+import { TICKETS } from './vaultTickets.js';
+import { showTreasureReveal } from './treasureReveal.js';
 import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
 const { email, name } = requireLogin();
@@ -534,11 +536,82 @@ async function healStuckPuzzleCompletions(data) {
   }
 }
 
+// One-time Disciple reward: 10 of every ticket type for reaching
+// Disciple the NORMAL way -- actually solving all 3 Prelim puzzles.
+// Students who got there through the Vault Capstone shortcut are
+// deliberately left out (they already got 30 of each from it). The
+// completion badges are what tell the two apart: app.js's markComplete()
+// and healStuckPuzzleCompletions() above both add them, but
+// vaultCapstone.js's grantCore() only writes the pieces + *Completed
+// flags, never the badges. So "every piece AND every completion badge"
+// means "solved all 3 themselves". Runs on every dashboard load (after
+// the heal above, so a just-repaired student qualifies right away) and
+// covers students who reached Disciple before this reward existed.
+// Returns true only if THIS load granted it, so the popup shows once.
+const DISCIPLE_BONUS_PER_TYPE = 10;
+
+function reachedDiscipleNormally(d) {
+  const achievements = d.achievements || [];
+  return Object.values(PUZZLE_CONFIG).every((config) =>
+    isPuzzleComplete(config, d) && achievements.includes(config.completionAchievement.id)
+  );
+}
+
+async function awardDiscipleBonus(data) {
+  if (data.discipleBonusGranted || !reachedDiscipleNormally(data)) return false;
+
+  try {
+    let granted = false;
+
+    // Same LIVE-record re-check as awardDailyVisitShard above, so two
+    // tabs loading at once can't both grant it.
+    await runTransaction(db, async (tx) => {
+      granted = false;
+      const snap = await tx.get(studentRef);
+      const live = snap.data() || {};
+      if (live.discipleBonusGranted || !reachedDiscipleNormally(live)) return;
+
+      const updates = { discipleBonusGranted: true };
+      Object.values(TICKETS).forEach(({ ticket }) => {
+        updates[`tickets.${ticket}`] = increment(DISCIPLE_BONUS_PER_TYPE);
+      });
+      tx.update(studentRef, updates);
+      granted = true;
+    });
+
+    if (granted) {
+      const tickets = { ...(data.tickets || {}) };
+      Object.values(TICKETS).forEach(({ ticket }) => {
+        tickets[ticket] = (tickets[ticket] || 0) + DISCIPLE_BONUS_PER_TYPE;
+      });
+      data.tickets = tickets;
+      data.discipleBonusGranted = true;
+    }
+    return granted;
+  } catch (err) {
+    console.error('Failed to award the Disciple bonus:', err);
+    return false;
+  }
+}
+
+function showDiscipleBonusReveal() {
+  return showTreasureReveal({
+    iconSrc: 'assets/capstone-chest.png',
+    kicker: 'Disciple Reward',
+    heading: 'A Gift for the Faithful Disciple',
+    subheading: 'You reached Disciple by solving all three Prelim puzzles yourself.',
+    chips: Object.values(TICKETS).map((t) => `+${DISCIPLE_BONUS_PER_TYPE} ${t.name}`),
+    dashboardButton: false,
+    celebration: true
+  });
+}
+
 async function loadStudentCard() {
   try {
     const snapshot = await getDoc(studentRef);
     const data = snapshot.exists() ? snapshot.data() : {};
     studentData = data;
+    let discipleBonusJustGranted = false;
 
     // Safety net for a STUDENT who lands here mid-onboarding (e.g. via
     // a bookmark) instead of through the normal login.html routing.
@@ -557,6 +630,7 @@ async function loadStudentCard() {
 
       await awardDailyVisitShard(data);
       await healStuckPuzzleCompletions(data);
+      discipleBonusJustGranted = await awardDiscipleBonus(data);
     }
 
     document.getElementById('cardName').textContent = data.name || name;
@@ -623,7 +697,8 @@ async function loadStudentCard() {
       email,
       hasSeen: !!data.hasSeenFiesta75Announcement,
       isAdmin: isSeasonPreviewAdmin
-    }).then(() => {
+    }).then(async () => {
+      if (discipleBonusJustGranted) await showDiscipleBonusReveal();
       initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
       maybeShowCapstonePreview({ email, name: data.name || name, data }).then((shown) => {
         if (!shown && VAULT_UNLOCKED && !isSeasonPreviewAdmin) {

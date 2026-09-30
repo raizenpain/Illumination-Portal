@@ -174,7 +174,7 @@ service cloud.firestore {
         'semifinalVerificationCode', 'finalVerificationCode',
         'hasSeenDashboardTour', 'avatarImage',
         'sideQuests', 'vaultGames', 'seenGameGuides',
-        'vaultCapstoneGranted', 'vaultCapstoneKeyUsed',
+        'vaultCapstoneGranted', 'vaultCapstoneKeyUsed', 'discipleBonusGranted',
         'hasSeenFiesta75Announcement', 'legendaryCountdownStartedAt',
         'mustardSeed'
       ];

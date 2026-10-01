@@ -24,6 +24,7 @@ import { initSeasonEditor } from './seasonEditor.js';
 import { getOfferingsForTeacher } from './classOfferings.js';
 import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
 import { maybePostDailyGreeting } from './dailyGreeting.js';
+import { createImageSlot, loadInto, deleteChatImage } from './chatImages.js';
 
 const UNASSIGNED_KEY = '__unassigned__';
 
@@ -741,13 +742,20 @@ if (user) {
       deleteBtn.textContent = 'Delete';
       deleteBtn.addEventListener('click', () => {
         if (!confirm('Delete this message for everyone? This cannot be undone.')) return;
-        deleteDoc(doc(db, 'classChatMessages', docSnap.id)).catch((err) => {
-          console.error('Failed to delete message:', err);
-        });
+        deleteDoc(doc(db, 'classChatMessages', docSnap.id))
+          .then(() => { if (msg.imageId) deleteChatImage(msg.imageId); })
+          .catch((err) => {
+            console.error('Failed to delete message:', err);
+          });
       });
 
       card.appendChild(header);
-      card.appendChild(text);
+      if (msg.imageId) {
+        const slot = createImageSlot(msg.imageId, msg.text);
+        card.appendChild(slot);
+        loadInto(slot);
+      }
+      if (msg.text) card.appendChild(text);
       card.appendChild(deleteBtn);
       chatLogList.appendChild(card);
     });

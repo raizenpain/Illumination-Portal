@@ -351,15 +351,22 @@ service cloud.firestore {
       // the one system-styled message kind (see dailyGreeting.js),
       // still attributed to the real posting account above, just
       // rendered differently client-side.
+      // 'imageId' (admin-only image posts, see chatImages.js) must be
+      // this message's own id and point at an existing classChatImages
+      // doc; with an image the caption (text) may be empty.
       allow create: if request.auth != null &&
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                        request.resource.data.senderEmail == request.auth.token.email &&
                        request.resource.data.keys().hasOnly(
-                         ['senderEmail', 'senderName', 'teacherEmail', 'section', 'text', 'timestamp', 'reported', 'type']
+                         ['senderEmail', 'senderName', 'teacherEmail', 'section', 'text', 'timestamp', 'reported', 'type', 'imageId']
                        ) &&
                        request.resource.data.text is string &&
-                       request.resource.data.text.size() > 0 &&
                        request.resource.data.text.size() <= 500 &&
+                       (request.resource.data.text.size() > 0 || 'imageId' in request.resource.data) &&
+                       (!('imageId' in request.resource.data) ||
+                        (isAdmin() &&
+                         request.resource.data.imageId == messageId &&
+                         exists(/databases/$(database)/documents/classChatImages/$(messageId)))) &&
                        request.resource.data.reported == false &&
                        (!('type' in request.resource.data) || request.resource.data.type == 'greeting') &&
                        (isAdmin() || isInCallerClass(request.resource.data));
@@ -378,6 +385,30 @@ service cloud.firestore {
       // reviewing it in the class chat log -- students can never
       // delete, matching the "nothing vanishes before a teacher sees
       // it" policy.
+      allow delete: if isAdmin();
+    }
+
+    // The image bytes for an admin image post, kept apart from
+    // classChatMessages so the always-on badge listener never downloads
+    // them (see chatImages.js). Same id as its message. Readable by the
+    // same people as the message; only admins can create or delete.
+    // The data is a compressed JPEG data URL, capped well under
+    // Firestore's 1 MiB document limit.
+    match /classChatImages/{imageId} {
+      allow read: if request.auth != null &&
+                     (isAdmin() || isInCallerClass(resource.data));
+
+      allow create: if isAdmin() &&
+                       request.resource.data.keys().hasOnly(
+                         ['senderEmail', 'teacherEmail', 'section', 'data', 'timestamp']
+                       ) &&
+                       request.resource.data.senderEmail == request.auth.token.email &&
+                       request.resource.data.teacherEmail is string &&
+                       request.resource.data.section is string &&
+                       request.resource.data.data is string &&
+                       request.resource.data.data.size() <= 600000 &&
+                       request.resource.data.data[0:23] == 'data:image/jpeg;base64,';
+
       allow delete: if isAdmin();
     }
 

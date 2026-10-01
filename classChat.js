@@ -27,9 +27,11 @@
 // matching client query.
 // ============================================
 
-import { db, collection, doc, addDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, getDocs, serverTimestamp } from './firebase.js';
+import { db, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, getDocs, serverTimestamp } from './firebase.js';
 import { findBannedWord, looksLikeGibberish } from './contentFilter.js';
 import { maybePostDailyGreeting } from './dailyGreeting.js';
+import { ADMIN_EMAILS } from './admins.js';
+import { compressImage, createImageSlot, loadInto, deleteChatImage } from './chatImages.js';
 
 const MAX_MESSAGES = 50;
 const MAX_LENGTH = 500;
@@ -83,8 +85,17 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     <div class="chat-emoji-picker" id="chatEmojiPicker">
       ${EMOJI_SET.map((e) => `<button type="button" class="chat-emoji-option">${e}</button>`).join('')}
     </div>
+    ${isAdmin ? `
+      <div class="chat-image-pending" id="chatImagePending" hidden>
+        <img alt="" id="chatImagePendingThumb">
+        <div class="chat-image-pending-info"><strong>Image ready to send</strong><span id="chatImagePendingSize"></span></div>
+        <button type="button" class="chat-image-remove" id="chatImageRemove" aria-label="Remove image">✕</button>
+      </div>
+      <input type="file" accept="image/*" id="chatImageFile" hidden>
+    ` : ''}
     <div class="chat-input-row">
       <button type="button" class="chat-emoji-btn" id="chatEmojiBtn" aria-label="Insert emoji">😊</button>
+      ${isAdmin ? '<button type="button" class="chat-emoji-btn chat-image-btn" id="chatImageBtn" aria-label="Add an image">🖼️</button>' : ''}
       <textarea class="chat-input" id="chatInput" placeholder="Message your class…" maxlength="${MAX_LENGTH}" rows="1"></textarea>
       <button type="button" class="chat-send-btn" id="chatSendBtn">Send</button>
     </div>
@@ -125,6 +136,54 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
   let latestMessages = [];
   let isOpen = false;
   let unsubscribe = null;
+
+  // Admin-only image posting (see chatImages.js). These elements only
+  // exist when isAdmin -- students never get the button or the picker.
+  const imageBtn = panel.querySelector('#chatImageBtn');
+  const imageFile = panel.querySelector('#chatImageFile');
+  const imagePending = panel.querySelector('#chatImagePending');
+  let pendingImage = null;
+
+  function clearPendingImage() {
+    pendingImage = null;
+    if (imagePending) imagePending.hidden = true;
+  }
+
+  if (isAdmin && imageBtn) {
+    const thumb = panel.querySelector('#chatImagePendingThumb');
+    const sizeEl = panel.querySelector('#chatImagePendingSize');
+    imageBtn.addEventListener('click', () => imageFile.click());
+    panel.querySelector('#chatImageRemove').addEventListener('click', clearPendingImage);
+    imageFile.addEventListener('change', async () => {
+      const file = imageFile.files[0];
+      imageFile.value = '';
+      if (!file) return;
+      sendBtn.disabled = true;
+      imagePending.hidden = false;
+      thumb.removeAttribute('src');
+      sizeEl.textContent = 'Compressing…';
+      try {
+        pendingImage = await compressImage(file);
+        thumb.src = pendingImage.dataUrl;
+        sizeEl.textContent = `${pendingImage.width}×${pendingImage.height} · ${Math.round(pendingImage.bytes / 1024)} KB`;
+      } catch (err) {
+        clearPendingImage();
+        showError(err.message === 'not-an-image'
+          ? 'That file isn’t an image. Pick a JPG, PNG or similar.'
+          : 'That image is too large to send, even after shrinking it.');
+      }
+      sendBtn.disabled = false;
+    });
+  }
+
+  // Images are only fetched once the panel is actually open, never by
+  // the background badge listener -- see chatImages.js.
+  function loadVisibleImages() {
+    if (!isOpen) return;
+    messagesEl.querySelectorAll('.msg-image-wrap').forEach((slot) => {
+      loadInto(slot, () => { messagesEl.scrollTop = messagesEl.scrollHeight; });
+    });
+  }
 
   function lastSeenKey() {
     return `classChatLastSeen_${activeTeacherEmail}_${activeSection}`;
@@ -187,13 +246,24 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
       const nameEl = document.createElement('div');
       nameEl.className = 'msg-name';
       nameEl.textContent = isMe ? 'You' : (msg.senderName || 'Classmate');
-
-      const bubbleEl = document.createElement('div');
-      bubbleEl.className = 'msg-bubble';
-      bubbleEl.textContent = msg.text;
+      if (!isMe && ADMIN_EMAILS.includes(msg.senderEmail)) {
+        const teacherTag = document.createElement('span');
+        teacherTag.className = 'msg-teacher-tag';
+        teacherTag.textContent = 'TEACHER';
+        nameEl.appendChild(teacherTag);
+      }
 
       body.appendChild(nameEl);
-      body.appendChild(bubbleEl);
+
+      if (msg.imageId) {
+        body.appendChild(createImageSlot(msg.imageId, msg.text));
+      }
+      if (msg.text) {
+        const bubbleEl = document.createElement('div');
+        bubbleEl.className = 'msg-bubble';
+        bubbleEl.textContent = msg.text;
+        body.appendChild(bubbleEl);
+      }
 
       if (!isMe) {
         if (msg.reported) {
@@ -226,9 +296,11 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
         deleteBtn.textContent = 'Delete';
         deleteBtn.addEventListener('click', () => {
           if (!confirm('Delete this message for everyone? This cannot be undone.')) return;
-          deleteDoc(doc(db, 'classChatMessages', msg.id)).catch((err) => {
-            console.error('Failed to delete message:', err);
-          });
+          deleteDoc(doc(db, 'classChatMessages', msg.id))
+            .then(() => { if (msg.imageId) deleteChatImage(msg.imageId); })
+            .catch((err) => {
+              console.error('Failed to delete message:', err);
+            });
         });
         body.appendChild(deleteBtn);
       }
@@ -239,6 +311,7 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     });
 
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    loadVisibleImages();
   }
 
   function showError(message) {
@@ -250,17 +323,18 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
 
   function send() {
     const text = inputEl.value.trim();
-    if (!text || !activeTeacherEmail || !activeSection) return;
+    const image = isAdmin ? pendingImage : null;
+    if ((!text && !image) || !activeTeacherEmail || !activeSection) return;
 
     // looksLikeGibberish only recognizes Latin letters, so a pure-
     // emoji message (e.g. just "👏") would otherwise get wrongly
     // flagged as gibberish -- only run that check when there's
     // actual text to judge.
-    if (/[a-zA-Z]/.test(text) && looksLikeGibberish(text)) {
+    if (text && /[a-zA-Z]/.test(text) && looksLikeGibberish(text)) {
       showError("That doesn't look like a real message — try again.");
       return;
     }
-    const bannedWord = findBannedWord(text);
+    const bannedWord = text ? findBannedWord(text) : null;
     if (bannedWord) {
       showError(`That message contains a word that isn’t allowed here: “${bannedWord}”.`);
       return;
@@ -269,7 +343,7 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     inputEl.disabled = true;
     sendBtn.disabled = true;
 
-    addDoc(collection(db, 'classChatMessages'), {
+    const message = {
       senderEmail: email,
       senderName: name,
       teacherEmail: activeTeacherEmail,
@@ -277,9 +351,29 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
       text,
       timestamp: serverTimestamp(),
       reported: false
-    }).then(() => {
+    };
+
+    // With an image: write the image doc first, then the message under
+    // the SAME id (firestore.rules checks the image doc exists), so a
+    // message can never point at an image that isn't there.
+    let write;
+    if (image) {
+      const messageRef = doc(collection(db, 'classChatMessages'));
+      write = setDoc(doc(db, 'classChatImages', messageRef.id), {
+        senderEmail: email,
+        teacherEmail: activeTeacherEmail,
+        section: activeSection,
+        data: image.dataUrl,
+        timestamp: serverTimestamp()
+      }).then(() => setDoc(messageRef, { ...message, imageId: messageRef.id }));
+    } else {
+      write = addDoc(collection(db, 'classChatMessages'), message);
+    }
+
+    write.then(() => {
       inputEl.value = '';
       autoGrowInput();
+      clearPendingImage();
     }).catch((err) => {
       console.error('Failed to send class chat message:', err);
       showError('Could not send that message — try again.');
@@ -356,6 +450,7 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     }
     updateBadge();
     messagesEl.scrollTop = messagesEl.scrollHeight;
+    loadVisibleImages();
     inputEl.focus();
   }
 
@@ -389,6 +484,7 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
         messagesEl.innerHTML = '<p class="chat-empty">You have no assigned classes yet.</p>';
         inputEl.disabled = true;
         sendBtn.disabled = true;
+        if (imageBtn) imageBtn.disabled = true;
         return;
       }
 

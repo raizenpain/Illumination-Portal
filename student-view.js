@@ -139,7 +139,9 @@ function renderPrelimProgress(data) {
 
     const pill = document.createElement('span');
     pill.className = progressPillClass(count, config.totalPieces, completed);
-    pill.textContent = `${count}/${config.totalPieces}${completed ? ' ✅' : ''}`;
+    // A full piece count shows ✅ even if the flag hasn't saved yet (the
+    // student's dashboard repairs it) -- see teacher.js's progressPill().
+    pill.textContent = `${count}/${config.totalPieces}${(completed || count >= config.totalPieces) ? ' ✅' : ''}`;
     if (completed && count < config.totalPieces) {
       pill.title = 'Flagged as completed but fewer than 9 pieces on record — likely edited outside the app';
     }

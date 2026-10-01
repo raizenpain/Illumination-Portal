@@ -170,17 +170,25 @@ if (user) {
   // flag was set directly (e.g. via devtools), not earned. Flagged here
   // so it's visible while paging the roster, since rank.js no longer
   // trusts the flag for star/rank purposes either way.
+  //
+  // The opposite mismatch -- all 9 pieces but the flag still false -- is
+  // NOT suspicious: it's the completion write failing after the last
+  // piece saved (typically the free-tier read quota running out), which
+  // the student's own dashboard repairs on its next load (see
+  // healStuckPuzzleCompletions in dashboard.html). So a full piece count
+  // shows as complete here regardless of the flag, same as rank.js.
   function progressPill(count, completed) {
     const mismatch = completed && count < 9;
-    const state = mismatch ? 'flagged' : completed ? 'complete' : count > 0 ? 'in-progress' : '';
-    const label = `${count}/9${completed ? ' ✅' : ''}`;
+    const done = count >= 9;
+    const state = mismatch ? 'flagged' : done ? 'complete' : count > 0 ? 'in-progress' : '';
+    const label = `${count}/9${(done || completed) ? ' ✅' : ''}`;
     const title = mismatch ? ' title="Flagged as completed but fewer than 9 pieces on record — likely edited outside the app"' : '';
     return `<span class="progress-pill${state ? ' ' + state : ''}"${title}>${label}</span>`;
   }
 
   function progressText(count, completed) {
     if (completed && count < 9) return `${count}/9 (FLAGGED — completed but incomplete)`;
-    return completed ? `${count}/9 (Completed)` : `${count}/9`;
+    return (completed || count >= 9) ? `${count}/9 (Completed)` : `${count}/9`;
   }
 
   function pieceCount(data, field) {

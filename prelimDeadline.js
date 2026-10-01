@@ -5,8 +5,8 @@
 // 1. maybeShowPrelimReminder() -- a dashboard popup with a live
 //    countdown, shown until the lock. Students who haven't unlocked
 //    Midterm see it on EVERY dashboard visit; students who already
-//    have see it once (hasSeenPrelimReminder). Admins see it once per
-//    browser (localStorage), same as fiesta75Announcement.js.
+//    have see it once (hasSeenPrelimReminder). Admins see it on every
+//    visit too (Jornie's request, 2026-10-01).
 //
 // 2. enforcePrelimLockout() -- called from requireLogin() in auth.js,
 //    so it covers every student page. From PRELIM_LOCKS_AT on, a
@@ -33,7 +33,6 @@ import { ADMIN_EMAILS } from './admins.js';
 // Keep in sync with PRELIM_LOCK_MS in firestore.rules.
 export const PRELIM_LOCKS_AT = '2026-10-05T00:00:00+08:00';
 const LOCK_MS = new Date(PRELIM_LOCKS_AT).getTime();
-const ADMIN_SEEN_KEY = 'adminHasSeenPrelimReminder';
 
 export function isPrelimLocked() {
   return Date.now() >= LOCK_MS;
@@ -250,13 +249,9 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
   return new Promise((resolve) => {
     if (isPrelimLocked()) { resolve(); return; }
 
-    let seen;
-    if (isAdmin) {
-      try { seen = localStorage.getItem(ADMIN_SEEN_KEY) === 'true'; } catch (err) { seen = false; }
-    } else {
-      // Behind students: every visit. Safe students: once.
-      seen = midtermUnlocked && hasSeen;
-    }
+    // Admins: every visit (Jornie asked to keep seeing it). Behind
+    // students: every visit. Safe students: once.
+    const seen = !isAdmin && midtermUnlocked && hasSeen;
     if (seen) { resolve(); return; }
 
     injectStyles();
@@ -311,9 +306,7 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
     overlay.querySelector('.prelim-reminder-btn').addEventListener('click', () => {
       clearInterval(timer);
       overlay.remove();
-      if (isAdmin) {
-        try { localStorage.setItem(ADMIN_SEEN_KEY, 'true'); } catch (err) { /* once-per-browser is best effort */ }
-      } else if (midtermUnlocked && !hasSeen) {
+      if (!isAdmin && midtermUnlocked && !hasSeen) {
         updateDoc(doc(db, 'students', email), { hasSeenPrelimReminder: true }).catch((err) => {
           console.error('Failed to save Prelim reminder dismissal:', err);
         });

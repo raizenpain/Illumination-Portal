@@ -30,9 +30,14 @@
 import { db, doc, getDoc, updateDoc, auth, signOut } from './firebase.js';
 import { ADMIN_EMAILS } from './admins.js';
 
-// Keep in sync with PRELIM_LOCK_MS in firestore.rules.
-export const PRELIM_LOCKS_AT = '2026-10-05T00:00:00+08:00';
+// Keep in sync with prelimLockPassed() in firestore.rules. Moved from
+// October 5 to October 10 at Jornie's request (2026-10-02).
+export const PRELIM_LOCKS_AT = '2026-10-10T00:00:00+08:00';
 const LOCK_MS = new Date(PRELIM_LOCKS_AT).getTime();
+// "October 10, 2026" -- the popup and lockout wording read the date from
+// here so they can't drift from the real lock time. (The time of day in
+// that wording is still the literal "12:00 AM".)
+const LOCK_DATE_TEXT = new Date(PRELIM_LOCKS_AT).toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'long', day: 'numeric', year: 'numeric' });
 
 export function isPrelimLocked() {
   return Date.now() >= LOCK_MS;
@@ -114,6 +119,12 @@ const CSS = `
   background: linear-gradient(90deg, transparent, #C9923A 40%, #C9923A 60%, transparent);
 }
 .prelim-reminder-divider i { width: 8px; height: 8px; transform: rotate(45deg); background: #E9B85A; box-shadow: 0 0 8px rgba(233,184,90,.7); }
+.prelim-reminder-gift {
+  margin: 0 0 16px; padding: 10px 14px; border-radius: 4px; font-size: 13.5px; line-height: 1.55; text-align: center;
+  color: #F3E7CC; background: linear-gradient(135deg, rgba(233,184,90,.22), rgba(120,70,10,.14));
+  border: 1px solid rgba(233,184,90,.55); box-shadow: 0 0 16px rgba(233,184,90,.12);
+}
+.prelim-reminder-gift strong { color: #FFE2A8; }
 .prelim-reminder-deadline-label {
   margin: 0 0 10px; font-family: 'Cinzel', Georgia, serif; font-weight: 700;
   font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: #D98A4A;
@@ -271,7 +282,9 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
         <h2 class="prelim-reminder-heading" id="prelimReminderHeading">The Prelim Season Closes Soon</h2>
         <div class="prelim-reminder-divider"><i></i></div>
 
-        <p class="prelim-reminder-deadline-label">The gate seals October 5, 2026 · 12:00 AM</p>
+        <p class="prelim-reminder-gift">🍎 <strong>A Teachers' Day gift:</strong> the deadline has been extended from October 5 to <strong>${LOCK_DATE_TEXT}</strong>. Use these extra days well!</p>
+
+        <p class="prelim-reminder-deadline-label">The gate seals ${LOCK_DATE_TEXT} · 12:00 AM</p>
         <div class="prelim-reminder-countdown" role="timer" aria-label="Time left before the Prelim Season locks">
           <div class="prelim-reminder-rune"><b data-cd="d">00</b><span>Days</span></div>
           <span class="prelim-reminder-sep">:</span>
@@ -335,7 +348,7 @@ function showLockoutScreen() {
       ${PADLOCK_SVG}
       <h2 class="prelim-reminder-heading" id="prelimLockoutHeading">The Prelim Season Has Closed</h2>
       <div class="prelim-reminder-divider"><i></i></div>
-      <p class="prelim-reminder-text">The Prelim Season was sealed on <strong>October 5, 2026 at 12:00 AM</strong>. Only students who unlocked the Midterm Season may enter the portal.</p>
+      <p class="prelim-reminder-text">The Prelim Season was sealed on <strong>${LOCK_DATE_TEXT} at 12:00 AM</strong>. Only students who unlocked the Midterm Season may enter the portal.</p>
       <div class="prelim-reminder-seal warn">${SEAL_WARN}<div><strong>Your path was not secured in time</strong>Your Midterm Season was not unlocked before the deadline, so your access to the portal has ended.</div></div>
       <button type="button" class="prelim-reminder-btn" id="prelimLockoutSignOut">Sign Out</button>
     </div>

@@ -12,14 +12,14 @@ service cloud.firestore {
              ];
     }
 
-    // The Prelim Season locks for good at 2026-10-05 00:00 Philippine
-    // time (= 1791129600000 ms, mirrored from PRELIM_LOCKS_AT in
+    // The Prelim Season locks for good at 2026-10-10 00:00 Philippine
+    // time (= 1791561600000 ms, mirrored from PRELIM_LOCKS_AT in
     // prelimDeadline.js). From then on, a student can only write their
     // own record if midtermUnlocked was ALREADY true -- which also means
     // midtermUnlocked can never be flipped false -> true after the lock,
     // by the app or by devtools. No new student records after the lock.
     function prelimLockPassed() {
-      return request.time >= timestamp.value(1791129600000);
+      return request.time >= timestamp.value(1791561600000);
     }
 
     // Mustard Seed growth-stage schedule, mirrored from

@@ -156,7 +156,9 @@ const CSS = `
   box-shadow: inset 0 1px 0 rgba(255,255,255,.5), inset 0 -2px 0 rgba(0,0,0,.25), 0 0 0 1px #000, 0 8px 24px rgba(255,150,50,.25);
   text-shadow: 0 1px 0 rgba(255,240,200,.6);
 }
-.prelim-reminder-btn:hover { filter: brightness(1.1); }
+/* Restates the background: style.css's global button:hover (0,1,1)
+   outranks the plain class above (0,1,0) and would turn it teal. */
+.prelim-reminder-btn:hover { filter: brightness(1.1); background: linear-gradient(180deg, #F6D98A 0%, #D9A441 50%, #A8731F 100%); }
 .prelim-reminder-btn:focus-visible { outline: 2px solid #FFE7A8; outline-offset: 3px; }
 .prelim-reminder-btn.ghost {
   margin-top: 10px; color: #D6C8AE; text-shadow: none; font-size: 13px; padding: 12px 18px;

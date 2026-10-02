@@ -25,6 +25,7 @@ import { getOfferingsForTeacher } from './classOfferings.js';
 import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
 import { maybePostDailyGreeting } from './dailyGreeting.js';
 import { createImageSlot, loadInto, deleteChatImage } from './chatImages.js';
+import { publishMidtermHonorRoll } from './midtermHonorRoll.js';
 
 const UNASSIGNED_KEY = '__unassigned__';
 
@@ -219,6 +220,11 @@ if (user) {
         if (!group.bySection[section]) group.bySection[section] = [];
         group.bySection[section].push(data);
       });
+
+      // Every student is already in hand here, so this is where the
+      // Midterm Roll of Honor gets refreshed (see midtermHonorRoll.js) --
+      // not awaited, the roster shouldn't wait on it.
+      publishMidtermHonorRoll(snapshot.docs.map((student) => student.data()));
 
       renderTeacherListView();
 

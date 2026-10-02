@@ -78,8 +78,14 @@ const CSS = `
   opacity: 0;
 }
 .prelim-reminder-card {
-  position: relative; width: min(500px, 100%); max-height: calc(100vh - 32px); overflow-y: auto;
-  box-sizing: border-box; padding: 34px 30px 28px;
+  position: relative; width: min(500px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px);
+  /* The card itself never scrolls: the frame, its corner ornaments and
+     the button stay put, and only .prelim-reminder-scroll moves. When
+     the whole card scrolled, a white native scrollbar cut into the
+     frame, the bottom corners sat on top of the button, and the button
+     itself was cut off on laptop-height screens. */
+  display: flex; flex-direction: column; overflow: hidden;
+  box-sizing: border-box; padding: 0;
   color: #E8DCC4; text-align: center;
   background:
     radial-gradient(ellipse at 50% 0%, rgba(201,146,58,.16), transparent 60%),
@@ -96,7 +102,23 @@ const CSS = `
     0 0 70px rgba(255,110,30,.12);
   animation: prRise .55s cubic-bezier(.2,.9,.3,1.1);
 }
-.prelim-reminder-corner { position: absolute; width: 46px; height: 46px; pointer-events: none; }
+/* 6px side/top margin keeps the scrollbar inside the gold inner frame. */
+.prelim-reminder-scroll {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto;
+  margin: 6px 6px 0; padding: 24px 24px 14px;
+  scrollbar-width: thin; scrollbar-color: #6B4E1F transparent;
+}
+.prelim-reminder-scroll::-webkit-scrollbar { width: 8px; }
+.prelim-reminder-scroll::-webkit-scrollbar-track { background: transparent; }
+.prelim-reminder-scroll::-webkit-scrollbar-thumb { background: #6B4E1F; border-radius: 4px; }
+.prelim-reminder-foot { position: relative; flex-shrink: 0; padding: 4px 30px 24px; }
+/* A soft fade above the button: phones hide scrollbars, so this is the
+   cue that there is more to read when the middle part scrolls. */
+.prelim-reminder-foot::before {
+  content: ''; position: absolute; left: 6px; right: 6px; top: -18px; height: 18px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(9,6,5,0), rgba(9,6,5,.95));
+}
+.prelim-reminder-corner { position: absolute; width: 46px; height: 46px; pointer-events: none; z-index: 1; }
 .prelim-reminder-corner svg { display: block; width: 100%; height: 100%; }
 .prelim-reminder-corner.tl { top: 2px; left: 2px; }
 .prelim-reminder-corner.tr { top: 2px; right: 2px; transform: scaleX(-1); }
@@ -150,7 +172,7 @@ const CSS = `
 .prelim-reminder-seal {
   --seal: rgba(220,60,40,.8);
   display: flex; gap: 12px; align-items: center; text-align: left;
-  margin: 18px 0 20px; padding: 12px 14px; border-radius: 4px; font-size: 14px; line-height: 1.5;
+  margin: 16px 0 6px; padding: 12px 14px; border-radius: 4px; font-size: 14px; line-height: 1.5;
 }
 .prelim-reminder-seal svg { flex: none; width: 38px; height: 38px; animation: prSealGlow 2.4s ease-in-out infinite; }
 .prelim-reminder-seal.warn { background: linear-gradient(90deg, rgba(120,20,15,.45), rgba(60,10,8,.25)); border: 1px solid rgba(200,60,40,.55); color: #F5C6B8; }
@@ -176,8 +198,30 @@ const CSS = `
   background: rgba(255,255,255,.04); border: 1px solid #4A3820; box-shadow: none;
 }
 .prelim-lockout-icon { width: 78px; height: 78px; margin: 4px auto 12px; display: block; filter: drop-shadow(0 0 14px rgba(255,110,30,.45)); }
+/* Laptop-height screens and phones: tighten everything a little so the
+   card fits without scrolling wherever it can. */
+@media (max-height: 760px), (max-width: 480px) {
+  .prelim-reminder-scroll { padding-top: 18px; }
+  .prelim-reminder-heading { font-size: 23px; }
+  .prelim-reminder-divider { margin: 9px 0 11px; }
+  .prelim-reminder-gift { font-size: 13px; padding: 8px 12px; margin-bottom: 11px; }
+  .prelim-reminder-deadline-label { margin-bottom: 7px; }
+  .prelim-reminder-countdown { margin-bottom: 13px; }
+  .prelim-reminder-rune { padding: 7px 4px 6px; }
+  .prelim-reminder-rune b { font-size: 25px; }
+  .prelim-reminder-text { font-size: 13.5px; line-height: 1.55; margin-bottom: 9px; }
+  .prelim-reminder-seal { margin-top: 11px; padding: 9px 12px; font-size: 13px; }
+  .prelim-reminder-seal svg { width: 32px; height: 32px; }
+  .prelim-reminder-foot { padding: 4px 30px 20px; }
+  .prelim-reminder-btn { padding: 13px 20px; font-size: 15px; }
+  .prelim-lockout-icon { width: 64px; height: 64px; margin-bottom: 8px; }
+}
 @media (max-width: 480px) {
-  .prelim-reminder-card { padding: 28px 18px 22px; }
+  .prelim-reminder-scroll { padding: 18px 14px 14px; }
+  .prelim-reminder-foot { padding: 4px 18px 18px; }
+  .prelim-reminder-kicker { font-size: 10.5px; letter-spacing: 2px; }
+  .prelim-reminder-deadline-label { font-size: 10.5px; letter-spacing: 1px; }
+  .prelim-reminder-seal strong { font-size: 13px; }
   .prelim-reminder-heading { font-size: 21px; }
   .prelim-reminder-rune b { font-size: 22px; }
   .prelim-reminder-rune span { font-size: 8.5px; letter-spacing: 1px; }
@@ -278,6 +322,7 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
       <div class="prelim-reminder-embers">${embersHtml()}</div>
       <div class="prelim-reminder-card" role="dialog" aria-modal="true" aria-labelledby="prelimReminderHeading">
         ${cornersHtml()}
+        <div class="prelim-reminder-scroll">
         <p class="prelim-reminder-kicker">✦ A Warning to All Seekers ✦</p>
         <h2 class="prelim-reminder-heading" id="prelimReminderHeading">The Prelim Season Closes Soon</h2>
         <div class="prelim-reminder-divider"><i></i></div>
@@ -299,8 +344,9 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
         <p class="prelim-reminder-text">If you haven't yet, <strong>solve all three Prelim puzzles</strong> and submit your reflection to unlock the Midterm Season. Don't wait until the last day!</p>
 
         ${seal}
+        </div>
 
-        <button type="button" class="prelim-reminder-btn">I Understand</button>
+        <div class="prelim-reminder-foot"><button type="button" class="prelim-reminder-btn">I Understand</button></div>
       </div>
     `;
     document.body.appendChild(overlay);
@@ -344,13 +390,15 @@ function showLockoutScreen() {
     <div class="prelim-reminder-embers">${embersHtml()}</div>
     <div class="prelim-reminder-card" role="alertdialog" aria-modal="true" aria-labelledby="prelimLockoutHeading">
       ${cornersHtml()}
+      <div class="prelim-reminder-scroll">
       <p class="prelim-reminder-kicker">✦ The Gate Is Sealed ✦</p>
       ${PADLOCK_SVG}
       <h2 class="prelim-reminder-heading" id="prelimLockoutHeading">The Prelim Season Has Closed</h2>
       <div class="prelim-reminder-divider"><i></i></div>
       <p class="prelim-reminder-text">The Prelim Season was sealed on <strong>${LOCK_DATE_TEXT} at 12:00 AM</strong>. Only students who unlocked the Midterm Season may enter the portal.</p>
       <div class="prelim-reminder-seal warn">${SEAL_WARN}<div><strong>Your path was not secured in time</strong>Your Midterm Season was not unlocked before the deadline, so your access to the portal has ended.</div></div>
-      <button type="button" class="prelim-reminder-btn" id="prelimLockoutSignOut">Sign Out</button>
+      </div>
+      <div class="prelim-reminder-foot"><button type="button" class="prelim-reminder-btn" id="prelimLockoutSignOut">Sign Out</button></div>
     </div>
   `;
   document.body.appendChild(overlay);

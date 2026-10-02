@@ -88,15 +88,35 @@ const CSS = `
 .honor-sparks { position: absolute; inset: 0; pointer-events: none; }
 .honor-sparks span { position: absolute; bottom: -10px; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%; background: radial-gradient(circle, #FFF4C9 0%, #FFC94A 45%, rgba(255,180,0,0) 70%); animation: honorSpark var(--d) linear var(--delay) infinite; opacity: 0; }
 .honor-card {
-  position: relative; width: min(560px, 100%); max-height: calc(100vh - 32px); overflow-y: auto; box-sizing: border-box;
-  padding: 30px 0 26px; color: #E8DCC4; text-align: center;
+  position: relative; width: min(560px, 100%); max-height: calc(100vh - 32px); max-height: calc(100dvh - 32px); box-sizing: border-box;
+  /* The card itself never scrolls: the frame, its corner ornaments and
+     the button stay put, and only .honor-scroll moves (same structure as
+     the Prelim reminder card -- see prelimDeadline.js for why). */
+  display: flex; flex-direction: column; overflow: hidden;
+  padding: 0; color: #E8DCC4; text-align: center;
   background: radial-gradient(ellipse at 50% 0%, rgba(233,184,90,.22), transparent 55%), linear-gradient(170deg, #1B1512 0%, #0E0A09 55%, #070505 100%);
   border: 1px solid #8A6626; border-radius: 6px;
   box-shadow: inset 0 0 0 4px #0E0A09, inset 0 0 0 5px rgba(233,184,90,.6), inset 0 0 60px rgba(0,0,0,.7), 0 0 0 1px #000, 0 30px 80px rgba(0,0,0,.8), 0 0 90px rgba(255,190,70,.18);
   animation: honorRise .55s cubic-bezier(.2,.9,.3,1.1);
 }
-.honor-pad { padding: 0 28px; }
-.honor-corner { position: absolute; width: 46px; height: 46px; pointer-events: none; }
+/* 6px side/top margin keeps the scrollbar inside the gold inner frame. */
+.honor-scroll {
+  flex: 1 1 auto; min-height: 0; overflow-y: auto; overflow-x: hidden;
+  margin: 6px 6px 0; padding: 22px 0 14px;
+  scrollbar-width: thin; scrollbar-color: #8A6626 transparent;
+}
+.honor-scroll::-webkit-scrollbar { width: 8px; }
+.honor-scroll::-webkit-scrollbar-track { background: transparent; }
+.honor-scroll::-webkit-scrollbar-thumb { background: #8A6626; border-radius: 4px; }
+.honor-foot { position: relative; flex-shrink: 0; padding: 4px 28px 24px; }
+/* A soft fade above the button: phones hide scrollbars, so this is the
+   cue that there is more to read when the middle part scrolls. */
+.honor-foot::before {
+  content: ''; position: absolute; left: 6px; right: 6px; top: -18px; height: 18px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(9,6,5,0), rgba(9,6,5,.95));
+}
+.honor-pad { padding: 0 22px; }
+.honor-corner { position: absolute; width: 46px; height: 46px; pointer-events: none; z-index: 1; }
 .honor-corner svg { display: block; width: 100%; height: 100%; }
 .honor-corner.tl { top: 2px; left: 2px; } .honor-corner.tr { top: 2px; right: 2px; transform: scaleX(-1); }
 .honor-corner.bl { bottom: 2px; left: 2px; transform: scaleY(-1); } .honor-corner.br { bottom: 2px; right: 2px; transform: scale(-1,-1); }
@@ -130,9 +150,9 @@ const CSS = `
 .honor-spotlight-rank { font-size: 11.5px; letter-spacing: 1.5px; text-transform: uppercase; color: #E9B85A; }
 .honor-all li.top { color: #FFE7A8; font-weight: 700; }
 .honor-card .honor-marquee { padding: 5px 0; }
-.honor-rows { margin: 4px 0 14px; padding: 8px 0; background: rgba(0,0,0,.28); border-top: 1px solid rgba(233,184,90,.2); border-bottom: 1px solid rgba(233,184,90,.2); }
-.honor-all-btn, .honor-all-btn:hover { margin: 0 0 14px; padding: 0; background: none; border: none; color: #E9B85A; font: 600 12.5px 'Segoe UI', system-ui, sans-serif; text-decoration: underline; cursor: pointer; }
-.honor-all { display: none; margin: 0 0 16px; max-height: 220px; overflow-y: auto; text-align: left; padding: 10px 12px; border: 1px solid rgba(233,184,90,.25); border-radius: 4px; background: rgba(0,0,0,.3); }
+.honor-rows { margin: 4px 0 12px; padding: 8px 0; background: rgba(0,0,0,.28); border-top: 1px solid rgba(233,184,90,.2); border-bottom: 1px solid rgba(233,184,90,.2); }
+.honor-all-btn, .honor-all-btn:hover { margin: 0 0 8px; padding: 0; background: none; border: none; color: #E9B85A; font: 600 12.5px 'Segoe UI', system-ui, sans-serif; text-decoration: underline; cursor: pointer; }
+.honor-all { display: none; margin: 0 0 6px; max-height: 220px; overflow-y: auto; text-align: left; padding: 10px 12px; border: 1px solid rgba(233,184,90,.25); border-radius: 4px; background: rgba(0,0,0,.3); }
 .honor-all.open { display: block; }
 .honor-all ol { margin: 0; padding-left: 26px; columns: 2; column-gap: 22px; font-size: 12.5px; line-height: 1.75; color: #E8DCC4; }
 .honor-all li { break-inside: avoid; }
@@ -147,11 +167,36 @@ const CSS = `
 }
 .honor-btn:hover { filter: brightness(1.1); }
 .honor-btn:focus-visible { outline: 2px solid #FFE7A8; outline-offset: 3px; }
+/* Laptop-height screens and phones: tighten everything a little so the
+   card fits without scrolling wherever it can. */
+@media (max-height: 760px), (max-width: 480px) {
+  .honor-scroll { padding-top: 14px; }
+  .honor-crest { width: 66px; height: 66px; margin-bottom: 4px; }
+  .honor-crest::before { inset: -24px; }
+  .honor-kicker { margin-bottom: 5px; }
+  .honor-heading { font-size: 23px; }
+  .honor-count { margin-top: 8px; font-size: 12px; }
+  .honor-count b { font-size: 22px; }
+  .honor-divider { margin: 10px 0; }
+  .honor-text { font-size: 13.5px; line-height: 1.55; margin-bottom: 9px; }
+  .honor-you { font-size: 13px; padding: 8px 12px; margin-bottom: 10px; }
+  .honor-spotlight { padding: 8px 12px 9px; margin-bottom: 10px; gap: 1px; }
+  .honor-spotlight-names { font-size: 17px; }
+  .honor-rows { margin: 2px 0 9px; padding: 4px 0; }
+  .honor-foot { padding: 4px 28px 20px; }
+  .honor-btn, .honor-btn:hover { padding: 13px 20px; font-size: 15px; }
+}
 @media (max-width: 480px) {
-  .honor-card { padding: 24px 0 20px; } .honor-pad { padding: 0 18px; }
+  .honor-scroll { padding-top: 14px; } .honor-pad { padding: 0 14px; }
+  .honor-foot { padding: 4px 18px 18px; }
+  .honor-kicker { font-size: 10.5px; letter-spacing: 2px; }
+  .honor-count { font-size: 10.5px; letter-spacing: .6px; }
+  .honor-count b { font-size: 20px; }
+  .honor-spotlight-label { font-size: 9.5px; letter-spacing: 1px; }
+  .honor-spotlight-names { font-size: 16px; }
   .honor-heading { font-size: 21px; } .honor-text { font-size: 13.5px; }
   .honor-all ol { columns: 1; } .honor-corner { width: 34px; height: 34px; }
-  .honor-crest { width: 78px; height: 78px; }
+  .honor-crest { width: 58px; height: 58px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .honor-overlay, .honor-card, .honor-heading, .honor-crest::before { animation: none; }
@@ -278,6 +323,7 @@ export function openHonorPopup(model, viewerName, onClose) {
     <div class="honor-sparks">${sparksHtml()}</div>
     <div class="honor-card" role="dialog" aria-modal="true" aria-labelledby="honorHeading">
       ${['tl', 'tr', 'bl', 'br'].map((c) => `<span class="honor-corner ${c}">${CORNER_SVG}</span>`).join('')}
+      <div class="honor-scroll">
       <div class="honor-pad">
         <div class="honor-crest">${CREST_SVG}</div>
         <p class="honor-kicker">✦ Roll of Honor ✦</p>
@@ -301,8 +347,9 @@ export function openHonorPopup(model, viewerName, onClose) {
       <div class="honor-pad">
         <button type="button" class="honor-all-btn" aria-expanded="false">See all ${sorted.length} names</button>
         <div class="honor-all"><ol>${sorted.map((s) => `<li class="${model.isLeader(s) ? 'top' : ''}">${escapeHtml(s.name)}<small>${s.rank}${s.stars ? ' ' + '★'.repeat(s.stars) : ''}</small></li>`).join('')}</ol></div>
-        <button type="button" class="honor-btn">Hail, Pilgrims!</button>
       </div>
+      </div>
+      <div class="honor-foot"><button type="button" class="honor-btn">Hail, Pilgrims!</button></div>
     </div>`;
   document.body.appendChild(overlay);
 

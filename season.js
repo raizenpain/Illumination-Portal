@@ -7,7 +7,7 @@ import { logActivity } from './activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
 import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
 import { getRankProgress, getSeasonStars, RANK_TIERS } from './rank.js';
-import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
+import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderChampionPopup } from './rankPopup.js';
 import { TICKET_INFO } from './ticketTrader.js';
 
 const { email, name } = requireLogin();
@@ -481,37 +481,36 @@ function queuePopup(popup) {
   processPopupQueue();
 }
 
+// Resolvers waiting for the queue to run dry (the season-complete
+// redirect waits on this, so it never cuts a popup short).
+const popupsDoneWaiters = [];
+
+function whenPopupsDone() {
+  if (!popupBusy && popupQueue.length === 0) return Promise.resolve();
+  return new Promise((resolve) => popupsDoneWaiters.push(resolve));
+}
+
 function processPopupQueue() {
-  if (popupBusy || popupQueue.length === 0) return;
+  if (popupBusy) return;
+  if (popupQueue.length === 0) {
+    popupsDoneWaiters.splice(0).forEach((resolve) => resolve());
+    return;
+  }
   popupBusy = true;
 
   const item = popupQueue.shift();
 
-  if (item.kind === 'star' || item.kind === 'rank') {
+  if (item.kind === 'star' || item.kind === 'rank' || item.kind === 'champion') {
     ensureRankPopup();
-    const overlay = document.getElementById('rankPopup');
     if (item.kind === 'star') renderStarPopup(item);
-    else renderRankPopup(item);
+    else if (item.kind === 'rank') renderRankPopup(item);
+    else renderChampionPopup(item);
 
-    overlay.classList.remove('hidden');
-    requestAnimationFrame(() => overlay.classList.add('show'));
-
-    const dismiss = () => {
-      overlay.classList.remove('show');
-      setTimeout(() => {
-        overlay.classList.add('hidden');
-        popupBusy = false;
-        setTimeout(processPopupQueue, 300);
-      }, 300);
-    };
-
-    if (item.kind === 'rank') {
-      const btn = document.getElementById('rankPopupContinue');
-      const onClick = () => { btn.removeEventListener('click', onClick); dismiss(); };
-      btn.addEventListener('click', onClick);
-    } else {
-      setTimeout(dismiss, 3200);
-    }
+    // Waits for Continue (no auto-close: it was too fast to read).
+    openRankPopup().then(() => {
+      popupBusy = false;
+      setTimeout(processPopupQueue, 250);
+    });
     return;
   }
 
@@ -528,6 +527,10 @@ function processPopupQueue() {
     popupBusy = false;
     setTimeout(processPopupQueue, 300);
   }, 3000);
+}
+
+function showChampionPopup(info) {
+  queuePopup({ kind: 'champion', ...info });
 }
 
 function showAchievement(title, text, icon) {
@@ -623,14 +626,13 @@ async function awardNode(node, submissionText) {
 
   const achievements = [...(studentData.achievements || [])];
   const newAchievementIds = [];
-  let popupsQueued = 0;
+  let championPopup = null;
 
   const taskId = taskBadgeId(node.nodeId);
   if (!achievements.includes(taskId)) {
     achievements.push(taskId);
     newAchievementIds.push(taskId);
     showAchievement(node.title, `Task completed — ${content.seasonName}`, NODE_TYPE_ICON[node.type]);
-    popupsQueued++;
   }
 
   const chId = chapterBadgeId(chapter.chapterId);
@@ -638,12 +640,10 @@ async function awardNode(node, submissionText) {
     achievements.push(chId);
     newAchievementIds.push(chId);
     showAchievement(chapter.chapterTitle, `Chapter completed — ${content.seasonName}`, '🏁');
-    popupsQueued++;
 
     const lesson = CHAPTER_LESSONS[chapter.chapterId];
     if (lesson) {
       showLesson(lesson);
-      popupsQueued++;
     }
   }
 
@@ -654,14 +654,14 @@ async function awardNode(node, submissionText) {
   if (seasonJustCompleted && !achievements.includes(seId)) {
     achievements.push(seId);
     newAchievementIds.push(seId);
-    showAchievement(`${content.seasonName} Champion`, content.subtitle, '👑');
-    popupsQueued++;
-
     const tokenBonus = SEASON_COMPLETION_TOKEN_BONUS[seasonId];
     if (tokenBonus) {
       unlockTokens += tokenBonus;
       unlockTokenDelta += tokenBonus;
     }
+    // Queued after the star / rank popups below, so it's the last word
+    // before the certificate.
+    championPopup = { seasonName: content.seasonName, subtitle: content.subtitle, tokenBonus: tokenBonus || 0 };
   }
 
   const update = {
@@ -701,7 +701,6 @@ async function awardNode(node, submissionText) {
       justEarnedIndex: chapterIndex,
       subtitle: `${chapter.chapterTitle} — ${content.seasonName}`
     });
-    popupsQueued++;
   }
 
   if (rankAfter.rank !== rankBefore.rank) {
@@ -713,7 +712,6 @@ async function awardNode(node, submissionText) {
 
     const nextTier = RANK_TIERS.find((t) => t.rank === rankAfter.rank);
     showRankPopup({ rank: rankAfter.rank, seasonName: nextTier ? nextTier.seasonName : null });
-    popupsQueued++;
   }
 
   if (seasonJustCompleted) {
@@ -723,9 +721,11 @@ async function awardNode(node, submissionText) {
       icon: '👑'
     });
 
-    setTimeout(() => {
-      window.location.href = `season-completion.html?season=${seasonId}`;
-    }, Math.max(3000, popupsQueued * 3300));
+    if (championPopup) showChampionPopup(championPopup);
+    // On to the certificate once every popup has been read and closed.
+    whenPopupsDone().then(() => {
+      setTimeout(() => { window.location.href = `season-completion.html?season=${seasonId}`; }, 400);
+    });
   }
 
   renderChapter();

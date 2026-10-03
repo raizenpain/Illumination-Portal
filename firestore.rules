@@ -187,6 +187,8 @@ service cloud.firestore {
         'vaultCapstoneGranted', 'vaultCapstoneKeyUsed', 'discipleBonusGranted',
         'hasSeenPrelimReminder',
         'hasSeenFiesta75Announcement', 'legendaryCountdownStartedAt', 'legendaryKeyUsedAt',
+        'journeyCompleteSeen', 'legendaryForgeSeen', 'legendaryForgeStartedAt', 'legendaryForgeChain',
+        'finalGiftGranted',
         'mustardSeed'
       ];
     }

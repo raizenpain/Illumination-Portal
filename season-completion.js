@@ -21,6 +21,17 @@ const params = new URLSearchParams(window.location.search);
 const seasonId = params.get('season');
 const season = SEASON_CONTENT[seasonId];
 
+// Rising embers behind the dark fantasy certificate (outside #certificate,
+// so they never end up in the PDF).
+const embers = document.querySelector('.cert-embers');
+if (embers) {
+  for (let i = 0; i < 26; i++) {
+    const s = document.createElement('span');
+    s.style.cssText = `--x:${Math.random() * 100}%;--s:${3 + Math.random() * 5}px;--d:${7 + Math.random() * 8}s;--delay:${-Math.random() * 12}s;--drift:${(Math.random() - 0.5) * 120}px`;
+    embers.appendChild(s);
+  }
+}
+
 const SEASON_CODE = { midterm: 'MID', semifinal: 'SEM', final: 'FIN' };
 const SEASON_SEAL = { midterm: '🌅', semifinal: '🌑', final: '🌄' };
 

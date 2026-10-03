@@ -45,6 +45,7 @@
 import { db, doc, getDoc, updateDoc, runTransaction } from './firebase.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { SEASON_CONTENT } from './seasonContent.js';
+import { runForgeGate, maybePreviewForge } from './legendaryForge.js';
 
 const COUNTDOWN_DAYS = 15;
 const COUNTDOWN_MS = COUNTDOWN_DAYS * 24 * 60 * 60 * 1000;
@@ -251,6 +252,7 @@ async function init() {
     showOverlay(Date.now() + ms, keyPreview);
     return;
   }
+  if (await maybePreviewForge()) return; // ?previewForge / ?previewForging / ?previewForgeDone
 
   const email = localStorage.getItem('studentEmail');
   if (!email || ADMIN_EMAILS.includes(email)) return;
@@ -266,7 +268,13 @@ async function init() {
     return;
   }
 
-  if (!isReadyForFinalExam(data)) return;
+  // Not at the exam gate: this same record also tells us whether the
+  // student is in the Legendary Forge (ritual / 5-day forging / reveal),
+  // which blocks every page the same way -- see legendaryForge.js.
+  if (!isReadyForFinalExam(data)) {
+    runForgeGate({ email, name: localStorage.getItem('studentName') || data.name, data });
+    return;
+  }
 
   // Key already turned: on record, or at least on this device (a save
   // that failed last time is quietly retried here).

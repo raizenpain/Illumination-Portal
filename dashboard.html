@@ -420,6 +420,7 @@ import { TICKETS } from './vaultTickets.js';
 import { showTreasureReveal } from './treasureReveal.js';
 import { maybeShowPrelimReminder } from './prelimDeadline.js';
 import { showHonorPopup, renderHonorStrip } from './midtermHonorRoll.js';
+import { maybeShowFinale, awardFinalGift } from './journeyFinale.js';
 import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
 const { email, name } = requireLogin();
@@ -634,6 +635,9 @@ async function loadStudentCard() {
       await awardDailyVisitShard(data);
       await healStuckPuzzleCompletions(data);
       discipleBonusJustGranted = await awardDiscipleBonus(data);
+      // Before the wallet is drawn, so the Final Gift's tickets show at once
+      // (it's revealed on the "Pilgrimage Complete" screen).
+      await awardFinalGift(email, data);
     }
 
     document.getElementById('cardName').textContent = data.name || name;
@@ -673,7 +677,10 @@ async function loadStudentCard() {
     setupSemifinalAndFinalCards(data);
     setupReflectionSymbol(data);
     initTicketTrader({ email, studentData: data, prelimDone: isSeasonPreviewAdmin || isPrelimSeasonDone(data) });
-    initCrafting({ email, name: data.name || name, studentData: data, prelimDone: isSeasonPreviewAdmin || isPrelimSeasonDone(data) });
+    // Kept so the journey finale can wait for it: crafting may forge the
+    // Legendary on this very load, and that deserves its celebration.
+    const craftingReady = initCrafting({ email, name: data.name || name, studentData: data, prelimDone: isSeasonPreviewAdmin || isPrelimSeasonDone(data) })
+      .catch((err) => console.error('Crafting failed to initialise:', err));
     initLeaderboard({
       email,
       name: data.name || name,
@@ -714,6 +721,10 @@ async function loadStudentCard() {
         isAdmin: isSeasonPreviewAdmin
       });
       if (discipleBonusJustGranted) await showDiscipleBonusReveal();
+      // The end of the whole journey: "Your Pilgrimage Is Complete" after
+      // the Final Reflection, then "The Legendary Is Forged" (each once).
+      await craftingReady;
+      await maybeShowFinale({ email, data, isAdmin: isSeasonPreviewAdmin });
       initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
       maybeShowCapstonePreview({ email, name: data.name || name, data }).then((shown) => {
         if (!shown && VAULT_UNLOCKED && !isSeasonPreviewAdmin) {

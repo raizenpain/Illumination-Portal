@@ -9,17 +9,19 @@
 // order for that specific chain — already-owned items (e.g. bought
 // before choosing this chain) already count, per the source spec's
 // "extra items... contribute if the student switches" note. Tier 5
-// is never purchased directly; it auto-unlocks once all 4 chain
-// prerequisites are owned.
+// is never purchased directly: once all 4 chain prerequisites are owned
+// (and the student has every star), it is made in the Legendary Forge
+// (legendaryForge.js) -- 7 strikes, then 5 days of forging, then claim.
 // ============================================
 
-import { db, doc, setDoc, updateDoc, arrayUnion, runTransaction } from './firebase.js';
-import { logActivity } from './activity.js';
+import { db, doc, setDoc, runTransaction } from './firebase.js';
 import {
   TIERS, ARTIFACTS, CRAFTING_CHAINS,
   artifactIconPath, chainForTier5, tokenCostFor
 } from './artifacts.js';
 import { getRankProgress } from './rank.js';
+import { runForgeGate, FORGE_DAYS } from './legendaryForge.js';
+import { downloadLegendaryCard, forgedDateFor } from './legendaryCard.js';
 
 let email = null;
 let name = null;
@@ -167,6 +169,9 @@ function artifactState(id, tier) {
     if (chainComplete && !getRankProgress(studentData).legendaryEligible) {
       return { kind: 'tier5-rank-locked' };
     }
+    if (chainComplete) {
+      return { kind: studentData.legendaryForgeStartedAt ? 'tier5-forging' : 'tier5-ready' };
+    }
     return { kind: 'tier5-pending' };
   }
 
@@ -235,10 +240,17 @@ function buildArtifactCard(a, tier) {
   card.className = `artifact-card state-${state.kind}${tier === 5 ? ' artifact-card-tier5' : ''}`;
 
   let statusHtml = '';
-  if (state.kind === 'owned') {
+  if (state.kind === 'owned' && tier === 5) {
+    statusHtml = `<span class="artifact-status-badge">✓ Owned</span>
+      <button type="button" class="submit-quiz-btn artifact-buy-btn legendary-card-btn" data-artifact-id="${a.id}">🃏 Download Card</button>`;
+  } else if (state.kind === 'owned') {
     statusHtml = `<span class="artifact-status-badge">✓ Owned</span>`;
   } else if (state.kind === 'tier5-pending') {
     statusHtml = `<span class="artifact-status-badge">🔒 Complete the chain</span>`;
+  } else if (state.kind === 'tier5-ready') {
+    statusHtml = `<span class="artifact-status-badge">⚒️ Ready for the forge</span>`;
+  } else if (state.kind === 'tier5-forging') {
+    statusHtml = `<span class="artifact-status-badge">🔥 In the forge</span>`;
   } else if (state.kind === 'tier5-rank-locked') {
     statusHtml = `<span class="artifact-status-badge">🔒 Reach Apostle — all stars</span>`;
   } else if (state.kind === 'tier5-other') {
@@ -259,7 +271,23 @@ function buildArtifactCard(a, tier) {
     ${statusHtml}
   `;
 
-  const buyBtn = card.querySelector('.artifact-buy-btn');
+  const cardBtn = card.querySelector('.legendary-card-btn');
+  if (cardBtn) {
+    cardBtn.onclick = async () => {
+      cardBtn.disabled = true;
+      cardBtn.textContent = 'Engraving…';
+      const ok = await downloadLegendaryCard({
+        chain: chainForTier5(a.id),
+        studentName: studentData.name || name,
+        email,
+        forgedAt: forgedDateFor(studentData, FORGE_DAYS * 24 * 60 * 60 * 1000)
+      }).catch(() => false);
+      cardBtn.textContent = ok ? '✓ Downloaded' : 'Try again';
+      cardBtn.disabled = false;
+    };
+  }
+
+  const buyBtn = card.querySelector('.artifact-buy-btn:not(.legendary-card-btn)');
   if (buyBtn) {
     buyBtn.disabled = purchasing;
     buyBtn.onclick = () => purchaseArtifact(a.id, tier);
@@ -322,26 +350,15 @@ async function purchaseArtifact(id, tier) {
   renderCrafting();
 }
 
+// Used to grant the Legendary silently. Now it only hands over to the
+// Legendary Forge (2026-10-03), which grants it when the student claims it
+// after the 5-day forging. Still called on load and after each purchase,
+// so buying the 4th chain artifact opens the forge straight away.
 async function checkTier5AutoUnlock() {
   const chosen = studentData.chosenLegendaryChain;
   if (!chosen || isOwned(chosen)) return;
-
   const chainInfo = chainForTier5(chosen);
-  if (!chainInfo) return;
-
-  const allOwned = chainInfo.chain.every((id) => isOwned(id));
-  if (!allOwned) return;
-
+  if (!chainInfo || !chainInfo.chain.every((id) => isOwned(id))) return;
   if (!getRankProgress(studentData).legendaryEligible) return;
-
-  const ownedArtifacts = [...ownedList(), chosen];
-
-  await updateDoc(doc(db, 'students', email), { ownedArtifacts: arrayUnion(chosen) });
-  studentData.ownedArtifacts = ownedArtifacts;
-
-  logActivity({
-    email, name, type: 'artifact',
-    title: `Forged the Legendary ${chainInfo.tier5Name}!`,
-    icon: '🏆'
-  });
+  runForgeGate({ email, name, data: studentData });
 }

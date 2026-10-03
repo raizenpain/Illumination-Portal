@@ -4,66 +4,73 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Season Certificate | HCDC Illumination Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
   <script type="module" src="clickSound.js"></script>
   <script type="module" src="legendaryCountdown.js"></script>
 </head>
-<body>
+<body class="cert-page">
 
-<div class="certificate" id="certificate">
+<div class="cert-embers" aria-hidden="true"></div>
 
-  <div class="certificate-header">
-    <img src="assets/hcdc-logo.png" alt="HCDC Logo" class="logo">
-    <span class="certificate-seal" id="certificateSeal"></span>
-    <h1>Holy Cross of Davao College</h1>
-    <p>Religious Education Department</p>
+<main class="cert-wrap">
+  <!-- Everything inside #certificate is what "Download PDF" captures, so
+       only effects html2canvas can draw are used inside it (gradients,
+       borders, shadows, inline SVG) -- no masks, filters or clipped text. -->
+  <div class="certificate certificate-dark" id="certificate">
+    <span class="cert-corner tl" aria-hidden="true"></span>
+    <span class="cert-corner tr" aria-hidden="true"></span>
+    <span class="cert-corner bl" aria-hidden="true"></span>
+    <span class="cert-corner br" aria-hidden="true"></span>
+
+    <div class="certificate-header">
+      <div class="cert-medallion"><img src="assets/hcdc-logo.png" alt="HCDC Logo" class="logo"></div>
+      <h1>Holy Cross of Davao College</h1>
+      <p class="cert-dept">Religious Education Department</p>
+    </div>
+
+    <div class="cert-divider" aria-hidden="true"><i></i></div>
+
+    <div class="cert-seal-row">
+      <span class="certificate-seal" id="certificateSeal"></span>
+    </div>
+    <h2 id="certTitle" class="cert-title">Certificate of Season Completion</h2>
+
+    <p class="cert-line">This certifies that</p>
+    <h1 id="studentName" class="cert-name"></h1>
+    <p class="cert-line">has successfully completed</p>
+
+    <h2 id="seasonTitle" class="cert-season">Season</h2>
+    <p id="seasonSubtitleText" class="cert-subtitle"></p>
+    <p class="cert-line">through the HCDC Illumination Portal.</p>
+
+    <div class="cert-divider" aria-hidden="true"><i></i></div>
+
+    <div class="cert-foot">
+      <div class="certificate-details">
+        <p><strong>Instructor</strong><span id="instructorName">Jornie Hinay</span></p>
+        <p><strong>Email</strong><span id="studentEmail"></span></p>
+        <p><strong>Date Completed</strong><span id="completionDate"></span></p>
+        <p><strong>Verification Code</strong><span id="verificationCode" class="cert-code"></span></p>
+      </div>
+
+      <div class="cert-qr" id="qrContainer"></div>
+
+      <div class="signature">
+        <div class="signature-line"></div>
+        <p class="cert-signer"><strong id="signatureName">Jornie Hinay</strong></p>
+        <p class="cert-role">Religious Education Instructor</p>
+      </div>
+    </div>
   </div>
 
-  <hr>
-
-  <h2 id="certTitle">Certificate of Season Completion</h2>
-
-  <p>This certifies that</p>
-
-  <h1 id="studentName"></h1>
-
-  <p>has successfully completed</p>
-
-  <h2 id="seasonTitle">Season</h2>
-  <p id="seasonSubtitleText"></p>
-
-  <p>through the HCDC Illumination Portal.</p>
-
-  <br>
-
-  <div class="certificate-details">
-    <p><strong>Instructor:</strong> <span id="instructorName">Jornie Hinay</span></p>
-    <p><strong>Email:</strong> <span id="studentEmail"></span></p>
-    <p><strong>Date Completed:</strong> <span id="completionDate"></span></p>
-    <p><strong>Verification Code:</strong> <span id="verificationCode"></span></p>
+  <div class="cert-actions">
+    <button id="downloadBtn" class="cert-btn">Download Certificate (PDF)</button>
+    <button id="classroomBtn" class="cert-btn ghost">Submit to Google Classroom</button>
+    <button id="dashboardBtn" class="cert-btn ghost">Back to Dashboard</button>
   </div>
-
-  <br>
-
-  <div id="qrContainer"></div>
-
-  <br><br>
-
-  <div class="signature">
-    <div class="signature-line"></div>
-    <p><strong id="signatureName">Jornie Hinay</strong></p>
-    <p>Religious Education Instructor</p>
-  </div>
-
-  <br>
-
-  <button id="downloadBtn">Download Certificate (PDF)</button>
-
-  <button id="classroomBtn">Submit to Google Classroom</button>
-
-  <button id="dashboardBtn">Back to Dashboard</button>
-
-</div>
+</main>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <script type="module" src="season-completion.js"></script>

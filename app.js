@@ -5,7 +5,7 @@ import { PIECE_CODES } from './codes.js';
 import { PIECE_LESSONS } from './lessons.js';
 import { logActivity } from './activity.js';
 import { getRankProgress, getSeasonStars, RANK_TIERS } from './rank.js';
-import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
+import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 
 // ================================
 // SETTINGS — adjust freely
@@ -47,37 +47,35 @@ function queuePopup(popup) {
   processPopupQueue();
 }
 
+// Resolvers waiting for the queue to run dry (the completion redirect
+// waits on this, so it never cuts a popup short).
+const popupsDoneWaiters = [];
+
+function whenPopupsDone() {
+  if (!popupBusy && popupQueue.length === 0) return Promise.resolve();
+  return new Promise((resolve) => popupsDoneWaiters.push(resolve));
+}
+
 function processPopupQueue() {
-  if (popupBusy || popupQueue.length === 0) return;
+  if (popupBusy) return;
+  if (popupQueue.length === 0) {
+    popupsDoneWaiters.splice(0).forEach((resolve) => resolve());
+    return;
+  }
   popupBusy = true;
 
   const item = popupQueue.shift();
 
   if (item.kind === 'star' || item.kind === 'rank') {
     ensureRankPopup();
-    const overlay = document.getElementById('rankPopup');
     if (item.kind === 'star') renderStarPopup(item);
     else renderRankPopup(item);
 
-    overlay.classList.remove('hidden');
-    requestAnimationFrame(() => overlay.classList.add('show'));
-
-    const dismiss = () => {
-      overlay.classList.remove('show');
-      setTimeout(() => {
-        overlay.classList.add('hidden');
-        popupBusy = false;
-        setTimeout(processPopupQueue, 300);
-      }, 300);
-    };
-
-    if (item.kind === 'rank') {
-      const btn = document.getElementById('rankPopupContinue');
-      const onClick = () => { btn.removeEventListener('click', onClick); dismiss(); };
-      btn.addEventListener('click', onClick);
-    } else {
-      setTimeout(dismiss, 3200);
-    }
+    // Waits for Continue (no auto-close: it was too fast to read).
+    openRankPopup().then(() => {
+      popupBusy = false;
+      setTimeout(processPopupQueue, 250);
+    });
     return;
   }
 
@@ -269,12 +267,9 @@ async function handleCodeSubmit() {
     icon: '🧩'
   });
 
-  let popupsQueued = 0;
-
   const lesson = (PIECE_LESSONS[`puzzle${puzzleNumber}`] || {})[pieceNumber];
   if (lesson) {
     showLesson(lesson);
-    popupsQueued++;
   }
 
   if (uploadedPieces.length === config.totalPieces) {
@@ -308,7 +303,6 @@ async function handleCodeSubmit() {
         'tickets.scrap_ticket': increment(2)
       });
       showAchievement(comp.title, comp.text, comp.icon);
-      popupsQueued++;
 
       logActivity({
         email, name, type: 'puzzle',
@@ -325,7 +319,6 @@ async function handleCodeSubmit() {
         justEarnedIndex: puzzleNumber - 1,
         subtitle: `${config.title} — ${config.subtitle}, completed`
       });
-      popupsQueued++;
 
       if (rankAfter.rank !== rankBefore.rank) {
         logActivity({
@@ -336,7 +329,6 @@ async function handleCodeSubmit() {
 
         const nextTier = RANK_TIERS.find((t) => t.rank === rankAfter.rank);
         showRankPopup({ rank: rankAfter.rank, seasonName: nextTier ? nextTier.seasonName : null });
-        popupsQueued++;
       }
     };
 
@@ -356,9 +348,10 @@ async function handleCodeSubmit() {
       }
     }
 
-    setTimeout(() => {
-      window.location.href = 'completion.html';
-    }, Math.max(3000, popupsQueued * 3300));
+    // On to the certificate once every popup has been read and closed.
+    whenPopupsDone().then(() => {
+      setTimeout(() => { window.location.href = 'completion.html'; }, 400);
+    });
   }
 }
 

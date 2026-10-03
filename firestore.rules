@@ -186,7 +186,7 @@ service cloud.firestore {
         'sideQuests', 'vaultGames', 'seenGameGuides',
         'vaultCapstoneGranted', 'vaultCapstoneKeyUsed', 'discipleBonusGranted',
         'hasSeenPrelimReminder',
-        'hasSeenFiesta75Announcement', 'legendaryCountdownStartedAt',
+        'hasSeenFiesta75Announcement', 'legendaryCountdownStartedAt', 'legendaryKeyUsedAt',
         'mustardSeed'
       ];
     }

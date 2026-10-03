@@ -6075,131 +6075,393 @@ body.season-page {
 }
 
 /* ================================
-   LEGENDARY COUNTDOWN — full-screen, unclosable, z-index above every
-   other overlay in the site (.tour-overlay 10050, .fiesta-popup
-   10100) since this one is meant to block the entire portal, not
-   stack alongside anything else.
+   LEGENDARY COUNTDOWN + LEGENDARY KEY — dark fantasy treatment (same
+   family as the Prelim reminder in prelimDeadline.js: obsidian card,
+   gold filigree corners, Cinzel, rising embers, carved rune tablets).
+   Full-screen and unclosable; z-index above every other overlay in the
+   site (.tour-overlay 10050, .fiesta-popup / reminders 10100, Roll of
+   Honor 10100) since this one blocks the entire portal.
+
+   Layout: the card never scrolls itself. The frame, corners and footer
+   (Sign Out) stay put and only .legendary-countdown-scroll moves, so
+   nothing gets cut off on laptop-height screens or phones.
+
+   Every button here restates margin/padding/background on :hover too,
+   since the global button / button:hover rules near the top of this
+   file would otherwise win the cascade.
    ================================ */
+@keyframes lcFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@keyframes lcRise { from { opacity: 0; transform: translateY(18px) scale(.96); } to { opacity: 1; transform: none; } }
+@keyframes lcEmber {
+  0% { transform: translate(0, 0) scale(1); opacity: 0; }
+  10% { opacity: 1; }
+  100% { transform: translate(var(--drift), -110vh) scale(.4); opacity: 0; }
+}
+@keyframes lcRunePulse {
+  0%, 100% { box-shadow: inset 0 0 12px rgba(0,0,0,.8), 0 0 0 rgba(255,120,40,0); }
+  50% { box-shadow: inset 0 0 12px rgba(0,0,0,.8), 0 0 14px rgba(255,120,40,.35); }
+}
+@keyframes lcShine { 0%, 60% { background-position: -150% 0; } 100% { background-position: 250% 0; } }
+
 .legendary-countdown-overlay {
   position: fixed;
   inset: 0;
   z-index: 20000;
-  background: radial-gradient(ellipse at center, #1D2233 0%, #05070d 80%);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
   box-sizing: border-box;
-  animation: fadeIn 0.4s ease;
+  overflow: hidden;
+  background:
+    radial-gradient(ellipse at 50% 110%, rgba(150,45,10,.5), transparent 55%),
+    radial-gradient(ellipse at center, #140d0a 0%, #000 85%);
+  animation: lcFadeIn .45s ease;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+}
+
+.legendary-countdown-embers { position: absolute; inset: 0; pointer-events: none; }
+.legendary-countdown-embers span {
+  position: absolute; bottom: -10px; left: var(--x);
+  width: var(--s); height: var(--s); border-radius: 50%;
+  background: radial-gradient(circle, #FFD08A 0%, #FF7A1A 45%, rgba(255,80,0,0) 70%);
+  animation: lcEmber var(--d) linear var(--delay) infinite;
+  opacity: 0;
 }
 
 .legendary-countdown-card {
+  position: relative;
   width: min(560px, 100%);
   max-height: calc(100vh - 32px);
-  overflow-y: auto;
-  text-align: center;
-  background: linear-gradient(160deg, #1D2233 0%, #0A0F22 100%);
-  border: 2px solid #FBBF24;
-  border-radius: 24px;
-  padding: 36px 28px;
+  max-height: calc(100dvh - 32px);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
   box-sizing: border-box;
-  box-shadow: 0 0 0 1px rgba(251,191,36,0.2), 0 0 100px rgba(251,191,36,0.15);
-  animation: popupScale 0.4s cubic-bezier(.2,.9,.3,1.2);
+  padding: 0;
+  color: #E8DCC4;
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(201,146,58,.18), transparent 60%),
+    radial-gradient(circle at 20% 85%, rgba(90,20,10,.28), transparent 50%),
+    linear-gradient(170deg, #1B1512 0%, #0E0A09 55%, #070505 100%);
+  border: 1px solid #6B4E1F;
+  border-radius: 6px;
+  box-shadow:
+    inset 0 0 0 4px #0E0A09,
+    inset 0 0 0 5px rgba(201,146,58,.55),
+    inset 0 0 60px rgba(0,0,0,.7),
+    0 0 0 1px #000,
+    0 30px 80px rgba(0,0,0,.85),
+    0 0 80px rgba(255,110,30,.14);
+  animation: lcRise .55s cubic-bezier(.2,.9,.3,1.1);
 }
 
+.legendary-countdown-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  margin: 6px 6px 0;
+  padding: 26px 24px 14px;
+  scrollbar-width: thin;
+  scrollbar-color: #6B4E1F transparent;
+}
+.legendary-countdown-scroll::-webkit-scrollbar { width: 8px; }
+.legendary-countdown-scroll::-webkit-scrollbar-track { background: transparent; }
+.legendary-countdown-scroll::-webkit-scrollbar-thumb { background: #6B4E1F; border-radius: 4px; }
+
+.legendary-countdown-foot { position: relative; flex-shrink: 0; padding: 4px 30px 22px; }
+/* Fade above the footer: the cue that the middle scrolls on phones. */
+.legendary-countdown-foot::before {
+  content: '';
+  position: absolute; left: 6px; right: 6px; top: -18px; height: 18px; pointer-events: none;
+  background: linear-gradient(180deg, rgba(9,6,5,0), rgba(9,6,5,.95));
+}
+
+.legendary-countdown-corner { position: absolute; width: 46px; height: 46px; pointer-events: none; z-index: 1; }
+.legendary-countdown-corner svg { display: block; width: 100%; height: 100%; }
+.legendary-countdown-corner.tl { top: 2px; left: 2px; }
+.legendary-countdown-corner.tr { top: 2px; right: 2px; transform: scaleX(-1); }
+.legendary-countdown-corner.bl { bottom: 2px; left: 2px; transform: scaleY(-1); }
+.legendary-countdown-corner.br { bottom: 2px; right: 2px; transform: scale(-1, -1); }
+
 .legendary-countdown-kicker {
-  text-transform: uppercase;
-  letter-spacing: 2px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #FBBF24;
   margin: 0 0 10px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: 11.5px;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: #C9923A;
 }
 
 .legendary-countdown-heading {
-  margin: 0 0 14px;
-  font-size: 26px;
-  color: #FDE68A;
-  text-shadow: 0 0 24px rgba(251,191,36,0.4);
+  margin: 0;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: 27px;
+  line-height: 1.2;
+  letter-spacing: .5px;
+  text-wrap: balance;
+  background: linear-gradient(100deg, #E9B85A 0%, #FFF6D8 45%, #E9B85A 55%, #9C6A22 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 rgba(0,0,0,.8)) drop-shadow(0 0 14px rgba(233,184,90,.25));
+  animation: lcShine 6s ease-in-out infinite;
 }
+
+.legendary-countdown-divider { display: flex; align-items: center; gap: 10px; margin: 14px 0 16px; }
+.legendary-countdown-divider::before,
+.legendary-countdown-divider::after {
+  content: ''; flex: 1; height: 1px;
+  background: linear-gradient(90deg, transparent, #C9923A 40%, #C9923A 60%, transparent);
+}
+.legendary-countdown-divider i { width: 8px; height: 8px; transform: rotate(45deg); background: #E9B85A; box-shadow: 0 0 8px rgba(233,184,90,.7); }
 
 .legendary-countdown-sub {
-  margin: 0 0 26px;
+  margin: 0 0 20px;
   font-size: 14.5px;
-  line-height: 1.6;
-  color: #D7E3F0;
+  line-height: 1.65;
+  color: #D6C8AE;
+}
+.legendary-countdown-sub strong { color: #FFE2A8; }
+
+.legendary-countdown-label {
+  margin: 0 0 10px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: 12px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #D98A4A;
 }
 
+/* Five carved rune tablets, always on one row. */
 .legendary-countdown-timer {
   display: flex;
   justify-content: center;
-  gap: 10px;
-  margin-bottom: 22px;
-  flex-wrap: wrap;
+  gap: 7px;
+  margin: 0 0 18px;
+  flex-wrap: nowrap;
 }
 
 .legendary-countdown-unit {
-  background: rgba(251,191,36,0.08);
-  border: 1px solid rgba(251,191,36,0.35);
-  border-radius: 14px;
-  padding: 12px 14px;
-  min-width: 64px;
+  flex: 1 1 0;
+  min-width: 0;
+  max-width: 92px;
+  padding: 11px 4px 8px;
+  border-radius: 4px;
+  background: linear-gradient(180deg, #2A221D 0%, #15100D 100%);
+  border: 1px solid #4A3820;
+  box-shadow: inset 0 0 12px rgba(0,0,0,.8);
+  animation: lcRunePulse 3s ease-in-out infinite;
 }
 
 .legendary-countdown-unit span {
   display: block;
-  font-family: 'Cinzel', serif;
-  font-size: 26px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 30px;
   font-weight: 700;
-  color: #FBBF24;
-  text-shadow: 0 0 14px rgba(251,191,36,0.4);
+  line-height: 1;
+  color: #FFD9A0;
+  text-shadow: 0 0 10px rgba(255,130,40,.6), 0 2px 0 #000;
   font-variant-numeric: tabular-nums;
 }
 
 .legendary-countdown-unit.legendary-countdown-ms span {
-  font-size: 20px;
-  color: #9CA9C4;
-  text-shadow: none;
+  font-size: 22px;
+  line-height: 30px;
+  color: #B79B72;
+  text-shadow: 0 2px 0 #000;
 }
 
 .legendary-countdown-unit label {
   display: block;
-  font-size: 10.5px;
+  margin-top: 6px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 9.5px;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
-  letter-spacing: 1px;
-  color: #9CA9C4;
-  margin-top: 4px;
+  color: #A89272;
 }
 
 .legendary-countdown-note {
+  margin: 0 0 4px;
   font-size: 12.5px;
-  color: #9CA9C4;
-  margin: 0 0 16px;
+  font-style: italic;
+  color: #A89272;
 }
 
-.legendary-countdown-signout {
-  background: rgba(255,255,255,0.08);
-  color: white;
-  border: 1px solid rgba(255,255,255,0.18);
-  border-radius: 12px;
-  padding: 12px 24px;
-  font-size: 14px;
-  font-weight: 700;
+.legendary-countdown-signout,
+.legendary-countdown-signout:hover {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 4px;
   cursor: pointer;
+  font-family: 'Cinzel', Georgia, serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #D6C8AE;
+  background: rgba(255,255,255,.04);
+  border: 1px solid #4A3820;
 }
 
 .legendary-countdown-signout:hover {
-  background: rgba(255,255,255,0.14);
+  color: #FFE2A8;
+  background: rgba(233,184,90,.08);
+  border-color: #8A6626;
+}
+
+.legendary-countdown-signout:focus-visible,
+.legendary-key-btn:focus-visible {
+  outline: 2px solid #FFE7A8;
+  outline-offset: 3px;
+}
+
+/* ---- The Legendary Key: shown when the 15-day forge is done. Tapping
+   it turns the key (rotateX reads as a key turning in a lock), flashes
+   gold, and opens the Comprehensive Final Exam. The image is a
+   transparent cut-out, so the glow follows the key's own shape. ---- */
+.legendary-key-stage { position: relative; margin: 2px 0 6px; }
+
+/* Light rays behind the key, like a relic on an altar. They stay inside
+   the stage box (inset: 0 + an elliptical fade) -- drawn any bigger,
+   they count as scrollable overflow and put scrollbars on the card. */
+.legendary-key-stage::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-conic-gradient(from 0deg at 50% 50%, rgba(255,210,110,.17) 0deg 7deg, transparent 7deg 18deg);
+  -webkit-mask-image: radial-gradient(ellipse closest-side, #000 35%, transparent 100%);
+  mask-image: radial-gradient(ellipse closest-side, #000 35%, transparent 100%);
+  animation: legendaryKeyRaysPulse 4s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.legendary-key-btn,
+.legendary-key-btn:hover,
+.legendary-key-btn:disabled {
+  position: relative;
+  display: block;
+  width: min(400px, 100%);
+  margin: 0 auto;
+  padding: 16px 0;
+  background: none;
+  border: none;
+  border-radius: 18px;
+  cursor: pointer;
+  opacity: 1;
+}
+
+.legendary-key-glow {
+  position: absolute;
+  inset: -4% 6%;
+  border-radius: 50%;
+  background: radial-gradient(ellipse at center, rgba(253,230,138,0.34) 0%, rgba(251,191,36,0.12) 45%, transparent 72%);
+  filter: blur(6px);
+  animation: legendaryKeyGlow 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.legendary-key-btn img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: brightness(1.15) drop-shadow(0 0 10px rgba(251,191,36,0.4));
+  animation: legendaryKeyFloat 3.4s ease-in-out infinite;
+  transition: filter 0.25s ease;
+}
+
+.legendary-key-btn:hover img {
+  filter: brightness(1.35) drop-shadow(0 0 18px rgba(251,191,36,0.65));
+}
+
+.legendary-key-hint {
+  margin: 0 0 4px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: #FFE2A8;
+  text-shadow: 0 0 12px rgba(255,190,80,.45);
+  animation: legendaryHintPulse 2.2s ease-in-out infinite;
+}
+
+.legendary-countdown-overlay.turning .legendary-key-btn { cursor: default; }
+.legendary-countdown-overlay.turning .legendary-key-btn img { animation: legendaryKeyTurn 1.5s cubic-bezier(.45,.05,.3,1) forwards; }
+.legendary-countdown-overlay.turning .legendary-key-glow { animation: legendaryKeyGlowBurst 1.5s ease-out forwards; }
+.legendary-countdown-overlay.turning .legendary-key-hint { animation: none; }
+
+.legendary-key-flash {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  opacity: 0;
+  background: radial-gradient(circle at center, rgba(255,247,214,0.97) 0%, rgba(253,230,138,0.6) 35%, rgba(251,191,36,0) 72%);
+}
+.legendary-countdown-overlay.opened .legendary-key-flash { animation: legendaryKeyFlash 0.9s ease-out forwards; }
+
+@keyframes legendaryKeyRaysPulse { 0%, 100% { opacity: .7; } 50% { opacity: 1; } }
+@keyframes legendaryKeyFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+@keyframes legendaryKeyGlow { 0%, 100% { opacity: 0.65; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } }
+@keyframes legendaryHintPulse { 0%, 100% { opacity: 0.6; } 50% { opacity: 1; } }
+/* Slides in toward the lock, turns a quarter (rotateX flattens the side
+   view, like a key rotating), then settles back blazing. */
+@keyframes legendaryKeyTurn {
+  0% { transform: translateX(0) perspective(700px) rotateX(0deg); }
+  35% { transform: translateX(-22px) perspective(700px) rotateX(0deg); }
+  70% { transform: translateX(-22px) perspective(700px) rotateX(78deg); }
+  100% { transform: translateX(-22px) perspective(700px) rotateX(0deg) scale(1.04); filter: brightness(1.6) drop-shadow(0 0 26px rgba(253,230,138,0.9)); }
+}
+@keyframes legendaryKeyGlowBurst { 0% { opacity: 0.8; transform: scale(1); } 100% { opacity: 1; transform: scale(1.5); } }
+@keyframes legendaryKeyFlash { 0% { opacity: 0; } 40% { opacity: 1; } 100% { opacity: 1; } }
+
+/* Laptop-height screens and phones: tighten so the card fits without
+   scrolling wherever it can. */
+@media (max-height: 760px), (max-width: 480px) {
+  .legendary-countdown-scroll { padding-top: 20px; }
+  .legendary-countdown-heading { font-size: 23px; }
+  .legendary-countdown-divider { margin: 10px 0 12px; }
+  .legendary-countdown-sub { font-size: 13.5px; line-height: 1.55; margin-bottom: 14px; }
+  .legendary-countdown-label { margin-bottom: 8px; }
+  .legendary-countdown-timer { margin-bottom: 12px; }
+  .legendary-countdown-unit { padding: 8px 3px 6px; }
+  .legendary-countdown-unit span { font-size: 25px; }
+  .legendary-countdown-unit.legendary-countdown-ms span { font-size: 18px; line-height: 25px; }
+  .legendary-key-btn, .legendary-key-btn:hover, .legendary-key-btn:disabled { padding: 10px 0; width: min(360px, 100%); }
+  .legendary-countdown-foot { padding: 4px 30px 18px; }
 }
 
 @media (max-width: 480px) {
-  .legendary-countdown-card { padding: 26px 18px; }
+  .legendary-countdown-scroll { padding: 18px 14px 14px; }
+  .legendary-countdown-foot { padding: 4px 18px 16px; }
+  .legendary-countdown-corner { width: 34px; height: 34px; }
+  .legendary-countdown-kicker { font-size: 10.5px; letter-spacing: 2px; }
   .legendary-countdown-heading { font-size: 21px; }
-  .legendary-countdown-sub { font-size: 13.5px; }
-  .legendary-countdown-unit { min-width: 50px; padding: 9px 8px; }
-  .legendary-countdown-unit span { font-size: 19px; }
-  .legendary-countdown-unit.legendary-countdown-ms span { font-size: 15px; }
-  .legendary-countdown-timer { gap: 6px; }
+  .legendary-countdown-label { font-size: 10.5px; letter-spacing: 1px; }
+  .legendary-countdown-timer { gap: 5px; }
+  .legendary-countdown-unit span { font-size: 21px; }
+  .legendary-countdown-unit.legendary-countdown-ms span { font-size: 15px; line-height: 21px; }
+  .legendary-countdown-unit label { font-size: 8.5px; letter-spacing: .5px; }
+  .legendary-key-hint { font-size: 11.5px; letter-spacing: 1px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .legendary-countdown-overlay, .legendary-countdown-card, .legendary-countdown-heading,
+  .legendary-countdown-unit, .legendary-key-glow, .legendary-key-btn img,
+  .legendary-key-hint, .legendary-key-stage::before { animation: none; }
+  .legendary-countdown-embers { display: none; }
+  .legendary-countdown-overlay.turning .legendary-key-btn img { animation: none; }
 }
 
 @media (max-width: 700px) {

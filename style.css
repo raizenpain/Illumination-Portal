@@ -5968,6 +5968,25 @@ body.season-page {
   margin-right: auto;
 }
 
+/* Footer "Patch Notes" link (patchNotes.js). Restated on :hover so the
+   global button rules don't paint it teal. */
+.patch-notes-link,
+.patch-notes-link:hover {
+  margin: 0 0 4px;
+  padding: 6px 14px;
+  border-radius: 999px;
+  border: 1px solid rgba(226,81,42,.55);
+  background: rgba(226,81,42,.08);
+  color: #F08A5D;
+  font-family: 'Cinzel', serif;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  cursor: pointer;
+}
+.patch-notes-link:hover { background: rgba(226,81,42,.18); color: #FFB08A; border-color: #E2512A; }
+.patch-notes-link:focus-visible { outline: 2px solid #E2512A; outline-offset: 2px; }
+
 .dashboard-footer-credits {
   font-size: 11px;
   color: #9CA3AF;

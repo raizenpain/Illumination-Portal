@@ -332,6 +332,7 @@
   </div>
 
   <footer class="dashboard-footer">
+    <p><button type="button" class="patch-notes-link" id="patchNotesLink">📜 Patch Notes</button></p>
     <p>© 2026 Holy Cross of Davao College. All Rights Reserved.</p>
     <p class="dashboard-footer-credits">
       Game concept inspired by Dota 2, © Valve Corporation. Artifact and Side Quest treasure icons © Valve Corporation.
@@ -431,6 +432,9 @@ import { showHonorPopup, renderHonorStrip } from './midtermHonorRoll.js';
 import { maybeShowFinale, awardFinalGift } from './journeyFinale.js';
 import { renderCertificateShelf } from './certificates.js';
 import { maybeShowRefundNotice } from './refundNotice.js';
+import { maybeShowPatchNotes, showPatchNotes } from './patchNotes.js';
+
+document.getElementById('patchNotesLink')?.addEventListener('click', () => showPatchNotes());
 import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
 const { email, name } = requireLogin();
@@ -737,6 +741,7 @@ async function loadStudentCard() {
       });
       if (discipleBonusJustGranted) await showDiscipleBonusReveal();
       await maybeShowRefundNotice({ email, data, isAdmin: isSeasonPreviewAdmin });
+      await maybeShowPatchNotes();
       // The end of the whole journey: "Your Pilgrimage Is Complete" after
       // the Final Reflection, then "The Legendary Is Forged" (each once).
       await craftingReady;

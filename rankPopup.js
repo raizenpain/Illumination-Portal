@@ -157,6 +157,20 @@ export function renderRankPopup(info) {
   setRewards(null);
 }
 
+// A general notice in the same style (e.g. refundNotice.js).
+// info: { kicker, sub, icon, eyebrow, heading, detail, rewards?: [html] }
+export function renderNoticePopup(info) {
+  setVariant('notice');
+  document.getElementById('rankPopupKicker').textContent = info.kicker || '';
+  document.getElementById('rankPopupSub').textContent = info.sub || '';
+  document.getElementById('rankPopupIcon').textContent = info.icon || '✦';
+  document.getElementById('rankPopupEyebrow').textContent = info.eyebrow || '';
+  document.getElementById('rankPopupHeading').textContent = info.heading || '';
+  document.getElementById('rankPopupStars').classList.add('hidden');
+  document.getElementById('rankPopupDetail').textContent = info.detail || '';
+  setRewards(info.rewards || null);
+}
+
 // info: { seasonName, subtitle, tokenBonus }
 export function renderChampionPopup(info) {
   setVariant('champion');

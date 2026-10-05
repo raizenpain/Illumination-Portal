@@ -430,6 +430,7 @@ import { maybeShowPrelimReminder } from './prelimDeadline.js';
 import { showHonorPopup, renderHonorStrip } from './midtermHonorRoll.js';
 import { maybeShowFinale, awardFinalGift } from './journeyFinale.js';
 import { renderCertificateShelf } from './certificates.js';
+import { maybeShowRefundNotice } from './refundNotice.js';
 import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
 const { email, name } = requireLogin();
@@ -735,6 +736,7 @@ async function loadStudentCard() {
         isAdmin: isSeasonPreviewAdmin
       });
       if (discipleBonusJustGranted) await showDiscipleBonusReveal();
+      await maybeShowRefundNotice({ email, data, isAdmin: isSeasonPreviewAdmin });
       // The end of the whole journey: "Your Pilgrimage Is Complete" after
       // the Final Reflection, then "The Legendary Is Forged" (each once).
       await craftingReady;

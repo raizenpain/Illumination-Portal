@@ -836,6 +836,25 @@ export const SEASON_CONTENT = {
           }
         ]
       },
+      // Game chapter (Jornie, 2026-10-05): after "David and Goliath", raise
+      // the wall of Solomon's Temple stone by stone (templeBuilder.js).
+      // No questions and NO star (noStar), but it must be cleared to
+      // continue; same rewards as the other game chapters (30 of each).
+      {
+        chapterId: 'final_temple',
+        chapterTitle: "Building Solomon's Temple",
+        basedOn: 'Game — raise the wall of the First Temple with King Solomon, one course of stone at a time (1 Kgs 6). No questions, no star.',
+        noStar: true,
+        chapterBonus: 20,
+        clearedLabel: 'The Temple Is Raised',
+        clearedIcon: '🏛️',
+        nodes: [
+          {
+            nodeId: 'fnt_n1', type: 'game', game: 'templeBuilder', title: 'Raise the Temple Wall',
+            prompt: 'Set each swinging stone squarely on the wall and lay twelve courses without cracking three stones.'
+          }
+        ]
+      },
       {
         chapterId: 'final_ch7',
         chapterTitle: 'A Kingdom Divided and Exiled',

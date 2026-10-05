@@ -50,7 +50,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: Crossing the Red Sea',
             items: [
-              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 14)',
+              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 15)',
               ['Lead Moses and the Israelites through the sea before Pharaoh\'s chariots catch up', [
                 'Move between five lanes with ◀ ▶, the arrow keys, a swipe, or a tap on either side',
                 'Rocks make the people stumble, and the chariots gain on you',
@@ -69,7 +69,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: Ascent of Mount Sinai',
             items: [
-              'A second game chapter right after "The Covenant at Sinai" (now Chapter 6 of 14)',
+              'A second game chapter right after "The Covenant at Sinai" (now Chapter 6 of 15)',
               ['Climb the mountain as Moses, through the storm, to receive the tablets of the covenant', [
                 'Moses leaps by himself. Hold ◀ ▶, the arrow keys, or a side of the mountain to steer him',
                 'Stone ledges are safe. Cracked ledges crumble after one step',
@@ -88,7 +88,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: David and Goliath',
             items: [
-              'A third game chapter right after "A Kingdom United" (now Chapter 9 of 14)',
+              'A third game chapter right after "A Kingdom United" (now Chapter 9 of 15)',
               ['Face the giant in the Valley of Elah with a sling and five smooth stones', [
                 'A marker slides along the bar. Tap Sling! (or Space) while it is inside the gold zone to strike Goliath',
                 'Outside the gold zone the stone only rings off his armor, and he strides closer',
@@ -101,6 +101,25 @@ export const PATCHES = [
               'No star is earned, and the Final Season still has the same 12 stars',
               'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
               'Defeated? Nothing is lost. Try again as many times as you need'
+            ]
+          },
+          {
+            title: "New Chapter: Building Solomon's Temple",
+            items: [
+              'A fourth game chapter right after "David and Goliath" (now Chapter 10 of 15)',
+              ["Raise the wall of the First Temple with King Solomon's builders", [
+                'A stone swings across on the hoist. Tap Set the Stone (or Space) when it is right above the wall',
+                'Whatever hangs over the edge is cut away, so the wall and the next stone become narrower',
+                'A perfect stone keeps its full size and widens the wall a little',
+                'A stone that misses the wall cracks. You have 3 chances',
+                'The higher the wall, the faster the stone swings',
+                'From the seventh course, gusts of wind make the stone speed up and slow down',
+                'Lay twelve courses to finish the wall'
+              ]],
+              'Tap "How to Play" anytime for the full guide',
+              'No star is earned, and the Final Season still has the same 12 stars',
+              'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
+              'Three stones cracked? Nothing is lost. Try again as many times as you need'
             ]
           }
         ]

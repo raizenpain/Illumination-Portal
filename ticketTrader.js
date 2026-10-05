@@ -19,9 +19,12 @@
 
 import { db, doc, runTransaction } from './firebase.js';
 
-const SAME_COUNT = 12;
-const ANY_COUNT = 24;
-const SCRAP_COUNT = 45;
+// Tripled on 2026-10-05 (were 12 / 24 / 45) to balance the bigger
+// season rewards (+5 of every ticket per task and per chapter). The
+// matching labels are in dashboard.html's Ticket Trader modal.
+const SAME_COUNT = 36;
+const ANY_COUNT = 72;
+const SCRAP_COUNT = 135;
 
 export const TICKET_INFO = {
   quiz_ticket: { icon: '📝', label: 'Sigil of Insight' },

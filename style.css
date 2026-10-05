@@ -3941,6 +3941,11 @@ body.cert-page {
   color: #D7E3F0;
 }
 
+/* season.js puts the task's "Earned: ..." tickets on a second line. */
+#achievementText {
+  white-space: pre-line;
+}
+
 /* ============================================
    TREASURE REVEAL — the "open the treasure" moment shown by
    treasureReveal.js on Side Quest completion (crossword, fishing's
@@ -4513,6 +4518,11 @@ body.cert-page {
   box-shadow: 0 0 16px rgba(255,180,60,.25);
 }
 .popup-reward img { width: 22px; height: 22px; object-fit: contain; }
+/* A chapter's five ticket chips: smaller, so they sit in two tidy rows. */
+.popup-overlay[data-kind="star"] .popup-rewards { gap: 6px; margin-top: 14px; }
+.popup-overlay[data-kind="star"] .popup-reward { gap: 6px; padding: 6px 12px; font-size: 12px; letter-spacing: .3px; }
+.popup-overlay[data-kind="star"] .popup-reward img { width: 18px; height: 18px; }
+.popup-reward-icon { display: inline-flex; align-items: center; font-size: 15px; line-height: 1; }
 
 /* Continue — every value restated on :hover (the global button:hover
    in this file would otherwise win). Dimmed until it wakes up. */

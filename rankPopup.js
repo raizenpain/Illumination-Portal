@@ -120,7 +120,8 @@ function setRewards(items) {
   el.classList.toggle('hidden', !items || items.length === 0);
 }
 
-// info: { rank, stars, justEarnedIndex, subtitle }
+// info: { rank, stars, justEarnedIndex, subtitle, rewards? }
+// rewards: [{ icon, label, amount }] — the chapter's ticket bonus.
 export function renderStarPopup(info) {
   setVariant('star');
   document.getElementById('rankPopupKicker').textContent = '✦ A Star Ignites! ✦';
@@ -139,7 +140,7 @@ export function renderStarPopup(info) {
   document.getElementById('rankPopupDetail').textContent = remaining > 0
     ? `${remaining} more star${remaining === 1 ? '' : 's'} in ${info.rank}.`
     : `Every star of ${info.rank} now burns bright.`;
-  setRewards(null);
+  setRewards((info.rewards || []).map((r) => `<span class="popup-reward-icon">${r.icon}</span> +${r.amount} ${r.label}`));
 }
 
 // info: { rank, seasonName }

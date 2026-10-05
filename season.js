@@ -170,14 +170,15 @@ function renderTicketBar(chapter) {
 
   Object.keys(TICKET_INFO).forEach((key) => { required[key] = 0; current[key] = 0; });
 
+  const add = (into, rewards) => Object.entries(rewards).forEach(([k, n]) => { into[k] = (into[k] || 0) + n; });
   chapter.nodes.forEach((node) => {
-    if (!node.ticketReward) return;
-    const amount = ticketAmountFor(node);
-    required[node.ticketReward] = (required[node.ticketReward] || 0) + amount;
-    if (completedNodes[node.nodeId]) {
-      current[node.ticketReward] = (current[node.ticketReward] || 0) + amount;
-    }
+    const rewards = nodeTicketRewards(node, chapter);
+    add(required, rewards);
+    if (completedNodes[node.nodeId]) add(current, rewards);
   });
+  const bonus = chapterBonusFor(chapter);
+  add(required, bonus);
+  if (isChapterComplete(chapter, studentData)) add(current, bonus);
 
   const scrapTotal = (studentData.tickets && studentData.tickets.scrap_ticket) || 0;
 
@@ -571,6 +572,41 @@ function ticketAmountFor(node) {
 // completion, handled below via chapterJustCompleted.
 const CAPSTONE_BONUS = { semifinal_ch7: 2, final_ch11: 8 };
 
+// Normal (non-exam) chapters, Jornie 2026-10-05: every task also gives
+// +5 of EVERY ticket type on top of its usual ticket, and finishing the
+// chapter gives +5 of every type too (shown on "A Star Ignites!").
+const NORMAL_TASK_BONUS = 5;
+const NORMAL_CHAPTER_BONUS = 5;
+const ALL_TICKET_TYPES = ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket', 'scrap_ticket'];
+const isNormalChapter = (chapter) => !(chapter.chapterId in CAPSTONE_BONUS);
+
+/** Every ticket one task pays out, by type (the Ember Shard included). */
+function nodeTicketRewards(node, chapter) {
+  const rewards = {};
+  const add = (type, n) => { rewards[type] = (rewards[type] || 0) + n; };
+  if (node.ticketReward) add(node.ticketReward, ticketAmountFor(node));
+  // Ember Shard: 1 on every task, even the no-ticket exam chapters, so
+  // they still feed the Ember Shard catch-up trade.
+  add('scrap_ticket', 1);
+  if (isNormalChapter(chapter)) ALL_TICKET_TYPES.forEach((type) => add(type, NORMAL_TASK_BONUS));
+  return rewards;
+}
+
+// Short names for the one-line "Earned:" summary on the task popup.
+const TICKET_SHORT = { quiz_ticket: 'Sigil', task_ticket: 'Seal', journal_ticket: 'Scroll', recitation_ticket: 'Herald', scrap_ticket: 'Ember Shard' };
+const ticketSummary = (rewards) => ALL_TICKET_TYPES.filter((t) => rewards[t]).map((t) => `+${rewards[t]} ${TICKET_SHORT[t]}`).join(' · ');
+
+/** The one-time bonus for finishing a whole chapter, by type. */
+function chapterBonusFor(chapter) {
+  const rewards = {};
+  if (isNormalChapter(chapter)) {
+    ALL_TICKET_TYPES.forEach((type) => { rewards[type] = NORMAL_CHAPTER_BONUS; });
+  } else {
+    ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket'].forEach((type) => { rewards[type] = CAPSTONE_BONUS[chapter.chapterId]; });
+  }
+  return rewards;
+}
+
 // Finishing the ENTIRE Semifinal or Final season is worth an Artifact
 // Unlock Token outright, on top of whatever tickets/tokens the
 // student earned along the way. Prelim/Midterm deliberately excluded.
@@ -590,16 +626,12 @@ async function awardNode(node, submissionText) {
   };
 
   const tickets = { ...(studentData.tickets || {}) };
-  if (node.ticketReward) {
-    const amount = ticketAmountFor(node);
-    tickets[node.ticketReward] = (tickets[node.ticketReward] || 0) + amount;
-    addTicketDelta(node.ticketReward, amount);
-  }
-  // Ember Shard — awarded on every node completion, regardless of
-  // ticketReward, so even the no-ticket capstone chapters still feed
-  // the Ember Shard catch-up trade. Always exactly 1, never scaled.
-  tickets.scrap_ticket = (tickets.scrap_ticket || 0) + 1;
-  addTicketDelta('scrap_ticket', 1);
+  const chapter = content.chapters[chapterIndex];
+  const taskRewards = nodeTicketRewards(node, chapter);
+  Object.entries(taskRewards).forEach(([type, amount]) => {
+    tickets[type] = (tickets[type] || 0) + amount;
+    addTicketDelta(type, amount);
+  });
 
   const completedNodes = { ...(studentData.completedNodes || {}), [node.nodeId]: true };
   const checkData = { ...studentData, completedNodes };
@@ -609,17 +641,14 @@ async function awardNode(node, submissionText) {
     nodeSubmissions[node.nodeId] = submissionText;
   }
 
-  const chapter = content.chapters[chapterIndex];
   const chapterJustCompleted = isChapterComplete(chapter, checkData);
   const seasonJustCompleted = content.chapters.every((ch) => isChapterComplete(ch, checkData));
 
-  const capstoneBonus = CAPSTONE_BONUS[chapter.chapterId];
-  if (chapterJustCompleted && capstoneBonus) {
-    ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket'].forEach((type) => {
-      tickets[type] = (tickets[type] || 0) + capstoneBonus;
-      addTicketDelta(type, capstoneBonus);
-    });
-  }
+  const chapterBonus = chapterJustCompleted ? chapterBonusFor(chapter) : {};
+  Object.entries(chapterBonus).forEach(([type, amount]) => {
+    tickets[type] = (tickets[type] || 0) + amount;
+    addTicketDelta(type, amount);
+  });
 
   const rankBefore = getRankProgress(studentData);
   const rankAfter = getRankProgress(checkData);
@@ -632,7 +661,7 @@ async function awardNode(node, submissionText) {
   if (!achievements.includes(taskId)) {
     achievements.push(taskId);
     newAchievementIds.push(taskId);
-    showAchievement(node.title, `Task completed — ${content.seasonName}`, NODE_TYPE_ICON[node.type]);
+    showAchievement(node.title, `Task completed — ${content.seasonName}\nEarned: ${ticketSummary(taskRewards)}`, NODE_TYPE_ICON[node.type]);
   }
 
   const chId = chapterBadgeId(chapter.chapterId);
@@ -699,7 +728,8 @@ async function awardNode(node, submissionText) {
       rank: rankBefore.rank,
       stars: getSeasonStars(seasonId, checkData),
       justEarnedIndex: chapterIndex,
-      subtitle: `${chapter.chapterTitle} — ${content.seasonName}`
+      subtitle: `${chapter.chapterTitle} — ${content.seasonName}`,
+      rewards: Object.entries(chapterBonus).map(([type, amount]) => ({ icon: TICKET_INFO[type].icon, label: TICKET_INFO[type].label, amount }))
     });
   }
 

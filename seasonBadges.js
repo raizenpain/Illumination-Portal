@@ -37,7 +37,7 @@ function findChapter(chapterId) {
   return null;
 }
 
-// Returns { icon, title, sub } for a task_/chapter_/season_ badge id,
+// Returns { icon, title, sub, seasonId } for a task_/chapter_/season_ badge id,
 // or null if the id doesn't match one of those patterns (caller
 // should fall back to the static Prelim BADGE_INFO table).
 export function resolveSeasonBadge(id) {
@@ -47,7 +47,8 @@ export function resolveSeasonBadge(id) {
     return {
       icon: NODE_TYPE_ICON[found.node.type] || '🎖️',
       title: found.node.title,
-      sub: `Task completed — ${found.season.seasonName}`
+      sub: `Task completed — ${found.season.seasonName}`,
+      seasonId: found.season.seasonId
     };
   }
 
@@ -57,7 +58,8 @@ export function resolveSeasonBadge(id) {
     return {
       icon: '🏁',
       title: found.chapter.chapterTitle,
-      sub: `Chapter completed — ${found.season.seasonName}`
+      sub: `Chapter completed — ${found.season.seasonName}`,
+      seasonId: found.season.seasonId
     };
   }
 
@@ -68,7 +70,8 @@ export function resolveSeasonBadge(id) {
     return {
       icon: '👑',
       title: `${season.seasonName} Champion`,
-      sub: season.subtitle
+      sub: season.subtitle,
+      seasonId
     };
   }
 

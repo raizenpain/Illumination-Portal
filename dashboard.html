@@ -295,8 +295,8 @@
       <div class="badge-section">
         <span class="section-kicker">Milestones</span>
         <h3>Achievements</h3>
-        <p class="section-subtitle">Badges you've earned so far</p>
-        <div id="badgeContainer" class="badge-grid">
+        <p class="section-subtitle">Tap a season, Side Quests or the Sanctuarium to see its badges</p>
+        <div id="badgeContainer" class="badge-groups">
           <p>No achievements yet.</p>
         </div>
 
@@ -969,28 +969,89 @@ function renderVaultGames(data) {
   section.classList.remove('hidden');
 }
 
+// Achievements, grouped (Jornie 2026-10-05): one row per season / Side
+// Quests / Vault Games with a badge count; tapping a row opens just that
+// group's badges, so the panel stays short however many are earned.
+const BADGE_GROUPS = [
+  { id: 'prelim', icon: '🧩', name: 'Prelim Season', sub: 'Puzzles' },
+  { id: 'midterm', icon: '🌅', name: 'Midterm Season', sub: 'The Creation' },
+  { id: 'semifinal', icon: '🌑', name: 'Semifinal Season', sub: 'The Destruction' },
+  { id: 'final', icon: '🌄', name: 'Final Season', sub: "God's Action" },
+  { id: 'sidequest', icon: '🧭', name: 'Side Quests', sub: 'Limited-time quests' },
+  { id: 'vault', icon: '🗝️', name: 'The Sanctuarium', sub: 'Vault Games' },
+  // Only appears for accounts that actually have these badges.
+  { id: 'mustardseed', icon: '🌱', name: 'The Mustard Seed', sub: 'Growing faith', hideWhenEmpty: true }
+];
+const OPEN_BADGE_GROUP_KEY = 'openBadgeGroup';
+
+function badgeInfoWithGroup(id) {
+  if (PRELIM_BADGE_INFO[id]) return { ...PRELIM_BADGE_INFO[id], group: 'prelim' };
+  const season = resolveSeasonBadge(id);
+  if (season) return { ...season, group: season.seasonId };
+  const quest = resolveSideQuestBadge(id);
+  if (quest) return { ...quest, group: 'sidequest' };
+  const vault = resolveVaultGameBadge(id);
+  if (vault) return { ...vault, group: 'vault' };
+  const seed = resolveMustardSeedBadge(id);
+  if (seed) return { ...seed, group: 'mustardseed' };
+  return null;
+}
+
 function renderBadges(achievements) {
   const badgeContainer = document.getElementById('badgeContainer');
+  const byGroup = Object.fromEntries(BADGE_GROUPS.map((g) => [g.id, []]));
+  achievements.forEach((id) => {
+    const info = badgeInfoWithGroup(id);
+    if (info && byGroup[info.group]) byGroup[info.group].push(info);
+  });
+  const total = Object.values(byGroup).reduce((n, list) => n + list.length, 0);
 
-  if (achievements.length === 0) {
-    badgeContainer.innerHTML = '<p>No achievements yet.</p>';
-    return;
-  }
+  let openId = null;
+  try { openId = localStorage.getItem(OPEN_BADGE_GROUP_KEY); } catch (e) { /* storage blocked */ }
 
-  badgeContainer.innerHTML = '';
+  badgeContainer.innerHTML = `
+    <p class="badge-groups-total"><strong>${total}</strong> badge${total === 1 ? '' : 's'} earned</p>
+    ${BADGE_GROUPS.filter((g) => !(g.hideWhenEmpty && byGroup[g.id].length === 0)).map((g) => {
+      const list = byGroup[g.id];
+      const open = list.length > 0 && openId === g.id;
+      return `
+      <div class="badge-group${list.length ? '' : ' is-empty'}${open ? ' is-open' : ''}" data-group="${g.id}">
+        <button type="button" class="badge-group-head" aria-expanded="${open}" aria-controls="badgeGroup-${g.id}" ${list.length ? '' : 'disabled'}>
+          <span class="badge-group-icon" aria-hidden="true">${g.icon}</span>
+          <span class="badge-group-name">${g.name}<small>${list.length ? g.sub : 'No badges yet'}</small></span>
+          <span class="badge-group-count">${list.length}</span>
+          <span class="badge-group-chev" aria-hidden="true">›</span>
+        </button>
+        <div class="badge-group-body" id="badgeGroup-${g.id}" ${open ? '' : 'hidden'}>
+          ${list.map((b) => `
+            <div class="badge-row">
+              <span class="badge-row-icon">${b.icon}</span>
+              <span class="badge-row-text"><b>${b.title}</b><small>${String(b.sub).replace(/ — .*$/, '')}</small></span>
+            </div>`).join('')}
+        </div>
+      </div>`;
+    }).join('')}`;
 
-  achievements.forEach(id => {
-    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id) || resolveVaultGameBadge(id) || resolveMustardSeedBadge(id);
-    if (!info) return;
-
-    const badge = document.createElement('div');
-    badge.className = 'badge';
-    badge.innerHTML = `
-      <span class="badge-icon">${info.icon}</span>
-      <div class="badge-title">${info.title}</div>
-      <div class="badge-sub">${info.sub}</div>
-    `;
-    badgeContainer.appendChild(badge);
+  // One group open at a time; the open one is remembered on this device.
+  badgeContainer.querySelectorAll('.badge-group-head').forEach((head) => {
+    head.addEventListener('click', () => {
+      const group = head.closest('.badge-group');
+      const willOpen = !group.classList.contains('is-open');
+      badgeContainer.querySelectorAll('.badge-group.is-open').forEach((g) => {
+        g.classList.remove('is-open');
+        g.querySelector('.badge-group-head').setAttribute('aria-expanded', 'false');
+        g.querySelector('.badge-group-body').hidden = true;
+      });
+      if (willOpen) {
+        group.classList.add('is-open');
+        head.setAttribute('aria-expanded', 'true');
+        group.querySelector('.badge-group-body').hidden = false;
+      }
+      try {
+        if (willOpen) localStorage.setItem(OPEN_BADGE_GROUP_KEY, group.dataset.group);
+        else localStorage.removeItem(OPEN_BADGE_GROUP_KEY);
+      } catch (e) { /* storage blocked */ }
+    });
   });
 }
 

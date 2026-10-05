@@ -12,18 +12,19 @@
 // it's flavor text here, not an automated grade change.
 // ============================================
 
-// +6 on every Tier I-IV artifact on 2026-10-05 (were 4 / 7 / 9 / 11),
-// alongside the bigger season ticket rewards and tripled trade prices.
-export const TOKEN_COST_BY_TIER = { 1: 10, 2: 13, 3: 15, 4: 17 };
+// Set by Jornie on 2026-10-05 (were 4 / 7 / 9 / 11), alongside the
+// bigger season ticket rewards and tripled trade prices.
+export const TOKEN_COST_BY_TIER = { 1: 15, 2: 25, 3: 35, 4: 50 };
 
 // The Divine Regalia chain got its own bumped costs (not just tier
 // default + 3) at the user's request — everything else uses the tier
-// default above. Also +6 each on 2026-10-05 (were 5 / 9 / 12 / 16).
+// default above. On 2026-10-05 it rose by the same amount per tier as
+// the rest (were 5 / 9 / 12 / 16).
 export const TOKEN_COST_OVERRIDES = {
-  orb_of_destruction: 11,
-  iron_talon: 15,
-  ceremonial_robe: 18,
-  crippling_crossbow: 22
+  orb_of_destruction: 16,
+  iron_talon: 27,
+  ceremonial_robe: 38,
+  crippling_crossbow: 55
 };
 
 export function tokenCostFor(id, tier) {

@@ -572,10 +572,12 @@ function ticketAmountFor(node) {
 // completion, handled below via chapterJustCompleted.
 const CAPSTONE_BONUS = { semifinal_ch7: 2, final_ch11: 8 };
 
-// Normal (non-exam) chapters, Jornie 2026-10-05: every task also gives
-// +5 of EVERY ticket type on top of its usual ticket, and finishing the
-// chapter gives +5 of every type too (shown on "A Star Ignites!").
-const NORMAL_TASK_BONUS = 5;
+// Jornie 2026-10-05: every task in EVERY chapter (the exam chapters too)
+// gives +10 of every ticket type on top of its usual ticket, so a full
+// Legendary chain (125 tokens) stays reachable. Finishing a normal
+// chapter gives +5 of every type (shown on "A Star Ignites!"); the exam
+// chapters keep their CAPSTONE_BONUS instead.
+const TASK_BONUS = 10;
 const NORMAL_CHAPTER_BONUS = 5;
 const ALL_TICKET_TYPES = ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket', 'scrap_ticket'];
 const isNormalChapter = (chapter) => !(chapter.chapterId in CAPSTONE_BONUS);
@@ -588,7 +590,7 @@ function nodeTicketRewards(node, chapter) {
   // Ember Shard: 1 on every task, even the no-ticket exam chapters, so
   // they still feed the Ember Shard catch-up trade.
   add('scrap_ticket', 1);
-  if (isNormalChapter(chapter)) ALL_TICKET_TYPES.forEach((type) => add(type, NORMAL_TASK_BONUS));
+  ALL_TICKET_TYPES.forEach((type) => add(type, TASK_BONUS));
   return rewards;
 }
 
@@ -607,10 +609,10 @@ function chapterBonusFor(chapter) {
   return rewards;
 }
 
-// Finishing the ENTIRE Semifinal or Final season is worth an Artifact
-// Unlock Token outright, on top of whatever tickets/tokens the
-// student earned along the way. Prelim/Midterm deliberately excluded.
-const SEASON_COMPLETION_TOKEN_BONUS = { semifinal: 1, final: 1 };
+// Finishing an ENTIRE season is worth Artifact Unlock Tokens outright,
+// on top of whatever tickets/tokens the student earned along the way.
+// Set by Jornie on 2026-10-05 (were none / 1 / 1); Prelim has none.
+const SEASON_COMPLETION_TOKEN_BONUS = { midterm: 5, semifinal: 11, final: 26 };
 
 async function awardNode(node, submissionText) {
   const studentRef = doc(db, 'students', email);

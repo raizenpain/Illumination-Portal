@@ -817,6 +817,25 @@ export const SEASON_CONTENT = {
           }
         ]
       },
+      // Game chapter (Jornie, 2026-10-05): after "A Kingdom United", face
+      // Goliath as David with a sling and five stones (davidGoliath.js).
+      // No questions and NO star (noStar), but it must be cleared to
+      // continue; same rewards as the other game chapters (30 of each).
+      {
+        chapterId: 'final_goliath',
+        chapterTitle: 'David and Goliath',
+        basedOn: 'Game — face the giant Goliath as David in the Valley of Elah with a sling and five smooth stones (1 Sam 17). No questions, no star.',
+        noStar: true,
+        chapterBonus: 20,
+        clearedLabel: 'The Giant Has Fallen',
+        clearedIcon: '🪨',
+        nodes: [
+          {
+            nodeId: 'fng_n1', type: 'game', game: 'davidGoliath', title: 'Face the Giant',
+            prompt: 'Sling your stones at the right moment, dodge the spears, wait out the shield, and bring the giant down.'
+          }
+        ]
+      },
       {
         chapterId: 'final_ch7',
         chapterTitle: 'A Kingdom Divided and Exiled',

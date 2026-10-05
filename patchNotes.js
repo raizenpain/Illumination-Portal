@@ -50,7 +50,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: Crossing the Red Sea',
             items: [
-              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 13)',
+              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 14)',
               ['Lead Moses and the Israelites through the sea before Pharaoh\'s chariots catch up', [
                 'Move between five lanes with ◀ ▶, the arrow keys, a swipe, or a tap on either side',
                 'Rocks make the people stumble, and the chariots gain on you',
@@ -69,7 +69,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: Ascent of Mount Sinai',
             items: [
-              'A second game chapter right after "The Covenant at Sinai" (now Chapter 6 of 13)',
+              'A second game chapter right after "The Covenant at Sinai" (now Chapter 6 of 14)',
               ['Climb the mountain as Moses, through the storm, to receive the tablets of the covenant', [
                 'Moses leaps by himself. Hold ◀ ▶, the arrow keys, or a side of the mountain to steer him',
                 'Stone ledges are safe. Cracked ledges crumble after one step',
@@ -83,6 +83,24 @@ export const PATCHES = [
               'No star is earned, and the Final Season still has the same 12 stars',
               'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
               'Out of Strength? Nothing is lost. Try again as many times as you need'
+            ]
+          },
+          {
+            title: 'New Chapter: David and Goliath',
+            items: [
+              'A third game chapter right after "A Kingdom United" (now Chapter 9 of 14)',
+              ['Face the giant in the Valley of Elah with a sling and five smooth stones', [
+                'A marker slides along the bar. Tap Sling! (or Space) while it is inside the gold zone to strike Goliath',
+                'Outside the gold zone the stone only rings off his armor, and he strides closer',
+                'When Goliath raises his spear and DODGE! appears, tap Dodge (or ↓)',
+                'While his shield-bearer holds the shield up, stones are blocked. Wait for it to drop',
+                'Every strike drives Goliath back, but the gold zone gets smaller and the marker faster',
+                'Land five stones before he reaches you or your 3 Courage run out'
+              ]],
+              'Tap "How to Play" anytime for the full guide',
+              'No star is earned, and the Final Season still has the same 12 stars',
+              'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
+              'Defeated? Nothing is lost. Try again as many times as you need'
             ]
           }
         ]

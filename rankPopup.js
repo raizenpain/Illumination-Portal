@@ -160,7 +160,7 @@ export function renderRankPopup(info) {
 // A general notice in the same style (e.g. refundNotice.js).
 // info: { kicker, sub, icon, eyebrow, heading, detail, rewards?: [html] }
 export function renderNoticePopup(info) {
-  setVariant('notice');
+  setVariant(info.lesson ? 'lesson' : 'notice');
   document.getElementById('rankPopupKicker').textContent = info.kicker || '';
   document.getElementById('rankPopupSub').textContent = info.sub || '';
   document.getElementById('rankPopupIcon').textContent = info.icon || '✦';

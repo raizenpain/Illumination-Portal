@@ -6,8 +6,8 @@ import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
 import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
-import { getRankProgress, getSeasonStars, RANK_TIERS } from './rank.js';
-import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderChampionPopup } from './rankPopup.js';
+import { getRankProgress, getSeasonStars, RANK_TIERS, starIndexOfChapter } from './rank.js';
+import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderChampionPopup, renderNoticePopup } from './rankPopup.js';
 import { TICKET_INFO } from './ticketTrader.js';
 
 const { email, name } = requireLogin();
@@ -16,8 +16,8 @@ const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
 const params = new URLSearchParams(window.location.search);
 const seasonId = params.get('season');
 
-const NODE_TYPE_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️', identification: '🔍' };
-const NODE_TYPE_HEADING_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️', identification: '🔍' };
+const NODE_TYPE_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️', identification: '🔍', game: '⚔️' };
+const NODE_TYPE_HEADING_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️', identification: '🔍', game: '⚔️' };
 
 const seasonShell = document.getElementById('seasonShell');
 const seasonNameEl = document.getElementById('seasonName');
@@ -201,7 +201,30 @@ function renderTicketBar(chapter) {
 // NODE MODAL — one modal, content swapped per node type
 // ================================
 
+// A game node (e.g. the Semifinal boss battle) runs full-screen instead
+// of the modal, and is completed only by winning.
+let gameRunning = false;
+async function playGameNode(node) {
+  if (gameRunning) return;
+  gameRunning = true;
+  try {
+    const chapter = content.chapters[chapterIndex];
+    const total = { ...nodeTicketRewards(node, chapter) };
+    Object.entries(chapterBonusFor(chapter)).forEach(([k, n]) => { total[k] = (total[k] || 0) + n; });
+    const rewards = ALL_TICKET_TYPES.filter((t) => total[t]).map((t) => `${TICKET_INFO[t].icon} +${total[t]} ${TICKET_INFO[t].label}`);
+    const { playShadowBoss } = await import('./shadowBoss.js');
+    const result = await playShadowBoss({ rewards });
+    if (result === 'win') await awardNode(node);
+  } catch (err) {
+    console.error('Game node failed:', err);
+    alert('The battle could not be saved. Please check your connection and try again.');
+  } finally {
+    gameRunning = false;
+  }
+}
+
 function openNodeModal(node) {
+  if (node.type === 'game') { playGameNode(node); return; }
   nodeModal.classList.remove('hidden');
 
   if (node.type === 'quiz' || node.type === 'identification') renderQuizModal(node);
@@ -501,10 +524,11 @@ function processPopupQueue() {
 
   const item = popupQueue.shift();
 
-  if (item.kind === 'star' || item.kind === 'rank' || item.kind === 'champion') {
+  if (item.kind === 'star' || item.kind === 'rank' || item.kind === 'champion' || item.kind === 'notice') {
     ensureRankPopup();
     if (item.kind === 'star') renderStarPopup(item);
     else if (item.kind === 'rank') renderRankPopup(item);
+    else if (item.kind === 'notice') renderNoticePopup(item);
     else renderChampionPopup(item);
 
     // Waits for Continue (no auto-close: it was too fast to read).
@@ -538,8 +562,10 @@ function showAchievement(title, text, icon) {
   queuePopup({ title, text, icon });
 }
 
+// Catechism Moments use the dark popup and wait for Continue — they're
+// meant to be read and prayed over, not flashed for 3 seconds.
 function showLesson(lesson) {
-  queuePopup({ heading: '📖 Catechism Moment', title: lesson.title, text: lesson.text, icon: '✝️' });
+  queuePopup({ kind: 'notice', kicker: '✦ Catechism Moment ✦', sub: '', icon: '✝️', eyebrow: '', heading: lesson.title, detail: lesson.text, lesson: true });
 }
 
 function showStarPopup(info) {
@@ -726,13 +752,30 @@ async function awardNode(node, submissionText) {
       icon: '🏁'
     });
 
-    showStarPopup({
-      rank: rankBefore.rank,
-      stars: getSeasonStars(seasonId, checkData),
-      justEarnedIndex: chapterIndex,
-      subtitle: `${chapter.chapterTitle} — ${content.seasonName}`,
-      rewards: Object.entries(chapterBonus).map(([type, amount]) => ({ icon: TICKET_INFO[type].icon, label: TICKET_INFO[type].label, amount }))
-    });
+    const chapterRewards = Object.entries(chapterBonus).map(([type, amount]) => ({ icon: TICKET_INFO[type].icon, label: TICKET_INFO[type].label, amount }));
+    if (chapter.noStar) {
+      // A game chapter earns no star: a "chapter cleared" notice instead.
+      queuePopup({
+        kind: 'notice',
+        kicker: '✦ Chapter Cleared ✦',
+        sub: `${chapter.chapterTitle} — ${content.seasonName}`,
+        icon: '⚔️',
+        eyebrow: 'Boss Defeated',
+        heading: chapter.chapterTitle,
+        detail: 'No star for a battle, but the way forward is open, and the spoils are yours.',
+        rewards: chapterRewards.map((r) => `<span class="popup-reward-icon">${r.icon}</span> +${r.amount} ${r.label}`)
+      });
+    } else {
+      showStarPopup({
+        rank: rankBefore.rank,
+        stars: getSeasonStars(seasonId, checkData),
+        // Star position counts only star chapters (a noStar game chapter
+        // before the exam would otherwise shift it by one).
+        justEarnedIndex: starIndexOfChapter(seasonId, chapter.chapterId),
+        subtitle: `${chapter.chapterTitle} — ${content.seasonName}`,
+        rewards: chapterRewards
+      });
+    }
   }
 
   if (rankAfter.rank !== rankBefore.rank) {

@@ -5,7 +5,7 @@ import { PIECE_CODES } from './codes.js';
 import { PIECE_LESSONS } from './lessons.js';
 import { logActivity } from './activity.js';
 import { getRankProgress, getSeasonStars, RANK_TIERS } from './rank.js';
-import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
+import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderNoticePopup } from './rankPopup.js';
 
 // ================================
 // SETTINGS — adjust freely
@@ -66,9 +66,10 @@ function processPopupQueue() {
 
   const item = popupQueue.shift();
 
-  if (item.kind === 'star' || item.kind === 'rank') {
+  if (item.kind === 'star' || item.kind === 'rank' || item.kind === 'notice') {
     ensureRankPopup();
     if (item.kind === 'star') renderStarPopup(item);
+    else if (item.kind === 'notice') renderNoticePopup(item);
     else renderRankPopup(item);
 
     // Waits for Continue (no auto-close: it was too fast to read).
@@ -98,8 +99,10 @@ function showAchievement(title, text, icon = '🏅') {
   queuePopup({ title, text, icon });
 }
 
+// Same dark Catechism Moment popup as the seasons (season.js), waiting
+// for Continue instead of the old 3-second achievement box.
 function showLesson(lesson) {
-  queuePopup({ heading: '📖 Catechism Moment', title: lesson.title, text: lesson.text, icon: '✝️' });
+  queuePopup({ kind: 'notice', kicker: '✦ Catechism Moment ✦', sub: '', icon: '✝️', eyebrow: '', heading: lesson.title, detail: lesson.text, lesson: true });
 }
 
 function showStarPopup(info) {

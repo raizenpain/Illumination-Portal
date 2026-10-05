@@ -412,6 +412,23 @@ export const SEASON_CONTENT = {
           }
         ]
       },
+      // Boss battle (Jornie, 2026-10-05): a game chapter that guards the
+      // Comprehensive Exam. No questions and NO star (noStar — rank.js
+      // skips it), but it must be cleared before the exam unlocks, and it
+      // pays the usual task + chapter ticket rewards. Its one node opens
+      // shadowBoss.js instead of a quiz/text modal.
+      {
+        chapterId: 'semifinal_boss',
+        chapterTitle: 'The Shadow of Sin',
+        basedOn: 'Boss battle — face the Shadow of Sin before the Comprehensive Exam. No questions, no star: only courage, wisdom, and grace.',
+        noStar: true,
+        nodes: [
+          {
+            nodeId: 'sfb_n1', type: 'game', game: 'shadowBoss', title: 'Defeat the Shadow of Sin',
+            prompt: 'Strike, guard, pray, and call down Holy Light to drive the Shadow of Sin away.'
+          }
+        ]
+      },
       // Capstone chapter, deliberately last so it's locked behind every
       // other Semifinal chapter (chapters unlock strictly in order).
       // Sourced from the "Reed 101 Semi-Final.docx" answer-keyed exam

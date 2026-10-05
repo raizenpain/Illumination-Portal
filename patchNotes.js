@@ -12,6 +12,53 @@
 
 export const PATCHES = [
   {
+    version: '2.1',
+    date: 'October 5, 2026',
+    sections: [
+      {
+        title: 'Semifinal Season',
+        groups: [
+          {
+            title: 'New Chapter: The Shadow of Sin',
+            items: [
+              'A boss battle now stands between Chapter 6 and the Semifinal Comprehensive Exam',
+              ['Defeat the Shadow of Sin to unlock the exam', [
+                'Strike: wound the Shadow and charge your Holy Light',
+                'Guard: block most of the next blow. Use it when a Dark Surge is coming',
+                'Prayer: restore your Faith (twice per battle)',
+                'Holy Light: after 3 strikes, a mighty blow that also shatters the Veil of Shadow',
+                'The Shadow always shows its next move. Read it and answer wisely'
+              ]],
+              'Below half health, the Shadow becomes enraged and strikes harder',
+              'Tap "How to Play" anytime, even mid-battle, for the full guide',
+              'No star is earned for the battle, and Semifinal still has the same 8 stars',
+              'Victory rewards: +15 of every ticket type and +16 Ember Shards, plus a new Catechism Moment',
+              'Falling in battle costs nothing. Rise again and try as many times as you need'
+            ]
+          },
+          {
+            title: 'Comprehensive Exam',
+            items: [
+              'The Semifinal Comprehensive Exam is now Chapter 8 of 8 and opens after the boss is defeated'
+            ]
+          }
+        ]
+      },
+      {
+        title: 'Interface',
+        groups: [
+          {
+            title: 'Catechism Moments',
+            items: [
+              'Every Catechism Moment, in the puzzles and in every season, now has the new dark fantasy design',
+              'Catechism Moments now stay on screen until you tap Continue, so take your time to read and reflect (they used to close after 3 seconds)'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '2.0',
     date: 'October 5, 2026',
     sections: [

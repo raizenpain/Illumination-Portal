@@ -4732,6 +4732,11 @@ body.cert-page {
   color: #D6C8AE;
 }
 .popup-detail:empty { display: none; }
+.popup-box .eyebrow-small:empty { display: none; }
+/* Catechism Moments: a passage to read, so left-aligned and roomier. */
+.popup-overlay[data-kind="lesson"] .popup-box { width: min(500px, 100%); }
+.popup-overlay[data-kind="lesson"] .popup-detail { margin-top: 14px; text-align: left; font-size: 14.5px; line-height: 1.65; color: #E8DCC4; white-space: pre-line; }
+.popup-overlay[data-kind="lesson"] .popup-badge { margin: 20px auto 16px; }
 
 .popup-rewards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 16px 0 0; }
 .popup-rewards.hidden { display: none; }

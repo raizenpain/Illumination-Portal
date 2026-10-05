@@ -13,7 +13,7 @@
 
 import { SEASON_CONTENT } from './seasonContent.js';
 
-const NODE_TYPE_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️' };
+const NODE_TYPE_ICON = { quiz: '📝', task: '🎯', journal: '📖', recitation: '🗣️', game: '⚔️' };
 
 export function taskBadgeId(nodeId) { return `task_${nodeId}`; }
 export function chapterBadgeId(chapterId) { return `chapter_${chapterId}`; }

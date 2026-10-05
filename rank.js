@@ -39,18 +39,27 @@ export const REFLECTION_GATES = {
   apostle: { unlockField: 'apostleUnlocked', bonusForSeason: 'final' }
 };
 
+const chapterDone = (chapter, completed) => chapter.nodes.every((n) => !!completed[n.nodeId]);
+
+// Stars come from chapters WITHOUT noStar — a game chapter (e.g. the
+// Semifinal boss battle) must still be cleared but earns no star.
 function chaptersDone(seasonId, data) {
   const completed = data.completedNodes || {};
-  return SEASON_CONTENT[seasonId].chapters.filter((chapter) =>
-    chapter.nodes.every((n) => !!completed[n.nodeId])
-  ).length;
+  return SEASON_CONTENT[seasonId].chapters.filter((chapter) => !chapter.noStar && chapterDone(chapter, completed)).length;
 }
 
-// True once every chapter in a season is complete — the real-content
-// signal reflection.js/season.js gate on, independent of the star math
-// below (which pads out to a tier's fixed target).
+// True once every chapter in a season is complete (noStar ones included)
+// — the real-content signal reflection.js/season.js gate on, independent
+// of the star math below (which pads out to a tier's fixed target).
 export function isSeasonChaptersComplete(seasonId, data) {
-  return chaptersDone(seasonId, data) === SEASON_CONTENT[seasonId].chapters.length;
+  const completed = data.completedNodes || {};
+  return SEASON_CONTENT[seasonId].chapters.every((chapter) => chapterDone(chapter, completed));
+}
+
+/** Index of a chapter among the season's STAR chapters (-1 if noStar). */
+export function starIndexOfChapter(seasonId, chapterId) {
+  const starChapters = SEASON_CONTENT[seasonId].chapters.filter((c) => !c.noStar);
+  return starChapters.findIndex((c) => c.chapterId === chapterId);
 }
 
 function bonusStarEarned(seasonId, data) {

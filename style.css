@@ -4836,6 +4836,29 @@ body.cert-page {
   .popup-overlay[data-kind="lesson"] .popup-box { padding: 16px 18px 14px; }
   .popup-overlay[data-kind="lesson"] .popup-box h2 { font-size: 21px; margin-top: 8px; }
 }
+/* "Chapter Cleared" with five reward chips: a smaller badge on short
+   phones keeps Continue on screen without scrolling. */
+@media (max-height: 720px) {
+  .popup-overlay[data-kind="notice"] .popup-badge { width: 76px; height: 76px; margin: 14px auto 12px; }
+  .popup-overlay[data-kind="notice"] .popup-badge .rays { inset: -30px; }
+  .popup-overlay[data-kind="notice"] .popup-badge .ring { width: 70px; height: 70px; font-size: 32px; }
+  .popup-overlay[data-kind="notice"] .popup-rewards { gap: 6px; margin-top: 12px; }
+}
+@media (max-height: 660px) {
+  .popup-overlay[data-kind="notice"] .popup-box { padding: 16px 18px 14px; }
+  .popup-overlay[data-kind="notice"] .popup-badge { width: 60px; height: 60px; margin: 10px auto 8px; }
+  .popup-overlay[data-kind="notice"] .popup-badge .rays { inset: -24px; }
+  .popup-overlay[data-kind="notice"] .popup-badge .ring { width: 56px; height: 56px; font-size: 26px; }
+  .popup-overlay[data-kind="notice"] .popup-box h2 { font-size: 22px; }
+  .popup-overlay[data-kind="notice"] .popup-rewards { gap: 5px; margin-top: 10px; }
+  .popup-overlay[data-kind="notice"] .popup-continue,
+  .popup-overlay[data-kind="notice"] .popup-continue:hover { margin-top: 12px; }
+}
+@media (max-height: 600px) {
+  .popup-overlay[data-kind="notice"] .popup-badge { display: none; }
+  .popup-overlay[data-kind="notice"] .popup-box h2 { font-size: 20px; margin-top: 6px; }
+  .popup-overlay[data-kind="notice"] .popup-rewards span { padding: 4px 10px; font-size: 11px; }
+}
 
 .popup-rewards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 16px 0 0; }
 .popup-rewards.hidden { display: none; }

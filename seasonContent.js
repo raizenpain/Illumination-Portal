@@ -720,6 +720,25 @@ export const SEASON_CONTENT = {
           }
         ]
       },
+      // Game chapter (Jornie, 2026-10-05): after "The Covenant at Sinai",
+      // climb the mountain as Moses (sinaiAscent.js). No questions and NO
+      // star (noStar), but it must be cleared to continue; same rewards as
+      // the other game chapters (task +10 and chapter +20 = 30 of each).
+      {
+        chapterId: 'final_sinai',
+        chapterTitle: 'Ascent of Mount Sinai',
+        basedOn: 'Game — climb Mount Sinai as Moses through thunder and lightning (Ex 19:16–20) to receive the tablets of the covenant. No questions, no star.',
+        noStar: true,
+        chapterBonus: 20,
+        clearedLabel: 'The Summit Reached',
+        clearedIcon: '⛰️',
+        nodes: [
+          {
+            nodeId: 'fns_n1', type: 'game', game: 'sinaiAscent', title: 'Climb Mount Sinai',
+            prompt: 'Leap from ledge to ledge, wait out the lightning, dodge the falling rocks, and reach the summit.'
+          }
+        ]
+      },
       {
         chapterId: 'final_ch5',
         chapterTitle: 'Conquest and the Judges',

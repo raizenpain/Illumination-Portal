@@ -50,7 +50,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: Crossing the Red Sea',
             items: [
-              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 12)',
+              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 13)',
               ['Lead Moses and the Israelites through the sea before Pharaoh\'s chariots catch up', [
                 'Move between five lanes with ◀ ▶, the arrow keys, a swipe, or a tap on either side',
                 'Rocks make the people stumble, and the chariots gain on you',
@@ -64,6 +64,25 @@ export const PATCHES = [
               'No star is earned, and the Final Season still has the same 12 stars',
               'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
               'Caught by the chariots? Nothing is lost. Try again as many times as you need'
+            ]
+          },
+          {
+            title: 'New Chapter: Ascent of Mount Sinai',
+            items: [
+              'A second game chapter right after "The Covenant at Sinai" (now Chapter 6 of 13)',
+              ['Climb the mountain as Moses, through the storm, to receive the tablets of the covenant', [
+                'Moses leaps by himself. Hold ◀ ▶, the arrow keys, or a side of the mountain to steer him',
+                'Stone ledges are safe. Cracked ledges crumble after one step',
+                'Higher up, some ledges drift from side to side',
+                'A flashing column (!) means lightning is about to strike there. Get out of it!',
+                'Rocks tumble down the slope. Step aside',
+                'Manna restores one Strength',
+                'You have 4 Strength. A fall, a bolt or a rock costs one. Reach the summit (400 m) before it runs out'
+              ]],
+              'Tap "How to Play" anytime for the full guide',
+              'No star is earned, and the Final Season still has the same 12 stars',
+              'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
+              'Out of Strength? Nothing is lost. Try again as many times as you need'
             ]
           }
         ]

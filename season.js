@@ -202,11 +202,12 @@ function renderTicketBar(chapter) {
 // ================================
 
 // A game node (the Semifinal boss battle, the Final Season's Red Sea
-// crossing) runs full-screen instead of the modal, and is completed only
+// crossing and Sinai ascent) runs full-screen instead of the modal, and is completed only
 // by winning. Loaded on demand so no one downloads a game they can't play.
 const GAME_MODULES = {
   shadowBoss: () => import('./shadowBoss.js').then((m) => m.playShadowBoss),
-  redSea: () => import('./redSea.js').then((m) => m.playRedSea)
+  redSea: () => import('./redSea.js').then((m) => m.playRedSea),
+  sinaiAscent: () => import('./sinaiAscent.js').then((m) => m.playSinaiAscent)
 };
 let gameRunning = false;
 async function playGameNode(node) {

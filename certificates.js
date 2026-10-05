@@ -25,8 +25,10 @@ import { SEASON_CONTENT } from './seasonContent.js';
 import { VAULT_GAMES } from './vaultGames.js';
 
 const VIA_PORTAL = 'through the HCDC Illumination Portal.';
+// The three seasons' seals use their rune-stone art (assets/seasons/, AI
+// generated, 2026-10-06); `seal` (emoji) stays as the fallback.
 const seasonCert = (key, seal, code) => ({
-  key, kind: 'season', season: key, seal, theme: key, url: `season-completion.html?season=${key}`,
+  key, kind: 'season', season: key, seal, sealImage: `assets/seasons/${key}.webp`, theme: key, url: `season-completion.html?season=${key}`,
   title: SEASON_CONTENT[key].seasonName, subtitle: SEASON_CONTENT[key].subtitle,
   certTitle: `Certificate of ${SEASON_CONTENT[key].seasonName} Completion`, line: VIA_PORTAL,
   codeField: `${key}VerificationCode`, codePrefix: code
@@ -101,7 +103,7 @@ export function renderCertificateShelf(container, data) {
         const date = earned ? certificateDate(cert, data) : null;
         const status = earned ? (date ? `Earned ${formatCertificateDate(date)}` : 'Earned — tap to view') : 'Not yet earned';
         const inner = `
-          <span class="cert-shelf-seal" aria-hidden="true">${earned ? cert.seal : '🔒'}</span>
+          <span class="cert-shelf-seal" aria-hidden="true">${earned ? (cert.sealImage ? `<img src="${cert.sealImage}" alt="">` : cert.seal) : '🔒'}</span>
           <span class="cert-shelf-text">
             <b>${escapeHtml(cert.title)}</b>
             <small>${escapeHtml(status)}</small>

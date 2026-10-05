@@ -201,8 +201,13 @@ function renderTicketBar(chapter) {
 // NODE MODAL — one modal, content swapped per node type
 // ================================
 
-// A game node (e.g. the Semifinal boss battle) runs full-screen instead
-// of the modal, and is completed only by winning.
+// A game node (the Semifinal boss battle, the Final Season's Red Sea
+// crossing) runs full-screen instead of the modal, and is completed only
+// by winning. Loaded on demand so no one downloads a game they can't play.
+const GAME_MODULES = {
+  shadowBoss: () => import('./shadowBoss.js').then((m) => m.playShadowBoss),
+  redSea: () => import('./redSea.js').then((m) => m.playRedSea)
+};
 let gameRunning = false;
 async function playGameNode(node) {
   if (gameRunning) return;
@@ -212,8 +217,10 @@ async function playGameNode(node) {
     const total = { ...nodeTicketRewards(node, chapter) };
     Object.entries(chapterBonusFor(chapter)).forEach(([k, n]) => { total[k] = (total[k] || 0) + n; });
     const rewards = ALL_TICKET_TYPES.filter((t) => total[t]).map((t) => `${TICKET_INFO[t].icon} +${total[t]} ${TICKET_INFO[t].label}`);
-    const { playShadowBoss } = await import('./shadowBoss.js');
-    const result = await playShadowBoss({ rewards });
+    const loader = GAME_MODULES[node.game];
+    if (!loader) throw new Error(`Unknown game: ${node.game}`);
+    const play = await loader();
+    const result = await play({ rewards });
     if (result === 'win') await awardNode(node);
   } catch (err) {
     console.error('Game node failed:', err);
@@ -762,10 +769,10 @@ async function awardNode(node, submissionText) {
         kind: 'notice',
         kicker: '✦ Chapter Cleared ✦',
         sub: `${chapter.chapterTitle} — ${content.seasonName}`,
-        icon: '⚔️',
-        eyebrow: 'Boss Defeated',
+        icon: chapter.clearedIcon || '⚔️',
+        eyebrow: chapter.clearedLabel || 'Challenge Complete',
         heading: chapter.chapterTitle,
-        detail: 'No star for a battle, but the way forward is open, and the spoils are yours.',
+        detail: 'No star for this challenge, but the way forward is open, and the rewards are yours.',
         rewards: chapterRewards.map((r) => `<span class="popup-reward-icon">${r.icon}</span> +${r.amount} ${r.label}`)
       });
     } else {

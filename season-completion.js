@@ -41,7 +41,18 @@ if (!cert || cert.kind === 'puzzle') {
   window.location.href = cert ? cert.url : 'dashboard.html';
 } else {
   document.getElementById('certificate').dataset.theme = cert.theme;
-  document.getElementById('certificateSeal').textContent = cert.seal;
+  const sealEl = document.getElementById('certificateSeal');
+  if (cert.sealImage) {
+    // The season's rune stone; falls back to the emoji if it can't load.
+    const img = document.createElement('img');
+    img.alt = '';
+    img.onerror = () => { sealEl.classList.remove('has-image'); sealEl.textContent = cert.seal; };
+    img.src = cert.sealImage;
+    sealEl.classList.add('has-image');
+    sealEl.replaceChildren(img);
+  } else {
+    sealEl.textContent = cert.seal;
+  }
   document.getElementById('certTitle').textContent = cert.certTitle;
   document.getElementById('seasonTitle').textContent = cert.title;
   document.getElementById('seasonSubtitleText').textContent = `— ${cert.subtitle} —`;

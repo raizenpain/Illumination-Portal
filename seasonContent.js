@@ -425,6 +425,8 @@ export const SEASON_CONTENT = {
         // +20 of every ticket for clearing it, on top of the task's +10
         // (+1 Ember Shard): 30 of each ticket in all (Jornie, 2026-10-05).
         chapterBonus: 20,
+        clearedLabel: 'Boss Defeated',
+        clearedIcon: '⚔️',
         nodes: [
           {
             nodeId: 'sfb_n1', type: 'game', game: 'shadowBoss', title: 'Defeat the Shadow of Sin',
@@ -613,6 +615,25 @@ export const SEASON_CONTENT = {
             nodeId: 'fn2_n4', type: 'recitation', title: 'From Slavery to Sinai',
             prompt: "Trace the Israelites' journey from slavery in Egypt to the covenant assembly at Sinai.",
             ticketReward: 'recitation_ticket'
+          }
+        ]
+      },
+      // Game chapter (Jornie, 2026-10-05), right after "Out of Egypt":
+      // lead the people through the Red Sea (redSea.js). No questions and
+      // NO star (noStar), but it must be cleared to continue; same rewards
+      // as the Semifinal boss (task +10 and chapter +20 = 30 of each).
+      {
+        chapterId: 'final_redsea',
+        chapterTitle: 'Crossing the Red Sea',
+        basedOn: 'Game — lead Moses and the Israelites through the sea on dry land (Ex 14:21–22) before Pharaoh\'s chariots catch up. No questions, no star.',
+        noStar: true,
+        chapterBonus: 20,
+        clearedLabel: 'Safe on the Far Shore',
+        clearedIcon: '🌊',
+        nodes: [
+          {
+            nodeId: 'fnr_n1', type: 'game', game: 'redSea', title: 'Cross the Red Sea',
+            prompt: 'Dodge the rocks, escape the waves, rescue the stragglers, and reach the far shore before the chariots.'
           }
         ]
       },

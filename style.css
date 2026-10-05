@@ -972,6 +972,62 @@ body {
   font-size: 32px;
 }
 
+/* Season cards (Midterm / Semifinal / Final): the rune-stone art as a
+   glowing medallion instead of an emoji, with a corner state badge
+   (dashboard.html setSeasonIcon). --season-glow is set per season. */
+.puzzle-icon-chip.season-chip {
+  --season-glow: 86,178,187;
+  position: relative;
+  width: 104px;
+  height: 104px;
+  background: #0A0F22;
+  border: 2px solid rgba(var(--season-glow), .85);
+  box-shadow: 0 0 0 3px #0A0F22, 0 0 0 4px rgba(var(--season-glow), .35), 0 0 22px rgba(var(--season-glow), .45);
+  transition: box-shadow .25s ease, transform .25s ease;
+}
+.puzzle-icon-chip.season-chip[data-season="midterm"] { --season-glow: 110,220,255; }
+.puzzle-icon-chip.season-chip[data-season="semifinal"] { --season-glow: 235,90,190; }
+.puzzle-icon-chip.season-chip[data-season="final"] { --season-glow: 255,196,110; }
+.puzzle-icon-chip.season-chip .puzzle-icon { display: block; width: 100%; height: 100%; font-size: 0; }
+.season-icon-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.season-icon-badge {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 16px;
+  line-height: 1;
+  background: #10142A;
+  border: 2px solid rgba(var(--season-glow), .9);
+  box-shadow: 0 2px 8px rgba(0,0,0,.6);
+}
+.puzzle-card:hover .puzzle-icon-chip.season-chip {
+  transform: scale(1.05);
+  box-shadow: 0 0 0 3px #0A0F22, 0 0 0 4px rgba(var(--season-glow), .6), 0 0 34px rgba(var(--season-glow), .75);
+}
+/* A locked season: the stone sleeps (dim, colourless, no glow). */
+.puzzle-card.state-locked .puzzle-icon-chip.season-chip {
+  border-color: rgba(156,169,196,.4);
+  box-shadow: 0 0 0 3px #0A0F22, 0 0 0 4px rgba(156,169,196,.15);
+  transform: none;
+}
+.puzzle-card.state-locked .season-icon-img { filter: grayscale(1) brightness(.55); }
+.puzzle-card.state-locked .season-icon-badge { border-color: rgba(156,169,196,.6); }
+@media (prefers-reduced-motion: reduce) {
+  .puzzle-icon-chip.season-chip { transition: none; }
+}
+
 .puzzle-card h3 {
   margin: 0;
   font-family: 'Cinzel', serif;
@@ -3042,6 +3098,11 @@ body.cert-page {
 .cert-divider i { width: 9px; height: 9px; transform: rotate(45deg); background: var(--cert-accent); box-shadow: 0 0 8px rgba(233,184,90,.7); }
 
 .cert-seal-row { margin: 0 0 8px; }
+/* A season's rune stone as its seal: a larger round picture. Plain <img>
+   in a circle, so html2canvas draws it in the PDF too. */
+.certificate-dark .certificate-seal.has-image { width: 84px; height: 84px; background: #0E0A09; overflow: hidden; }
+.certificate-dark .certificate-seal.has-image img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+.cert-shelf-seal img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .certificate-dark .certificate-seal {
   display: inline-flex; align-items: center; justify-content: center;
   width: 58px; height: 58px; margin: 0; border-radius: 50%;
@@ -3381,6 +3442,7 @@ body.cert-page {
   background: rgba(86,178,187,.12);
   border: 1px solid rgba(86,178,187,.4);
 }
+.badge-group-icon img { display: block; width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
 .badge-group.is-empty .badge-group-icon { filter: grayscale(1); opacity: .55; }
 .badge-group-name {
   flex: 1;
@@ -4733,10 +4795,47 @@ body.cert-page {
 }
 .popup-detail:empty { display: none; }
 .popup-box .eyebrow-small:empty { display: none; }
-/* Catechism Moments: a passage to read, so left-aligned and roomier. */
-.popup-overlay[data-kind="lesson"] .popup-box { width: min(500px, 100%); }
-.popup-overlay[data-kind="lesson"] .popup-detail { margin-top: 14px; text-align: left; font-size: 14.5px; line-height: 1.65; color: #E8DCC4; white-space: pre-line; }
-.popup-overlay[data-kind="lesson"] .popup-badge { margin: 20px auto 16px; }
+/* Catechism Moments: a passage to read. The heading stays on top, ONLY
+   the text scrolls (fading at the bottom), and Continue is always
+   visible — however long the lesson or short the screen. */
+.popup-overlay[data-kind="lesson"] .popup-box {
+  width: min(520px, 100%);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 22px 24px 20px;
+}
+.popup-overlay[data-kind="lesson"] .popup-box > * { flex-shrink: 0; }
+.popup-overlay[data-kind="lesson"] .popup-divider { margin: 10px 0 2px; }
+.popup-overlay[data-kind="lesson"] .popup-badge { width: 76px; height: 76px; margin: 14px auto 12px; }
+.popup-overlay[data-kind="lesson"] .popup-badge .rays { inset: -30px; }
+.popup-overlay[data-kind="lesson"] .popup-badge .ring { width: 70px; height: 70px; font-size: 32px; }
+.popup-overlay[data-kind="lesson"] .popup-box h2 { font-size: 26px; }
+.popup-overlay[data-kind="lesson"] .popup-box > .popup-detail {
+  flex: 1 1 auto;
+  min-height: 60px;
+  overflow-y: auto;
+  margin: 14px -8px 0 0;
+  padding: 0 12px 18px 0;
+  text-align: left;
+  font-size: 14.5px;
+  line-height: 1.65;
+  color: #E8DCC4;
+  white-space: pre-line;
+  scrollbar-width: thin;
+  scrollbar-color: #6B4E1F transparent;
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent 100%);
+  mask-image: linear-gradient(180deg, #000 calc(100% - 26px), transparent 100%);
+}
+.popup-overlay[data-kind="lesson"] .popup-box > .popup-detail::-webkit-scrollbar { width: 6px; }
+.popup-overlay[data-kind="lesson"] .popup-box > .popup-detail::-webkit-scrollbar-thumb { background: #6B4E1F; border-radius: 3px; }
+.popup-overlay[data-kind="lesson"] .popup-continue,
+.popup-overlay[data-kind="lesson"] .popup-continue:hover { margin-top: 14px; }
+@media (max-height: 600px) {
+  .popup-overlay[data-kind="lesson"] .popup-badge { display: none; }
+  .popup-overlay[data-kind="lesson"] .popup-box { padding: 16px 18px 14px; }
+  .popup-overlay[data-kind="lesson"] .popup-box h2 { font-size: 21px; margin-top: 8px; }
+}
 
 .popup-rewards { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 16px 0 0; }
 .popup-rewards.hidden { display: none; }

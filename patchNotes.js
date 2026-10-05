@@ -12,6 +12,59 @@
 
 export const PATCHES = [
   {
+    version: '2.2',
+    date: 'October 5, 2026',
+    sections: [
+      {
+        title: 'Final Season',
+        groups: [
+          {
+            title: 'New Chapter: Crossing the Red Sea',
+            items: [
+              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 12)',
+              ['Lead Moses and the Israelites through the sea before Pharaoh\'s chariots catch up', [
+                'Move between five lanes with ◀ ▶, the arrow keys, a swipe, or a tap on either side',
+                'Rocks make the people stumble, and the chariots gain on you',
+                'A flashing lane (!) means a wave is about to crash through. Get out of it!',
+                'Seabirds swoop sideways across the path. Watch their shadows and time your moves',
+                'The deeper into the sea you go, the more rocks block the way',
+                'Rescue the glowing stragglers to rally the people and gain ground',
+                'Reach the far shore (1,000 m) and the waters close over the chariots'
+              ]],
+              'Tap "How to Play" anytime for the full guide',
+              'No star is earned, and the Final Season still has the same 12 stars',
+              'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
+              'Caught by the chariots? Nothing is lost. Try again as many times as you need'
+            ]
+          }
+        ]
+      },
+      {
+        title: 'Interface',
+        groups: [
+          {
+            title: 'Season Icons',
+            items: [
+              ['The Midterm, Semifinal and Final Seasons each have a new rune-stone icon on the dashboard', [
+                'An open season glows in its own colour: Midterm cyan, Semifinal magenta, Final gold',
+                'A locked season\'s stone sleeps, grey and without its glow',
+                'A small badge shows when a season is completed or its reflection is due'
+              ]],
+              'The Achievements panel and the season certificates use the same rune stones'
+            ]
+          },
+          {
+            title: 'Games and Catechism Moments',
+            items: [
+              'The Shadow of Sin now fits small phones and phones held sideways',
+              'Catechism Moments: the title stays on top, only the text scrolls, and Continue is always visible'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '2.1',
     date: 'October 5, 2026',
     sections: [

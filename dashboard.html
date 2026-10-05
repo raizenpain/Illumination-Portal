@@ -338,6 +338,7 @@
     <p class="dashboard-footer-credits">
       Game concept inspired by Dota 2, © Valve Corporation. Artifact and Side Quest treasure icons © Valve Corporation.
       Avatar illustrations by Freepik. Background music via Pixabay. Sound effects via Mixkit.
+      Season rune-stone illustrations are AI-generated.
       The Evangelization sprites and tiles adapted from the Liberated Pixel Cup Base Assets by Lanea Zimmerman,
       Stephen Challener, and Manuel Riecke, licensed CC-BY-SA 3.0 / OGA-BY 3.0.
     </p>
@@ -983,9 +984,9 @@ function renderVaultGames(data) {
 // group's badges, so the panel stays short however many are earned.
 const BADGE_GROUPS = [
   { id: 'prelim', icon: '🧩', name: 'Prelim Season', sub: 'Puzzles' },
-  { id: 'midterm', icon: '🌅', name: 'Midterm Season', sub: 'The Creation' },
-  { id: 'semifinal', icon: '🌑', name: 'Semifinal Season', sub: 'The Destruction' },
-  { id: 'final', icon: '🌄', name: 'Final Season', sub: "God's Action" },
+  { id: 'midterm', icon: '<img src="assets/seasons/midterm.webp" alt="">', name: 'Midterm Season', sub: 'The Creation' },
+  { id: 'semifinal', icon: '<img src="assets/seasons/semifinal.webp" alt="">', name: 'Semifinal Season', sub: 'The Destruction' },
+  { id: 'final', icon: '<img src="assets/seasons/final.webp" alt="">', name: 'Final Season', sub: "God's Action" },
   { id: 'sidequest', icon: '🧭', name: 'Side Quests', sub: 'Limited-time quests' },
   { id: 'vault', icon: '🗝️', name: 'The Sanctuarium', sub: 'Vault Games' },
   // Only appears for accounts that actually have these badges.
@@ -1168,6 +1169,20 @@ function calculateOverallProgress(data) {
   };
 }
 
+// Season cards show their rune stone (assets/seasons/<id>.webp, Jornie's
+// art, 2026-10-06) as a glowing medallion; a small corner badge carries
+// the state (🔒 locked, 📝 reflection due, ✅ completed).
+const SEASON_OF_CARD = { midtermSeasonBtn: 'midterm', semifinalSeasonBtn: 'semifinal', finalSeasonBtn: 'final' };
+
+function setSeasonIcon(card, cardId, badge) {
+  const seasonId = SEASON_OF_CARD[cardId];
+  const chip = card.querySelector('.puzzle-icon-chip');
+  const icon = card.querySelector('.puzzle-icon');
+  chip.classList.add('season-chip');
+  chip.dataset.season = seasonId;
+  icon.innerHTML = `<img class="season-icon-img" src="assets/seasons/${seasonId}.webp" alt="">${badge ? `<span class="season-icon-badge" aria-hidden="true">${badge}</span>` : ''}`;
+}
+
 function renderUnlockedSeasonCard(seasonId, cardId, data) {
   const card = document.getElementById(cardId);
   if (!card) return;
@@ -1188,7 +1203,7 @@ function renderUnlockedSeasonCard(seasonId, cardId, data) {
 
   card.className = `puzzle-card ${complete ? 'state-completed' : 'state-available'}`;
   badge.className = `status-badge ${complete ? 'status-completed' : 'status-available'}`;
-  icon.textContent = complete ? '✅' : '🗺️';
+  setSeasonIcon(card, cardId, complete ? '✅' : '');
   label.textContent = content.subtitle;
   badge.textContent = complete ? 'Completed' : 'Enter the Path';
   card.onclick = () => { window.location.href = `season.html?season=${seasonId}`; };
@@ -1204,7 +1219,7 @@ function renderLockedSeasonCard(cardId, message) {
 
   card.className = 'puzzle-card state-locked';
   badge.className = 'status-badge status-locked';
-  icon.textContent = '🔒';
+  setSeasonIcon(card, cardId, '🔒');
   label.textContent = 'Coming soon';
   badge.textContent = 'Locked';
   card.onclick = () => alert(message);
@@ -1220,7 +1235,7 @@ function renderReflectionChallengeCard(cardId, gateKey) {
 
   card.className = 'puzzle-card state-challenge';
   badge.className = 'status-badge status-challenge';
-  icon.textContent = '📝';
+  setSeasonIcon(card, cardId, '📝');
   label.textContent = 'Write your reflection';
   badge.textContent = 'Write Reflection';
   card.onclick = () => { window.location.href = `reflection.html?gate=${gateKey}`; };

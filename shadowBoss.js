@@ -148,7 +148,7 @@ const CSS = `
 .sb-btn:focus-visible { outline: 2px solid #FFE7A8; outline-offset: 2px; }
 
 /* Title / result screens */
-.sb-screen { padding: 22px 22px 20px; text-align: center; overflow-y: auto; }
+.sb-screen { flex: 1 1 auto; min-height: 0; padding: 22px 22px 20px; text-align: center; overflow-y: auto; }
 .sb-screen h2 { margin: 6px 0 0; font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 26px; line-height: 1.2; color: #F4C6D9; text-shadow: 0 0 16px rgba(224,69,123,.45); }
 .sb-screen.win h2 { color: #FFE2A8; text-shadow: 0 0 18px rgba(255,200,90,.5); }
 .sb-screen p { margin: 12px 0 0; font-size: 14px; line-height: 1.6; color: #D6C8AE; }
@@ -175,6 +175,33 @@ const CSS = `
   .sb-btn, .sb-btn:hover { padding: 7px 4px; font-size: 12.5px; }
   .sb-log { min-height: 34px; font-size: 13px; }
   .sb-screen h2 { font-size: 22px; }
+}
+/* Short screens (phones held sideways, small laptop windows): a compact
+   arena and all four moves in one row, and the card scrolls if needed. */
+.sb-card { overflow-y: auto; overflow-x: hidden; }
+@media (max-height: 520px) {
+  .sb-top { padding: 6px 12px 2px; }
+  .sb-bossbar { padding-top: 0; }
+  .sb-name { font-size: 12.5px; margin-bottom: 2px; }
+  .sb-bar { height: 9px; }
+  .sb-phase { min-height: 0; margin-top: 2px; font-size: 10.5px; }
+  .sb-arena { height: 118px; }
+  .sb-boss { width: 104px; height: 104px; margin-left: -52px; top: 16px; }
+  .sb-intent { font-size: 11px; padding: 2px 8px; }
+  .sb-num { top: 44px; font-size: 22px; }
+  .sb-num.you, .sb-num.heal { top: 96px; font-size: 18px; }
+  .sb-pips { margin-top: 4px; }
+  .sb-log { min-height: 0; margin-top: 4px; font-size: 12px; }
+  .sb-actions { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 6px 12px 10px; }
+  .sb-btn, .sb-btn:hover { padding: 6px 2px; font-size: 11px; letter-spacing: .3px; }
+  .sb-btn small { display: none; }
+  .sb-screen { padding: 14px 16px 12px; }
+  .sb-screen h2 { font-size: 20px; }
+  .sb-how { font-size: 12px; }
+}
+@media (max-width: 400px) {
+  .sb-kicker { font-size: 10px; letter-spacing: 1.5px; white-space: nowrap; }
+  .sb-retreat, .sb-retreat:hover { padding: 5px 7px; font-size: 10px; white-space: nowrap; }
 }
 @media (prefers-reduced-motion: reduce) {
   .sb-boss, .sb-boss .smoke, .sb-boss .eyes, .sb-btn.light:not(:disabled) { animation: none; }
@@ -385,7 +412,7 @@ export function playShadowBoss({ rewards = [] } = {}) {
       let s = newBattle();
       let busy = false;
       card.innerHTML = `
-        <div class="sb-top"><p class="sb-kicker">✦ Boss Battle ✦</p><div class="sb-top-btns"><button type="button" class="sb-retreat" data-act="guide">❔ How to Play</button><button type="button" class="sb-retreat" data-act="retreat">Retreat</button></div></div>
+        <div class="sb-top"><p class="sb-kicker">✦ Boss Battle ✦</p><div class="sb-top-btns"><button type="button" class="sb-retreat" data-act="guide">❔ Guide</button><button type="button" class="sb-retreat" data-act="retreat">Retreat</button></div></div>
         <div class="sb-bossbar">
           <p class="sb-name">The Shadow of Sin <small data-r="bossNum"></small></p>
           <div class="sb-bar"><i data-r="bossBar"></i></div>

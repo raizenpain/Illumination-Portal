@@ -312,12 +312,19 @@ export function showPatchNotes(version = PATCHES[0].version) {
   });
 }
 
-/** Shows the newest patch notes once per device; resolves when closed. */
+// Until this moment the newest notes open on EVERY dashboard visit
+// (Jornie: "show it within this week" — through Sunday, Oct 11, PH time);
+// after it, once per new version per device. Move it forward for a
+// future update that should also be pushed every visit for a while.
+const SHOW_EVERY_VISIT_UNTIL = Date.parse('2026-10-11T23:59:59+08:00');
+
+/** Shows the newest patch notes (every visit until SHOW_EVERY_VISIT_UNTIL,
+ *  then once per device per version); resolves when closed. */
 export async function maybeShowPatchNotes() {
   const latest = PATCHES[0].version;
   let seen = null;
   try { seen = localStorage.getItem(SEEN_KEY); } catch (e) { /* storage blocked */ }
-  if (seen === latest) return;
+  if (seen === latest && Date.now() > SHOW_EVERY_VISIT_UNTIL) return;
   await showPatchNotes(latest);
   try { localStorage.setItem(SEEN_KEY, latest); } catch (e) { /* storage blocked */ }
 }

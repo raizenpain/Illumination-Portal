@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -730,8 +731,10 @@ async function loadStudentCard() {
       hasSeen: !!data.hasSeenFiesta75Announcement,
       isAdmin: isSeasonPreviewAdmin
     }).then(async () => {
-      // Congratulations first, then the Prelim deadline reminder --
-      // the order Jornie asked for.
+      // The patch notes come first (every visit this week -- see
+      // patchNotes.js), then Congratulations, then the Prelim deadline
+      // reminder -- the order Jornie asked for.
+      await maybeShowPatchNotes();
       await showHonorPopup({ viewerName: honorViewerName });
       await maybeShowPrelimReminder({
         email,
@@ -741,7 +744,6 @@ async function loadStudentCard() {
       });
       if (discipleBonusJustGranted) await showDiscipleBonusReveal();
       await maybeShowRefundNotice({ email, data, isAdmin: isSeasonPreviewAdmin });
-      await maybeShowPatchNotes();
       // The end of the whole journey: "Your Pilgrimage Is Complete" after
       // the Final Reflection, then "The Legendary Is Forged" (each once).
       await craftingReady;

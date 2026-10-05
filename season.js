@@ -628,7 +628,10 @@ const ticketSummary = (rewards) => ALL_TICKET_TYPES.filter((t) => rewards[t]).ma
 function chapterBonusFor(chapter) {
   const rewards = {};
   if (isNormalChapter(chapter)) {
-    ALL_TICKET_TYPES.forEach((type) => { rewards[type] = NORMAL_CHAPTER_BONUS; });
+    // A chapter can set its own bonus (the Semifinal boss pays 20, so the
+    // battle totals 30 of every ticket with its task reward).
+    const bonus = Number.isFinite(chapter.chapterBonus) ? chapter.chapterBonus : NORMAL_CHAPTER_BONUS;
+    ALL_TICKET_TYPES.forEach((type) => { rewards[type] = bonus; });
   } else {
     ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket'].forEach((type) => { rewards[type] = CAPSTONE_BONUS[chapter.chapterId]; });
   }

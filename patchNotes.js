@@ -32,7 +32,7 @@ export const PATCHES = [
               'Below half health, the Shadow becomes enraged and strikes harder',
               'Tap "How to Play" anytime, even mid-battle, for the full guide',
               'No star is earned for the battle, and Semifinal still has the same 8 stars',
-              'Victory rewards: +15 of every ticket type and +16 Ember Shards, plus a new Catechism Moment',
+              'Victory rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
               'Falling in battle costs nothing. Rise again and try as many times as you need'
             ]
           },

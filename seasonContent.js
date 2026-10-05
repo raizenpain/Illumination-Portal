@@ -422,6 +422,9 @@ export const SEASON_CONTENT = {
         chapterTitle: 'The Shadow of Sin',
         basedOn: 'Boss battle — face the Shadow of Sin before the Comprehensive Exam. No questions, no star: only courage, wisdom, and grace.',
         noStar: true,
+        // +20 of every ticket for clearing it, on top of the task's +10
+        // (+1 Ember Shard): 30 of each ticket in all (Jornie, 2026-10-05).
+        chapterBonus: 20,
         nodes: [
           {
             nodeId: 'sfb_n1', type: 'game', game: 'shadowBoss', title: 'Defeat the Shadow of Sin',

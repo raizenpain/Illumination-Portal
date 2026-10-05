@@ -302,6 +302,14 @@
 
         <hr class="badge-section-divider">
 
+        <div class="cert-shelf" id="certShelf">
+          <h4>🏅 My Certificates</h4>
+          <p class="section-subtitle">Open any certificate you've earned to view or download it again</p>
+          <div id="certShelfMount"></div>
+        </div>
+
+        <hr class="badge-section-divider">
+
         <div class="ticket-trader-nested">
           <h4>🎫 Ticket Trader</h4>
           <p class="section-subtitle">Trade tickets for Artifact Unlock Tokens</p>
@@ -421,6 +429,7 @@ import { showTreasureReveal } from './treasureReveal.js';
 import { maybeShowPrelimReminder } from './prelimDeadline.js';
 import { showHonorPopup, renderHonorStrip } from './midtermHonorRoll.js';
 import { maybeShowFinale, awardFinalGift } from './journeyFinale.js';
+import { renderCertificateShelf } from './certificates.js';
 import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
 const { email, name } = requireLogin();
@@ -676,6 +685,7 @@ async function loadStudentCard() {
     });
 
     renderBadges(data.achievements || []);
+    renderCertificateShelf(document.getElementById('certShelfMount'), data);
     renderPuzzleCards(data);
     setupMidtermCard(data);
     setupSemifinalAndFinalCards(data);

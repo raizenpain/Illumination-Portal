@@ -189,6 +189,8 @@ service cloud.firestore {
         'hasSeenFiesta75Announcement', 'legendaryCountdownStartedAt', 'legendaryKeyUsedAt',
         'journeyCompleteSeen', 'legendaryForgeSeen', 'legendaryForgeStartedAt', 'legendaryForgeChain',
         'finalGiftGranted',
+        'puzzle2VerificationCode', 'puzzle3VerificationCode', 'certificateDates',
+        'prelimVerificationCode', 'vaultVerificationCode',
         'mustardSeed'
       ];
     }

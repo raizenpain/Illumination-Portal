@@ -350,7 +350,7 @@ async function handleCodeSubmit() {
 
     // On to the certificate once every popup has been read and closed.
     whenPopupsDone().then(() => {
-      setTimeout(() => { window.location.href = 'completion.html'; }, 400);
+      setTimeout(() => { window.location.href = `completion.html?puzzle=${puzzleNumber}`; }, 400);
     });
   }
 }

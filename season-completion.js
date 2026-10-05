@@ -1,13 +1,18 @@
 // ============================================
-// SEASON COMPLETION CERTIFICATE
-// Mirrors completion.js's exact pattern (verification code generated
-// once and stored, QR code, PDF download) — just parameterized by
-// ?season= and themed per season instead of hardcoded to Puzzle 1.
+// SEASON / ACHIEVEMENT CERTIFICATE — season-completion.html?season=KEY
+// for KEY = prelim | vault | midterm | semifinal | final. Everything
+// about each certificate (title, wording, colour, code) comes from
+// certificates.js; the puzzle certificates use completion.html.
+//
+// Verification code generated once and stored, QR code, PDF download.
+// Only shows a certificate the student has earned, and the issue date is
+// saved once so re-opening it later (from the dashboard's "My
+// Certificates") shows when it was earned, not today.
 // ============================================
 
 import { db, doc, getDoc, setDoc } from './firebase.js';
-import { SEASON_CONTENT } from './seasonContent.js';
 import { enforcePrelimLockout } from './prelimDeadline.js';
+import { certificateByKey, isCertificateEarned, certificateDate, formatCertificateDate } from './certificates.js';
 
 const email = localStorage.getItem('studentEmail');
 const name = localStorage.getItem('studentName');
@@ -17,9 +22,7 @@ if (!email) {
   window.location.href = 'login.html';
 }
 
-const params = new URLSearchParams(window.location.search);
-const seasonId = params.get('season');
-const season = SEASON_CONTENT[seasonId];
+const cert = certificateByKey(new URLSearchParams(window.location.search).get('season'));
 
 // Rising embers behind the dark fantasy certificate (outside #certificate,
 // so they never end up in the PDF).
@@ -32,51 +35,58 @@ if (embers) {
   }
 }
 
-const SEASON_CODE = { midterm: 'MID', semifinal: 'SEM', final: 'FIN' };
-const SEASON_SEAL = { midterm: '🌅', semifinal: '🌑', final: '🌄' };
+const studentRef = doc(db, 'students', email);
 
-if (!season) {
-  window.location.href = 'dashboard.html';
+if (!cert || cert.kind === 'puzzle') {
+  window.location.href = cert ? cert.url : 'dashboard.html';
 } else {
-  document.getElementById('certificate').dataset.theme = seasonId;
-  document.getElementById('certificateSeal').textContent = SEASON_SEAL[seasonId] || '🏅';
-  document.getElementById('certTitle').textContent = `Certificate of ${season.seasonName} Completion`;
-  document.getElementById('seasonTitle').textContent = season.seasonName;
-  document.getElementById('seasonSubtitleText').textContent = `— ${season.subtitle} —`;
+  document.getElementById('certificate').dataset.theme = cert.theme;
+  document.getElementById('certificateSeal').textContent = cert.seal;
+  document.getElementById('certTitle').textContent = cert.certTitle;
+  document.getElementById('seasonTitle').textContent = cert.title;
+  document.getElementById('seasonSubtitleText').textContent = `— ${cert.subtitle} —`;
+  document.getElementById('certLine').textContent = cert.line;
   loadCertificate();
 }
 
-const studentRef = doc(db, 'students', email);
-
 async function loadCertificate() {
   const snap = await getDoc(studentRef);
-
   if (!snap.exists()) {
     window.location.href = 'dashboard.html';
     return;
   }
-
   const data = snap.data();
-  const codeField = `${seasonId}VerificationCode`;
+  if (!isCertificateEarned(cert, data)) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
 
-  let verificationCode = data[codeField];
-
+  let verificationCode = data[cert.codeField];
+  let issued = certificateDate(cert, data);
+  const updates = {};
   if (!verificationCode) {
-    verificationCode = `HCDC-${SEASON_CODE[seasonId]}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
-    await setDoc(studentRef, { [codeField]: verificationCode }, { merge: true });
+    verificationCode = `HCDC-${cert.codePrefix}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`;
+    updates[cert.codeField] = verificationCode;
+  }
+  if (!issued) {
+    issued = new Date();
+    updates.certificateDates = { [cert.key]: issued.toISOString() };
+  }
+  if (Object.keys(updates).length) {
+    await setDoc(studentRef, updates, { merge: true });
   }
 
   const teacherName = data.teacherName || 'Jornie Hinay';
-
   document.getElementById('studentName').textContent = data.name || name;
   document.getElementById('studentEmail').textContent = email;
-  document.getElementById('completionDate').textContent = new Date().toLocaleString();
+  document.getElementById('completionDate').textContent = formatCertificateDate(issued);
   document.getElementById('verificationCode').textContent = verificationCode;
   document.getElementById('instructorName').textContent = teacherName;
   document.getElementById('signatureName').textContent = teacherName;
 
   const qr = document.createElement('img');
   qr.src = `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${verificationCode}`;
+  qr.alt = `QR code for verification code ${verificationCode}`;
   document.getElementById('qrContainer').appendChild(qr);
 }
 
@@ -89,16 +99,15 @@ document.getElementById('dashboardBtn').onclick = () => {
 };
 
 document.getElementById('downloadBtn').onclick = () => {
-  const element = document.getElementById('certificate');
-
+  if (!cert) return;
   html2pdf()
     .set({
       margin: 0.5,
-      filename: `HCDC_${season.seasonName.replace(/\s+/g, '_')}_Certificate.pdf`,
+      filename: `HCDC_${cert.title.replace(/^The\s+/, '').replace(/\s+/g, '_')}_Certificate.pdf`,
       image: { type: 'jpeg', quality: 1 },
       html2canvas: { scale: 2 },
       jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
     })
-    .from(element)
+    .from(document.getElementById('certificate'))
     .save();
 };

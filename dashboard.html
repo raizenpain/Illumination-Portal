@@ -939,7 +939,7 @@ function renderBadges(achievements) {
 
   badgeContainer.innerHTML = `
     <p class="badge-groups-total"><strong>${total}</strong> badge${total === 1 ? '' : 's'} earned</p>
-    ${BADGE_GROUPS.filter((g) => !(g.hideWhenEmpty && byGroup[g.id].length === 0)).map((g) => {
+    ${BADGE_GROUPS.map((g) => {
       const list = byGroup[g.id];
       const open = list.length > 0 && openId === g.id;
       return `

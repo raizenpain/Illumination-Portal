@@ -191,7 +191,7 @@ service cloud.firestore {
         'finalGiftGranted',
         'puzzle2VerificationCode', 'puzzle3VerificationCode', 'certificateDates',
         'prelimVerificationCode', 'vaultVerificationCode',
-        'artifactRefundNotice',
+        'artifactRefundNotice', 'revisionRequests',
         'mustardSeed'
       ];
     }

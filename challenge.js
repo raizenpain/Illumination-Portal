@@ -2,6 +2,8 @@ import { db, doc, getDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { CHALLENGES } from './questions.js';
 import { logActivity } from './activity.js';
+import { PUZZLE_CONFIG } from './puzzles.js';
+import { isPuzzleComplete } from './rank.js';
 
 // ================================
 // SETTINGS — adjust freely
@@ -20,8 +22,8 @@ const quizContainer = document.getElementById('quizContainer');
 const statusEl = document.getElementById('challengeStatus');
 
 const GATE_INFO = {
-  puzzle2: { title: 'Challenge Gate — Puzzle 2', unlockField: 'puzzle2Unlocked', nextPage: 'puzzle.html?puzzle=2' },
-  puzzle3: { title: 'Challenge Gate — Puzzle 3', unlockField: 'puzzle3Unlocked', nextPage: 'puzzle.html?puzzle=3' }
+  puzzle2: { title: 'Challenge Gate — Puzzle 2', unlockField: 'puzzle2Unlocked', nextPage: 'puzzle.html?puzzle=2', after: 1 },
+  puzzle3: { title: 'Challenge Gate — Puzzle 3', unlockField: 'puzzle3Unlocked', nextPage: 'puzzle.html?puzzle=3', after: 2 }
 };
 
 const gateInfo = GATE_INFO[gate];
@@ -70,12 +72,28 @@ async function init() {
     return;
   }
 
+  // The gate belongs to whoever finished the puzzle before it: opening
+  // this page from a typed link must not skip that puzzle.
+  const previous = PUZZLE_CONFIG[gateInfo.after];
+  if (previous && !isPuzzleComplete(previous, data)) {
+    showPreviousPuzzleFirst(previous);
+    return;
+  }
+
   if (isOnCooldown()) {
     renderCooldown();
     return;
   }
 
   renderQuiz();
+}
+
+function showPreviousPuzzleFirst(previous) {
+  subtitleEl.textContent = `Finish ${previous.title} first. This gate opens once all its pieces are found.`;
+  quizContainer.innerHTML = `<button class="submit-quiz-btn" id="backToPuzzleBtn">Back to ${previous.title}</button>`;
+  document.getElementById('backToPuzzleBtn').onclick = () => {
+    window.location.href = `puzzle.html?puzzle=${gateInfo.after}`;
+  };
 }
 
 function showAlreadyUnlocked() {

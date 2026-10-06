@@ -1,6 +1,7 @@
 import { db, doc, getDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
+import { blockPasteInto } from './noCopyPaste.js';
 import { getRankProgress, getSeasonStars, isSeasonChaptersComplete, isPrelimSeasonDone, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 
@@ -119,17 +120,6 @@ async function init() {
   }
 
   submitBtn.onclick = handleSubmit;
-}
-
-function blockPasteInto(textarea, onBlocked) {
-  const block = (event) => {
-    event.preventDefault();
-    onBlocked();
-  };
-
-  textarea.addEventListener('paste', block);
-  textarea.addEventListener('drop', block);
-  textarea.addEventListener('contextmenu', (event) => event.preventDefault());
 }
 
 blockPasteInto(inputEl, () => {

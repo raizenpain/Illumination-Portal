@@ -12,6 +12,7 @@
   <script type="module" src="clickSound.js"></script>
   <script type="module" src="legendaryCountdown.js"></script>
   <script type="module" src="emberBackground.js"></script>
+  <script type="module" src="noCopyPaste.js"></script>
 </head>
 <body class="dashboard-page">
 
@@ -408,6 +409,7 @@
 <script type="module">
 import { db, doc, getDoc, updateDoc, increment, runTransaction, arrayUnion, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
 import { requireLogin } from './auth.js';
+import { blockPasteInto } from './noCopyPaste.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
 import { SEASON_CONTENT } from './seasonContent.js';
 import { resolveSeasonBadge } from './seasonBadges.js';
@@ -434,6 +436,7 @@ import { showHonorPopup, renderHonorStrip } from './midtermHonorRoll.js';
 import { maybeShowFinale, awardFinalGift } from './journeyFinale.js';
 import { renderCertificateShelf } from './certificates.js';
 import { maybeShowRefundNotice } from './refundNotice.js';
+import { maybeShowRevisionNotice } from './revisionNotice.js';
 import { maybeShowPatchNotes, showPatchNotes } from './patchNotes.js';
 
 document.getElementById('patchNotesLink')?.addEventListener('click', () => showPatchNotes());
@@ -745,6 +748,7 @@ async function loadStudentCard() {
       });
       if (discipleBonusJustGranted) await showDiscipleBonusReveal();
       await maybeShowRefundNotice({ email, data, isAdmin: isSeasonPreviewAdmin });
+      await maybeShowRevisionNotice({ data, isAdmin: isSeasonPreviewAdmin });
       // The end of the whole journey: "Your Pilgrimage Is Complete" after
       // the Final Reflection, then "The Legendary Is Forged" (each once).
       await craftingReady;
@@ -1593,17 +1597,6 @@ if (reflectionModalEdit) {
 
 if (reflectionModalSave) {
   reflectionModalSave.onclick = saveReflectionEdit;
-}
-
-function blockPasteInto(textarea, onBlocked) {
-  const block = (event) => {
-    event.preventDefault();
-    onBlocked();
-  };
-
-  textarea.addEventListener('paste', block);
-  textarea.addEventListener('drop', block);
-  textarea.addEventListener('contextmenu', (event) => event.preventDefault());
 }
 
 blockPasteInto(reflectionModalText, () => {

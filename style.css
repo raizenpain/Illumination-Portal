@@ -7335,3 +7335,12 @@ body.season-page {
   cursor: pointer;
 }
 
+/* A teacher's request to rewrite a season answer (revisionNotice.js). */
+.reflection-hint.revision-note {
+  margin: 10px 0;
+  padding: 9px 12px;
+  border-radius: 6px;
+  color: #FFE2A8;
+  background: rgba(233, 184, 90, 0.12);
+  border: 1px solid rgba(233, 184, 90, 0.45);
+}

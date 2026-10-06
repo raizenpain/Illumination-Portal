@@ -9,6 +9,8 @@ import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.
 import { getRankProgress, getSeasonStars, RANK_TIERS, starIndexOfChapter } from './rank.js';
 import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderChampionPopup, renderNoticePopup } from './rankPopup.js';
 import { TICKET_INFO } from './ticketTrader.js';
+import { blockPasteInto } from './noCopyPaste.js';
+import { pendingRevisions, isRevisionPending, isSameAnswer } from './revisionNotice.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -72,6 +74,7 @@ async function init() {
   if (chapterIndex === -1) chapterIndex = content.chapters.length - 1;
 
   renderChapter();
+  announceRevisions();
 
   prevChapterBtn.onclick = () => {
     if (chapterIndex > 0) { chapterIndex--; renderChapter(); }
@@ -141,10 +144,12 @@ function renderChapter() {
     nodeEl.className = `path-node state-${state}`;
     nodeEl.disabled = state !== 'available';
 
-    const icon = completed ? '🚩' : state === 'locked' ? '🔒' : NODE_TYPE_ICON[node.type];
+    // Sent back by the teacher to be rewritten (see revisionNotice.js).
+    const toRevise = state === 'available' && isRevisionPending(studentData, node.nodeId);
+    const icon = completed ? '🚩' : state === 'locked' ? '🔒' : toRevise ? '✏️' : NODE_TYPE_ICON[node.type];
     nodeEl.innerHTML = `
       <span class="path-node-icon">${icon}</span>
-      <span class="path-node-label">${node.title}</span>
+      <span class="path-node-label">${toRevise ? 'Revise: ' : ''}${node.title}</span>
     `;
 
     if (state === 'available') {
@@ -435,10 +440,13 @@ function renderQuizCooldown(node) {
 
 function renderTextModal(node, { minLength }) {
   const icon = NODE_TYPE_HEADING_ICON[node.type];
+  const revising = isRevisionPending(studentData, node.nodeId);
+  const earlierAnswer = (studentData.nodeSubmissions || {})[node.nodeId];
 
   nodeModalBox.innerHTML = `
     <h2>${icon} ${node.title}</h2>
     <p class="reflection-hint">${node.prompt}</p>
+    ${revising ? `<p class="reflection-hint revision-note">✏️ Your teacher has asked you to rewrite this answer in your own words. No tickets are taken away, and none are added.</p>` : ''}
     <textarea id="seasonTextInput" class="reflection-textarea" placeholder="Write your response here…"></textarea>
     <p class="reflection-hint" id="seasonTextHint">Write at least a short response (${minLength} characters) in your own words — pasting is disabled.</p>
     <div class="reflection-modal-actions">
@@ -485,21 +493,66 @@ function renderTextModal(node, { minLength }) {
       return;
     }
 
+    if (revising && isSameAnswer(text, earlierAnswer)) {
+      hint.textContent = 'This is the same as your earlier answer. Please write a new one in your own words.';
+      return;
+    }
+
     textSubmitBtn.disabled = true;
-    await awardNode(node, text);
+    if (revising) await reviseNode(node, text);
+    else await awardNode(node, text);
     closeNodeModal();
   };
 }
 
-function blockPasteInto(textarea, onBlocked) {
-  const block = (event) => {
-    event.preventDefault();
-    onBlocked();
-  };
+// ================================
+// REVISIONS — a rewrite the teacher asked for (see revisionNotice.js).
+// The task was already paid for, so this only saves the new answer,
+// marks the task done again and closes the request: no tickets, no
+// badges, no star or rank popups.
+// ================================
 
-  textarea.addEventListener('paste', block);
-  textarea.addEventListener('drop', block);
-  textarea.addEventListener('contextmenu', (event) => event.preventDefault());
+function announceRevisions() {
+  if (isSeasonPreviewAdmin) return;
+  const here = content.chapters.flatMap((ch) => ch.nodes).filter((n) => isRevisionPending(studentData, n.nodeId));
+  if (!here.length) return;
+  queuePopup({
+    kind: 'notice',
+    kicker: '✦ A Note from Your Teacher ✦',
+    sub: content.seasonName,
+    icon: '✏️',
+    eyebrow: here.length === 1 ? 'One answer to revise' : `${here.length} answers to revise`,
+    heading: 'Please Rewrite in Your Own Words',
+    detail: `Your teacher has asked you to rewrite ${here.length === 1 ? 'this answer' : 'these answers'} in your own words. Tap the task marked ✏️ to begin. Your tickets and rewards stay as they are; the chapters after it reopen as soon as you finish.`,
+    rewards: here.map((n) => `<span class="popup-reward-icon">✏️</span> ${n.title}`)
+  });
+}
+
+async function reviseNode(node, text) {
+  await updateDoc(doc(db, 'students', email), {
+    [`completedNodes.${node.nodeId}`]: true,
+    [`nodeSubmissions.${node.nodeId}`]: text,
+    [`revisionRequests.${node.nodeId}`]: false
+  });
+  studentData.completedNodes = { ...(studentData.completedNodes || {}), [node.nodeId]: true };
+  studentData.nodeSubmissions = { ...(studentData.nodeSubmissions || {}), [node.nodeId]: text };
+  studentData.revisionRequests = { ...(studentData.revisionRequests || {}), [node.nodeId]: false };
+
+  const left = pendingRevisions(studentData).length;
+  queuePopup({
+    kind: 'notice',
+    kicker: '✦ Answer Revised ✦',
+    sub: content.seasonName,
+    icon: '✅',
+    eyebrow: 'Thank you',
+    heading: node.title,
+    detail: left ? `Your new answer is saved. ${left} more to revise.` : 'Your new answer is saved, and the way forward is open again.'
+  });
+
+  // Carry on from the next thing that still needs doing.
+  const next = content.chapters.findIndex((ch) => !isChapterComplete(ch, studentData));
+  if (next !== -1) chapterIndex = next;
+  renderChapter();
 }
 
 // ================================

@@ -175,7 +175,6 @@ export const PATCHES = [
             items: [
               'Text in the portal can no longer be copied, and pasting stays off in every written answer, on phones and computers',
               'A written answer must be typed: text dropped in all at once is removed',
-              'Every page now carries a faint watermark of your name and account, so a screenshot shows whose it is',
               'Printing a portal page gives a blank sheet'
             ]
           }

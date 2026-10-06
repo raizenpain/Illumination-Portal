@@ -74,7 +74,7 @@ function installCopyGuard() {
     input, textarea, [contenteditable="true"] { -webkit-user-select: text; user-select: text; }
   `;
   document.head.appendChild(style);
-  installWatermark();
+  installPrintGuard();
 
   const stop = (event) => event.preventDefault();
   document.addEventListener('copy', stop, true);
@@ -89,37 +89,8 @@ function installCopyGuard() {
   }, true);
 }
 
-// 3. Screenshots cannot be blocked from a web page, so they are made
-//    traceable instead: the student's own name and account, faintly
-//    repeated across every page (above popups and games too, never in the
-//    way of a tap). A printed page comes out blank.
-function installWatermark() {
-  let name = ''; let email = '';
-  try {
-    name = localStorage.getItem('studentName') || '';
-    email = localStorage.getItem('studentEmail') || '';
-  } catch (_) { /* storage blocked */ }
-  const label = [name, email].filter(Boolean).join(' · ');
-  if (!label) return;
-
-  const esc = (t) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const w = Math.max(320, Math.min(620, label.length * 9 + 80));
-  // Light fill with a dark edge, so it shows on dark and light screens alike.
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="210">`
-    + `<text x="${w / 2}" y="112" text-anchor="middle" transform="rotate(-22 ${w / 2} 105)" `
-    + `font-family="Segoe UI, Arial, sans-serif" font-size="15" font-weight="600" `
-    + `fill="rgba(255,255,255,0.09)" stroke="rgba(0,0,0,0.1)" stroke-width="0.5">${esc(label)}</text></svg>`;
-
-  const mark = document.createElement('div');
-  mark.id = 'accountWatermark';
-  mark.setAttribute('aria-hidden', 'true');
-  mark.style.cssText = 'position:fixed;inset:0;z-index:2147483000;pointer-events:none;'
-    + `background-image:url("data:image/svg+xml,${encodeURIComponent(svg)}");background-repeat:repeat;`;
-  const place = () => { if (document.body && !mark.isConnected) document.body.appendChild(mark); };
-  if (document.body) place(); else document.addEventListener('DOMContentLoaded', place);
-  // Put it back if it is removed from the page.
-  setInterval(place, 3000);
-
+// 3. A printed page (or "Save as PDF") comes out blank.
+function installPrintGuard() {
   const print = document.createElement('style');
   print.id = 'noPrintStyles';
   print.textContent = '@media print { body { display: none !important; } }';

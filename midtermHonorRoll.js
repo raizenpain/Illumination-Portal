@@ -28,6 +28,7 @@
 // ============================================
 
 import { db, doc, getDoc, setDoc, serverTimestamp } from './firebase.js';
+import { ADMIN_EMAILS } from './admins.js';
 import { getRankProgress, RANK_ICON, RANK_TIERS } from './rank.js';
 
 const HONOR_ENDS_AT = '2026-10-10T00:00:00+08:00';
@@ -242,7 +243,7 @@ export function buildHonorModel(list) {
 /** What publishMidtermHonorRoll() stores. Exported for testing. */
 export function honorEntriesFrom(allStudents) {
   return allStudents
-    .filter((d) => d && d.midtermUnlocked === true && d.name)
+    .filter((d) => d && d.midtermUnlocked === true && d.name && !ADMIN_EMAILS.includes(d.email))
     .map((d) => {
       const progress = getRankProgress(d);
       return { name: String(d.name).slice(0, 80), rank: progress.rank, stars: progress.stars.filter(Boolean).length };

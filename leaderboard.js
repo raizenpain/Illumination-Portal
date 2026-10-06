@@ -36,6 +36,7 @@
 
 import { db, doc, setDoc, increment, runTransaction, collection, getDocs, query, orderBy, limit } from './firebase.js';
 import { RANK_ICON as RANK_TIER_ICON, RANK_TIERS } from './rank.js';
+import { ADMIN_EMAILS } from './admins.js';
 
 // Index into RANK_TIERS (Seeker=0 .. Apostle=3) so a higher rank always
 // outranks a lower one regardless of pace. Unknown/legacy rank strings
@@ -108,7 +109,9 @@ export async function initLeaderboard(info) {
   // Publish this student's own slim public entry. Skipped without a
   // createdAt (students enrolled before that field existed) rather
   // than writing a bad value that would wrongly rank them at the top.
-  if (info.createdAt) {
+  // Never for a teacher's own account: their test progress must not take
+  // a student's place in the Top 5.
+  if (info.createdAt && !ADMIN_EMAILS.includes(info.email)) {
     try {
       await setDoc(doc(db, 'leaderboard', info.email), {
         name: info.name || info.email,

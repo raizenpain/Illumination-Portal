@@ -125,7 +125,7 @@ service cloud.firestore {
       allow update: if request.auth != null &&
                        ((request.auth.token.email == studentId &&
                          request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
-                         (!prelimLockPassed() || resource.data.get('midtermUnlocked', false) == true) &&
+                         (!prelimLockPassed() || isAdmin() || resource.data.get('midtermUnlocked', false) == true) &&
                          request.resource.data.diff(resource.data).affectedKeys()
                            .hasOnly(studentSelfFields())) ||
                         (isAdmin() &&

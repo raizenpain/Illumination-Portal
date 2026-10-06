@@ -50,7 +50,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: Crossing the Red Sea',
             items: [
-              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 15)',
+              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 16)',
               ['Lead Moses and the Israelites through the sea before Pharaoh\'s chariots catch up', [
                 'Move between five lanes with ◀ ▶, the arrow keys, a swipe, or a tap on either side',
                 'Rocks make the people stumble, and the chariots gain on you',
@@ -69,7 +69,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: Ascent of Mount Sinai',
             items: [
-              'A second game chapter right after "The Covenant at Sinai" (now Chapter 6 of 15)',
+              'A second game chapter right after "The Covenant at Sinai" (now Chapter 6 of 16)',
               ['Climb the mountain as Moses, through the storm, to receive the tablets of the covenant', [
                 'Moses leaps by himself. Hold ◀ ▶, the arrow keys, or a side of the mountain to steer him',
                 'Stone ledges are safe. Cracked ledges crumble after one step',
@@ -88,7 +88,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: David and Goliath',
             items: [
-              'A third game chapter right after "A Kingdom United" (now Chapter 9 of 15)',
+              'A third game chapter right after "A Kingdom United" (now Chapter 9 of 16)',
               ['Face the giant in the Valley of Elah with a sling and five smooth stones', [
                 'A marker slides along the bar. Tap Sling! (or Space) while it is inside the gold zone to strike Goliath',
                 'Outside the gold zone the stone only rings off his armor, and he strides closer',
@@ -106,7 +106,7 @@ export const PATCHES = [
           {
             title: "New Chapter: Building Solomon's Temple",
             items: [
-              'A fourth game chapter right after "David and Goliath" (now Chapter 10 of 15)',
+              'A fourth game chapter right after "David and Goliath" (now Chapter 10 of 16)',
               ["Raise the wall of the First Temple with King Solomon's builders", [
                 'A stone swings across on the hoist. Tap Set the Stone (or Space) when it is right above the wall',
                 'Whatever hangs over the edge is cut away, so the wall and the next stone become narrower',
@@ -120,6 +120,24 @@ export const PATCHES = [
               'No star is earned, and the Final Season still has the same 12 stars',
               'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
               'Three stones cracked? Nothing is lost. Try again as many times as you need'
+            ]
+          },
+          {
+            title: 'New Chapter: The Fall of Jerusalem',
+            items: [
+              'A fifth game chapter right after "A Kingdom Divided and Exiled" (now Chapter 12 of 16)',
+              ["Babylon's army is at the walls in 587 BC. Hold the wall long enough for a remnant to escape", [
+                'Tap one of the five sections of the wall (or press 1 to 5) to send defenders there',
+                'You have only three bands of defenders, and each is busy for a moment after every order',
+                'Fire arrows burn fastest, ladders next, battering rams slowest',
+                'Later, iron-bound rams (×2) must be answered twice, and the assault comes in waves',
+                'An enemy left unanswered breaches the wall. Four breaches and the city falls too soon',
+                'Hold the wall for 70 seconds'
+              ]],
+              'Tap "How to Play" anytime for the full guide',
+              'No star is earned, and the Final Season still has the same 12 stars',
+              'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
+              'The wall fell too soon? Nothing is lost. Try again as many times as you need'
             ]
           }
         ]

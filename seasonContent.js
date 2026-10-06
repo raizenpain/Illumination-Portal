@@ -894,6 +894,25 @@ export const SEASON_CONTENT = {
           }
         ]
       },
+      // Game chapter (Jornie, 2026-10-05): after "A Kingdom Divided and
+      // Exiled", hold the wall of Jerusalem against Babylon so a remnant
+      // can escape (jerusalemSiege.js). No questions and NO star (noStar),
+      // but it must be cleared to continue; same rewards as the other games.
+      {
+        chapterId: 'final_siege',
+        chapterTitle: 'The Fall of Jerusalem',
+        basedOn: "Game — hold the wall of Jerusalem against Babylon's army in 587 BC (2 Kgs 25:1–4) long enough for a remnant to escape. No questions, no star.",
+        noStar: true,
+        chapterBonus: 20,
+        clearedLabel: 'A Remnant Is Saved',
+        clearedIcon: '🔥',
+        nodes: [
+          {
+            nodeId: 'fnj_n1', type: 'game', game: 'jerusalemSiege', title: 'Hold the Wall',
+            prompt: 'Send your three bands of defenders against the fire, ladders and rams, and hold the wall for 70 seconds so the people can escape.'
+          }
+        ]
+      },
       {
         chapterId: 'final_ch8',
         chapterTitle: 'Voices of the Prophets',

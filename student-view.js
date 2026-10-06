@@ -21,7 +21,6 @@ import { PRELIM_BADGE_INFO } from './prelimBadges.js';
 import { resolveSeasonBadge } from './seasonBadges.js';
 import { SIDE_QUESTS, resolveSideQuestBadge } from './sideQuests.js';
 import { VAULT_GAMES, resolveVaultGameBadge } from './vaultGames.js';
-import { resolveMustardSeedBadge } from './mustardSeedContent.js';
 
 // Student records are student-writable (rules validate field names, not
 // values), so any id/name read off one must be escaped before it goes
@@ -301,7 +300,7 @@ function renderAchievements(data) {
   }
 
   achievements.forEach((id) => {
-    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id) || resolveVaultGameBadge(id) || resolveMustardSeedBadge(id);
+    const info = PRELIM_BADGE_INFO[id] || resolveSeasonBadge(id) || resolveSideQuestBadge(id) || resolveVaultGameBadge(id);
     const label = info ? `${info.icon} ${info.title}` : escapeHtml(id);
     addRow(container, label, '✅');
   });

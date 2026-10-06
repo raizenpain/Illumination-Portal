@@ -127,17 +127,6 @@
 
     <div class="dashboard-main">
 
-      <section class="puzzle-section hidden" id="mustardSeedSection">
-        <div class="section-title">
-          <span class="section-kicker">🌱 A New Journey</span>
-          <h2>THE MUSTARD SEED</h2>
-          <p class="section-tagline">Every great tree begins with a seed.</p>
-          <p class="section-subtitle">Plant it, care for it daily, and watch it grow over the weeks ahead.</p>
-        </div>
-
-        <div class="puzzle-grid" id="mustardSeedGrid"></div>
-      </section>
-
       <section class="puzzle-section vault-section hidden" id="vaultSection">
         <div class="section-title">
           <span class="section-kicker">🗝️ Always Open</span>
@@ -426,8 +415,6 @@ import { initClassChat } from './classChat.js';
 import { initDashboardMusic } from './dashboardMusic.js';
 import { getFeaturedQuest, getQuestStatus, resolveSideQuestBadge } from './sideQuests.js';
 import { VAULT_GAMES, VAULT_UNLOCKED, resolveVaultGameBadge } from './vaultGames.js';
-import { resolveMustardSeedBadge, MUSTARD_SEED_UNLOCKED, MUSTARD_SEED_PREVIEW_EMAILS } from './mustardSeedContent.js';
-import { checkAndAdvanceStage, currentStageInfo, nextStageCountdown } from './mustardSeed.js';
 import { checkVaultCapstone, maybeShowCapstonePreview } from './vaultCapstone.js';
 import { TICKETS } from './vaultTickets.js';
 import { showTreasureReveal } from './treasureReveal.js';
@@ -718,10 +705,6 @@ async function loadStudentCard() {
     });
 
     renderSideQuestBanner(data);
-    renderMustardSeed(data);
-    checkAndAdvanceStage({ email, name: data.name || name, data }).then((advancedTo) => {
-      if (advancedTo) renderMustardSeed(data);
-    });
     renderVaultGames(data);
     // Admins previewing the dashboard aren't on the roll themselves.
     const honorViewerName = isSeasonPreviewAdmin ? null : (data.name || name);
@@ -850,71 +833,6 @@ function renderSideQuestBanner(data) {
   if (status === 'upcoming') setInterval(paint, 60000);
 }
 
-// The Mustard Seed's own evergreen entry-point card -- a separate
-// section from The Sanctuarium/Vault Games below (different game,
-// different rhythm: this one runs on real elapsed days, not a single
-// sitting), not a card inside that grid. Three states: not planted yet
-// (invites planting), in progress (current stage + countdown to the
-// next one, sourced from the same GROWTH_STAGES data mustardSeed.js
-// and firestore.rules both key off of), or completed (fruit claimed,
-// replay-locked like every other one-time reward in this app).
-function renderMustardSeed(data) {
-  const section = document.getElementById('mustardSeedSection');
-  const grid = document.getElementById('mustardSeedGrid');
-  if (!section || !grid) return;
-
-  const ms = data.mustardSeed;
-  const card = document.createElement('div');
-
-  if (!MUSTARD_SEED_UNLOCKED && !MUSTARD_SEED_PREVIEW_EMAILS.includes(email)) {
-    card.className = 'puzzle-card state-locked';
-    card.innerHTML = `
-      <div class="puzzle-icon-chip"><span class="puzzle-icon">🌰</span></div>
-      <h3>The Mustard Seed</h3>
-      <p>Something is about to be planted.</p>
-      <span class="status-badge status-locked">🔒 Coming Soon</span>
-    `;
-    grid.innerHTML = '';
-    grid.appendChild(card);
-    section.classList.remove('hidden');
-    return;
-  }
-
-  if (!ms || !ms.plantedAt) {
-    card.className = 'puzzle-card state-challenge';
-    card.innerHTML = `
-      <div class="puzzle-icon-chip"><span class="puzzle-icon">🌰</span></div>
-      <h3>Plant Your Mustard Seed</h3>
-      <p>Every great tree begins with a seed. Growth takes patience.</p>
-      <span class="status-badge status-challenge">Begin</span>
-    `;
-  } else if (ms.gameStatus === 'completed') {
-    card.className = 'puzzle-card state-locked';
-    card.innerHTML = `
-      <div class="puzzle-icon-chip"><span class="puzzle-icon">🍎</span></div>
-      <h3>The Forbidden Fruit of Knowledge</h3>
-      <p>Your mustard seed has grown and borne fruit.</p>
-      <span class="status-badge status-completed">✅ Completed</span>
-    `;
-  } else {
-    const stageInfo = currentStageInfo(ms);
-    const countdown = nextStageCountdown(ms);
-    const sub = countdown ? `${countdown.stage.title} in ${countdown.daysRemaining}d` : 'Ready to bear fruit';
-    card.className = 'puzzle-card state-challenge';
-    card.innerHTML = `
-      <div class="puzzle-icon-chip"><span class="puzzle-icon">${stageInfo.icon}</span></div>
-      <h3>${stageInfo.title}</h3>
-      <p>${stageInfo.hint}</p>
-      <span class="status-badge status-challenge">${sub}</span>
-    `;
-  }
-
-  card.onclick = () => { window.location.href = 'mustard-seed.html'; };
-  grid.innerHTML = '';
-  grid.appendChild(card);
-  section.classList.remove('hidden');
-}
-
 // Unlike the Side Quest banner (one featured quest at a time, date-
 // gated), every Vault Game shows at once, permanently -- so this just
 // builds one card per registry entry rather than picking a "current"
@@ -992,9 +910,7 @@ const BADGE_GROUPS = [
   { id: 'semifinal', icon: '<img src="assets/seasons/semifinal.webp" alt="">', name: 'Semifinal Season', sub: 'The Destruction' },
   { id: 'final', icon: '<img src="assets/seasons/final.webp" alt="">', name: 'Final Season', sub: "God's Action" },
   { id: 'sidequest', icon: '🧭', name: 'Side Quests', sub: 'Limited-time quests' },
-  { id: 'vault', icon: '🗝️', name: 'The Sanctuarium', sub: 'Vault Games' },
-  // Only appears for accounts that actually have these badges.
-  { id: 'mustardseed', icon: '🌱', name: 'The Mustard Seed', sub: 'Growing faith', hideWhenEmpty: true }
+  { id: 'vault', icon: '🗝️', name: 'The Sanctuarium', sub: 'Vault Games' }
 ];
 const OPEN_BADGE_GROUP_KEY = 'openBadgeGroup';
 
@@ -1006,8 +922,6 @@ function badgeInfoWithGroup(id) {
   if (quest) return { ...quest, group: 'sidequest' };
   const vault = resolveVaultGameBadge(id);
   if (vault) return { ...vault, group: 'vault' };
-  const seed = resolveMustardSeedBadge(id);
-  if (seed) return { ...seed, group: 'mustardseed' };
   return null;
 }
 

@@ -22,125 +22,6 @@ service cloud.firestore {
       return request.time >= timestamp.value(1791561600000);
     }
 
-    // Mustard Seed growth-stage schedule, mirrored from
-    // mustardSeedContent.js (rules can't import JS) -- keep these two
-    // in sync whenever a stage's day threshold changes.
-    function mustardSeedStageOrder() {
-      return {
-        'seed': 0, 'sprout': 1, 'youngPlant': 2, 'growingPlant': 3,
-        'maturePlant': 4, 'flowering': 5, 'fruitFormation': 6, 'forbiddenFruit': 7
-      };
-    }
-    function mustardSeedStageDays() {
-      return {
-        'seed': 0, 'sprout': 7, 'youngPlant': 14, 'growingPlant': 21,
-        'maturePlant': 28, 'flowering': 35, 'fruitFormation': 42, 'forbiddenFruit': 49
-      };
-    }
-
-    // Split into small helpers, each well under Firestore Rules' cap of
-    // 10 variables per function (a single 29-variable version of this
-    // hit that cap and failed to compile at all -- caught by actually
-    // testing against the rules engine via the Firestore emulator +
-    // @firebase/rules-unit-testing, not by reading the syntax; 11
-    // scenarios verified passing, both legitimate writes and every
-    // attempted cheat below, before this was ever deployed). Layered
-    // on top of studentSelfFields()'s coarse "'mustardSeed' is a legal
-    // key name" check, which alone can't tell watering apart from a
-    // devtools call that replaces the whole field -- every real
-    // constraint here reaches into the map's own contents directly.
-    function mustardSeedPlantedAtValid(before, after) {
-      let plantedBefore = before != null ? before.get('plantedAt', null) : null;
-      let plantedAfter = after.get('plantedAt', null);
-      return (plantedBefore == null && plantedAfter == request.time) ||
-             (plantedBefore != null && plantedAfter == plantedBefore);
-    }
-
-    function mustardSeedStageValid(before, after, plantedAfter) {
-      let stageOrder = mustardSeedStageOrder();
-      let stageDays = mustardSeedStageDays();
-      let stageBefore = before != null ? before.get('currentStage', 'seed') : 'seed';
-      let stageAfter = after.get('currentStage', 'seed');
-      return stageAfter == stageBefore || (
-        stageAfter in stageOrder &&
-        stageBefore in stageOrder &&
-        stageOrder[stageAfter] > stageOrder[stageBefore] &&
-        plantedAfter != null &&
-        request.time >= plantedAfter + duration.value(stageDays[stageAfter], 'd')
-      );
-    }
-
-    // At most one BRAND NEW day may be added per write (the first
-    // action of a new day). An EXISTING day's entry may only be
-    // changed if it's the same day recorded in lastCareDate before
-    // this write -- i.e. a second/third action on the SAME day
-    // (water, then fertilize, then reflect) is allowed, but reaching
-    // back to edit an OLDER day is not. Deliberately keyed off
-    // lastCareDate (a value the app itself already maintains) rather
-    // than computing "is this really today" fresh in rules -- avoids
-    // the UTC-vs-Manila-timezone boundary risk a rules-side calendar
-    // check would introduce. A same-day-vs-old-day multi-action
-    // scenario was the one real gap the emulator test suite caught in
-    // an earlier version of this function (it originally blocked ALL
-    // changes, including a legitimate second same-day action) --
-    // verified fixed via 16 passing scenarios before this shipped.
-    function mustardSeedCareValid(before, after) {
-      let careBefore = before != null ? before.get('dailyCare', {}) : {};
-      let careAfter = after.get('dailyCare', {});
-      let careDiff = careAfter.diff(careBefore);
-      let lastCareDateBefore = before != null ? before.get('lastCareDate', null) : null;
-      return careDiff.addedKeys().size() <= 1 &&
-             careDiff.removedKeys().size() == 0 &&
-             careDiff.changedKeys().size() <= 1 &&
-             (careDiff.changedKeys().size() == 0 ||
-              (lastCareDateBefore != null && lastCareDateBefore in careDiff.changedKeys()));
-    }
-
-    function mustardSeedCountersValid(before, after) {
-      let watersBefore = before != null ? before.get('totalWaterings', 0) : 0;
-      let watersAfter = after.get('totalWaterings', 0);
-      let fertBefore = before != null ? before.get('totalFertilizers', 0) : 0;
-      let fertAfter = after.get('totalFertilizers', 0);
-      let reflBefore = before != null ? before.get('totalReflections', 0) : 0;
-      let reflAfter = after.get('totalReflections', 0);
-      return (watersAfter == watersBefore || watersAfter == watersBefore + 1) &&
-             (fertAfter == fertBefore || fertAfter == fertBefore + 1) &&
-             (reflAfter == reflBefore || reflAfter == reflBefore + 1);
-    }
-
-    function mustardSeedStatusValid(before, after, plantedAfter) {
-      let stageDays = mustardSeedStageDays();
-      let stageAfter = after.get('currentStage', 'seed');
-      let statusBefore = before != null ? before.get('gameStatus', 'active') : 'active';
-      let statusAfter = after.get('gameStatus', 'active');
-      return statusAfter == statusBefore || (
-        statusBefore == 'active' && statusAfter == 'completed' &&
-        stageAfter == 'forbiddenFruit' &&
-        plantedAfter != null &&
-        request.time >= plantedAfter + duration.value(stageDays['forbiddenFruit'], 'd')
-      );
-    }
-
-    function mustardSeedClaimValid(before, after) {
-      let claimedBefore = before != null ? before.get('fruitClaimedAt', null) : null;
-      let claimedAfter = after.get('fruitClaimedAt', null);
-      let statusAfter = after.get('gameStatus', 'active');
-      return claimedAfter == claimedBefore ||
-        (claimedBefore == null && claimedAfter == request.time && statusAfter == 'completed');
-    }
-
-    function isValidMustardSeedWrite() {
-      let before = resource.data.get('mustardSeed', null);
-      let after = request.resource.data.mustardSeed;
-      let plantedAfter = after.get('plantedAt', null);
-      return mustardSeedPlantedAtValid(before, after) &&
-             mustardSeedStageValid(before, after, plantedAfter) &&
-             mustardSeedCareValid(before, after) &&
-             mustardSeedCountersValid(before, after) &&
-             mustardSeedStatusValid(before, after, plantedAfter) &&
-             mustardSeedClaimValid(before, after);
-    }
-
     // A student's teacherEmail/section aren't in their auth token, so
     // class-scoped collections (classChatMessages) need a cross-
     // document lookup to know "which class is the CALLER actually in"
@@ -191,8 +72,7 @@ service cloud.firestore {
         'finalGiftGranted',
         'puzzle2VerificationCode', 'puzzle3VerificationCode', 'certificateDates',
         'prelimVerificationCode', 'vaultVerificationCode',
-        'artifactRefundNotice', 'revisionRequests',
-        'mustardSeed'
+        'artifactRefundNotice', 'revisionRequests'
       ];
     }
 
@@ -235,32 +115,22 @@ service cloud.firestore {
       // writes it anymore, but it's still sitting there) must never
       // block that student from making any further progress. Admins
       // can also update, but only the specific fields Gift Tickets,
-      // Re-assign Class, a Mustard Seed reset, and the roster's Fix
+      // Re-assign Class, and the roster's Fix
       // Flagged Completion action actually touch — never real progress,
       // achievements, or artifacts.
       //
-      // The mustardSeed field name alone being on studentSelfFields()
-      // only stops an unrelated made-up field name -- it can't tell a
-      // legitimate water()/fertilize()/reflect()/stage-advance write
-      // apart from a devtools call replacing the whole field to reset
-      // the game, so isValidMustardSeedWrite() (see above, verified
-      // against 11 scenarios via the Firestore rules emulator before
-      // this was ever deployed) is required whenever 'mustardSeed' is
-      // one of the touched keys. Same idea for the *Completed fields
-      // and isValidAdminCompletionFix() -- being legal key names alone
-      // can't stop an admin write from setting one true, so that
-      // function is what actually restricts it to clearing, not setting.
+      // The *Completed fields being legal key names alone can't stop an
+      // admin write from setting one true, so isValidAdminCompletionFix()
+      // is what actually restricts it to clearing, not setting.
       allow update: if request.auth != null &&
                        ((request.auth.token.email == studentId &&
                          request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                          (!prelimLockPassed() || resource.data.get('midtermUnlocked', false) == true) &&
                          request.resource.data.diff(resource.data).affectedKeys()
-                           .hasOnly(studentSelfFields()) &&
-                         (!('mustardSeed' in request.resource.data.diff(resource.data).affectedKeys()) ||
-                          isValidMustardSeedWrite())) ||
+                           .hasOnly(studentSelfFields())) ||
                         (isAdmin() &&
                          request.resource.data.diff(resource.data).affectedKeys()
-                           .hasOnly(['teacherEmail', 'teacherName', 'section', 'tickets', 'mustardSeed',
+                           .hasOnly(['teacherEmail', 'teacherName', 'section', 'tickets',
                                      'puzzle1Completed', 'puzzle2Completed', 'puzzle3Completed']) &&
                          isValidAdminCompletionFix()));
 
@@ -317,7 +187,7 @@ service cloud.firestore {
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                        request.resource.data.userId == request.auth.token.email &&
                        request.resource.data.keys().hasOnly(['userId', 'studentName', 'type', 'title', 'icon', 'timestamp']) &&
-                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact', 'sidequest', 'vaultgame', 'mustardseed'] &&
+                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact', 'sidequest', 'vaultgame'] &&
                        // The feed orders by timestamp, so it must be a real
                        // server time (serverTimestamp() resolves to
                        // request.time) -- a string or far-future value

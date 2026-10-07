@@ -12,36 +12,6 @@
 
 export const PATCHES = [
   {
-    version: '2.2',
-    date: 'October 7, 2026',
-    sections: [
-      {
-        title: 'Final Season',
-        groups: [
-          {
-            title: "New Chapter: Nehemiah's Night Ride",
-            items: [
-              'A sixth game chapter right after "Return and Rebuilding" (now Chapter 15 of 17)',
-              ['Ride with Nehemiah around the ruined walls of Jerusalem by night. This is the hardest game in the portal', [
-                'The mount never stops, and it runs faster the farther you go',
-                'Jump (tap Jump, tap the road, Space or ↑) over rubble, fallen pillars and breaches in the road',
-                'Hold Duck (or ↓) to pass under a broken arch. Duck in the air to drop quickly',
-                'You see only what the lantern lights, and its oil burns down. Jump to catch jars of oil',
-                'You have 3 chances. Passing the Dung Gate or the Fountain Gate gives one back',
-                'After the Fountain Gate the way narrows: more arches, wider breaches, less room between them',
-                'Ride 1,000 m, back to the Valley Gate'
-              ]],
-              'Tap "How to Play" anytime for the full guide',
-              'No star is earned, and the Final Season still has the same 12 stars',
-              'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
-              'Three stumbles? Nothing is lost. Try again as many times as you need'
-            ]
-          }
-        ]
-      }
-    ]
-  },
-  {
     version: '2.1',
     date: 'October 5, 2026',
     sections: [
@@ -80,7 +50,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: Crossing the Red Sea',
             items: [
-              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 16)',
+              'A new game chapter right after "Out of Egypt" (now Chapter 3 of 17)',
               ['Lead Moses and the Israelites through the sea before Pharaoh\'s chariots catch up', [
                 'Move between five lanes with ◀ ▶, the arrow keys, a swipe, or a tap on either side',
                 'Rocks make the people stumble, and the chariots gain on you',
@@ -99,7 +69,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: Ascent of Mount Sinai',
             items: [
-              'A second game chapter right after "The Covenant at Sinai" (now Chapter 6 of 16)',
+              'A second game chapter right after "The Covenant at Sinai" (now Chapter 6 of 17)',
               ['Climb the mountain as Moses, through the storm, to receive the tablets of the covenant', [
                 'Moses leaps by himself. Hold ◀ ▶, the arrow keys, or a side of the mountain to steer him',
                 'Stone ledges are safe. Cracked ledges crumble after one step',
@@ -118,7 +88,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: David and Goliath',
             items: [
-              'A third game chapter right after "A Kingdom United" (now Chapter 9 of 16)',
+              'A third game chapter right after "A Kingdom United" (now Chapter 9 of 17)',
               ['Face the giant in the Valley of Elah with a sling and five smooth stones', [
                 'A marker slides along the bar. Tap Sling! (or Space) while it is inside the gold zone to strike Goliath',
                 'Outside the gold zone the stone only rings off his armor, and he strides closer',
@@ -136,7 +106,7 @@ export const PATCHES = [
           {
             title: "New Chapter: Building Solomon's Temple",
             items: [
-              'A fourth game chapter right after "David and Goliath" (now Chapter 10 of 16)',
+              'A fourth game chapter right after "David and Goliath" (now Chapter 10 of 17)',
               ["Raise the wall of the First Temple with King Solomon's builders", [
                 'A stone swings across on the hoist. Tap Set the Stone (or Space) when it is right above the wall',
                 'Whatever hangs over the edge is cut away, so the wall and the next stone become narrower',
@@ -155,7 +125,7 @@ export const PATCHES = [
           {
             title: 'New Chapter: The Fall of Jerusalem',
             items: [
-              'A fifth game chapter right after "A Kingdom Divided and Exiled" (now Chapter 12 of 16)',
+              'A fifth game chapter right after "A Kingdom Divided and Exiled" (now Chapter 12 of 17)',
               ["Babylon's army is at the walls in 587 BC. Hold the wall long enough for a remnant to escape", [
                 'Tap one of the five sections of the wall (or press 1 to 5) to send defenders there',
                 'You have only three bands of defenders, and each is busy for a moment after every order',
@@ -168,6 +138,25 @@ export const PATCHES = [
               'No star is earned, and the Final Season still has the same 12 stars',
               'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
               'The wall fell too soon? Nothing is lost. Try again as many times as you need'
+            ]
+          },
+          {
+            title: "New Chapter: Nehemiah's Night Ride",
+            items: [
+              'A sixth game chapter right after "Return and Rebuilding" (now Chapter 15 of 17)',
+              ['Ride with Nehemiah around the ruined walls of Jerusalem by night. This is the hardest game in the portal', [
+                'The mount never stops, and it runs faster the farther you go',
+                'Jump (tap Jump, tap the road, Space or ↑) over rubble, fallen pillars and breaches in the road',
+                'Hold Duck (or ↓) to pass under a broken arch. Duck in the air to drop quickly',
+                'You see only what the lantern lights, and its oil burns down. Jump to catch jars of oil',
+                'You have 3 chances. Passing the Dung Gate or the Fountain Gate gives one back',
+                'After the Fountain Gate the way narrows: more arches, wider breaches, less room between them',
+                'Ride 1,000 m, back to the Valley Gate'
+              ]],
+              'Tap "How to Play" anytime for the full guide',
+              'No star is earned, and the Final Season still has the same 12 stars',
+              'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
+              'Three stumbles? Nothing is lost. Try again as many times as you need'
             ]
           }
         ]

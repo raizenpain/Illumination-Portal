@@ -168,9 +168,8 @@ export const PATCHES = [
             title: 'Phones Held Sideways',
             items: [
               ['The six Final Season games now have their own layout when you hold your phone sideways', [
-                'The buttons move to the left and right of the game, one under each thumb',
-                'Guide and Leave move to the top-left corner',
-                'The game takes the full height of the screen, so it is much larger than before',
+                'The buttons move to the sides of the game, under your thumbs',
+                'The game area is much larger than before',
                 'Turn your phone in the middle of a game and it re-fits without stopping'
               ]],
               "Nehemiah's Night Ride also gets a wider view of the road when held sideways",

@@ -198,7 +198,7 @@ const CSS = `
 .nr-pad button:active, .nr-pad button.held { filter: brightness(1.3); }
 .nr-pad button:focus-visible, .nr-go:focus-visible, .nr-small:focus-visible { outline: 2px solid #FFD98A; outline-offset: 2px; }
 .nr-screen { flex: 1 1 auto; min-height: 0; padding: 20px 20px 18px; text-align: center; overflow-y: auto; }
-@media (max-height: 520px) { .nr-screen { padding: 12px 16px 12px; } .nr-screen h2 { font-size: 20px; } .nr-how { font-size: 12px; } .nr-go, .nr-go:hover { margin-top: 10px; padding: 10px 14px; } }
+@media (max-height: 520px) { .nr-screen { padding: 12px 16px 12px; } .nr-screen h2 { font-size: 20px; } .nr-how { display: none; } .nr-go, .nr-go:hover { margin-top: 10px; padding: 10px 14px; } }
 .nr-screen h2 { margin: 6px 0 0; font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 25px; line-height: 1.2; color: #FFD9A0; text-shadow: 0 0 16px rgba(255,160,60,.45); }
 .nr-screen.win h2 { color: #FFE9B8; text-shadow: 0 0 20px rgba(255,210,110,.6); }
 .nr-screen p { margin: 12px 0 0; font-size: 14px; line-height: 1.6; color: #D6C8AE; }
@@ -239,6 +239,15 @@ const CSS = `
 .nr-guide-foot { padding: 10px 16px 16px; border-top: 1px solid rgba(201,146,58,.25); }
 .nr-guide-foot .nr-go, .nr-guide-foot .nr-go:hover { margin-top: 0; }
 @media (max-height: 700px) { .nr-pad button, .nr-pad button:hover { padding: 10px 6px; } .nr-top { padding: 7px 10px 4px; } .nr-pad { padding: 7px 10px 9px; } }
+/* A phone held sideways (.wide, set by JS): Duck | the road | Jump under a
+   slim top bar, one button under each thumb. */
+.nr-card.running.wide { width: min(820px, 100%); display: grid; grid-template-columns: minmax(104px, 1fr) minmax(0, 2fr) minmax(104px, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+.nr-card.wide .nr-top { grid-column: 1 / -1; padding: 6px 10px 4px; }
+.nr-card.wide .nr-stage { grid-column: 2; grid-row: 2; padding: 0 0 8px; }
+.nr-card.wide .nr-pad { display: contents; }
+.nr-card.wide .nr-pad button, .nr-card.wide .nr-pad button:hover { grid-row: 2; margin: 0 8px 8px; padding: 6px 2px; font-size: 13px; letter-spacing: .5px; }
+.nr-card.wide .nr-pad button[data-do="duck"] { grid-column: 1; }
+.nr-card.wide .nr-pad button[data-do="jump"] { grid-column: 3; }
 @media (max-width: 400px) {
   .nr-kicker { font-size: 10px; letter-spacing: 1.5px; white-space: nowrap; }
   .nr-small, .nr-small:hover { padding: 5px 7px; font-size: 10px; white-space: nowrap; }
@@ -311,6 +320,7 @@ function injectStyles() {
 // Canvas layout (logical units; scaled for the device).
 const CW = WORLD_W;
 const CH = 560;
+const WIDE_H = 380; // the view on a phone held sideways: the same road, less empty sky
 const GY = 432;   // the road
 const RX = 84;    // where the rider stays on screen
 const GATE_NAMES = ['The Valley Gate', 'The Dung Gate', 'The Fountain Gate', 'The Valley Gate'];
@@ -470,6 +480,8 @@ function drawRider(ctx, s, view) {
 function render(ctx, s, view) {
   const t = view.time;
   const sx = (wx) => RX + (wx - s.dist);
+  ctx.save();
+  ctx.translate(0, (view.h || CH) - CH);
 
   // Night over the ruined city.
   const sky = ctx.createLinearGradient(0, 0, 0, GY);
@@ -532,6 +544,8 @@ function render(ctx, s, view) {
     ctx.fillStyle = gl;
     ctx.fillRect(0, 46, CW, CH - 46);
   }
+
+  ctx.restore();
 
   // HUD: the ride so far, chances left, and the lantern's oil.
   ctx.fillStyle = 'rgba(4,5,10,.82)';
@@ -650,22 +664,32 @@ export function playNightRide({ rewards = [] } = {}) {
       card.classList.add('running');
       const canvas = card.querySelector('canvas');
       const pauseEl = card.querySelector('.nr-pause');
-      // Largest 360:560 canvas that fits the space the stage really has.
+      // Largest canvas that fits the space the stage really has: 360:560
+      // upright, or 360:380 with the buttons at the sides when a phone is
+      // held sideways (and it re-fits if the phone is turned mid-ride).
       const stage = card.querySelector('.nr-stage');
+      const dpr = Math.min(2, window.devicePixelRatio || 1);
+      const ctx = canvas.getContext('2d');
+      let viewH = 0;
       const fit = () => {
+        const wide = window.innerHeight < 520 && window.innerWidth > window.innerHeight * 1.2;
+        card.classList.toggle('wide', wide);
+        const h = wide ? WIDE_H : CH;
+        if (h !== viewH) {
+          viewH = h;
+          canvas.width = CW * dpr;
+          canvas.height = h * dpr;
+          ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+        }
         const r = stage.getBoundingClientRect();
-        const scale = Math.max(0.3, Math.min((r.width - 20) / CW, r.height / CH));
+        const scale = Math.max(0.3, Math.min((r.width - (wide ? 0 : 20)) / CW, r.height / h));
         canvas.style.width = `${Math.floor(CW * scale)}px`;
-        canvas.style.height = `${Math.floor(CH * scale)}px`;
+        canvas.style.height = `${Math.floor(h * scale)}px`;
       };
       fit();
       const ro = window.ResizeObserver ? new ResizeObserver(fit) : null;
-      if (ro) ro.observe(stage); else window.addEventListener('resize', fit);
-      const dpr = Math.min(2, window.devicePixelRatio || 1);
-      canvas.width = CW * dpr;
-      canvas.height = CH * dpr;
-      const ctx = canvas.getContext('2d');
-      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      if (ro) ro.observe(stage);
+      window.addEventListener('resize', fit);
 
       const s = newRide();
       const view = { time: 0, run: 0, msg: 'Out by the Valley Gate, into the night.', msgT: 2.6, dust: [], hurt: 0, flash: 0, tumble: 0, glory: 0 };
@@ -713,8 +737,9 @@ export function playNightRide({ rewards = [] } = {}) {
 
       stopLoop = () => {
         cancelAnimationFrame(raf);
-        if (ro) ro.disconnect(); else window.removeEventListener('resize', fit);
-        card.classList.remove('running');
+        if (ro) ro.disconnect();
+        window.removeEventListener('resize', fit);
+        card.classList.remove('running', 'wide');
         document.removeEventListener('keydown', onKey);
         document.removeEventListener('keyup', onKeyUp);
         document.removeEventListener('visibilitychange', onVisibility);
@@ -753,6 +778,7 @@ export function playNightRide({ rewards = [] } = {}) {
           view.tumble = Math.max(0, view.tumble - dt * 0.9);
           view.msgT = Math.max(0, view.msgT - dt);
         }
+        view.h = viewH;
         render(ctx, s, view);
         raf = requestAnimationFrame(frame);
       };

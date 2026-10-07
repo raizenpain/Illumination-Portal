@@ -224,7 +224,7 @@ const CSS = `
 .sa-pad button:active, .sa-pad button.held, .sa-pad button.held:hover { background: linear-gradient(180deg, #5A4226, #33261A); border-color: #E9B85A; }
 .sa-pad button:focus-visible, .sa-go:focus-visible, .sa-small:focus-visible { outline: 2px solid #FFD98A; outline-offset: 2px; }
 .sa-screen { flex: 1 1 auto; min-height: 0; padding: 20px 20px 18px; text-align: center; overflow-y: auto; }
-@media (max-height: 520px) { .sa-screen { padding: 12px 16px 12px; } .sa-screen h2 { font-size: 20px; } .sa-how { font-size: 12px; } .sa-go, .sa-go:hover { margin-top: 10px; padding: 10px 14px; } }
+@media (max-height: 520px) { .sa-screen { padding: 12px 16px 12px; } .sa-screen h2 { font-size: 20px; } .sa-how { display: none; } .sa-go, .sa-go:hover { margin-top: 10px; padding: 10px 14px; } }
 .sa-screen h2 { margin: 6px 0 0; font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 25px; line-height: 1.2; color: #FFD9A0; text-shadow: 0 0 16px rgba(255,160,60,.45); }
 .sa-screen.win h2 { color: #FFE9B8; text-shadow: 0 0 20px rgba(255,210,110,.6); }
 .sa-screen p { margin: 12px 0 0; font-size: 14px; line-height: 1.6; color: #D6C8AE; }
@@ -254,6 +254,19 @@ const CSS = `
 .sa-guide .tip { margin-top: 12px; padding: 9px 11px; border-radius: 4px; background: rgba(233,184,90,.1); border: 1px solid rgba(233,184,90,.4); }
 .sa-guide-foot { padding: 8px 18px 16px; }
 @media (max-height: 700px) { .sa-pad button, .sa-pad button:hover { padding: 10px 6px; } .sa-top { padding: 7px 10px 4px; } .sa-pad { padding: 7px 10px 9px; } }
+/* A phone held sideways (.wide, set by JS): the controls move to the sides
+   of the canvas and Guide / Leave to the corner, so the canvas gets the
+   card's full height. */
+.sa-card.running.wide { width: min(820px, 100%); display: grid; grid-template-columns: minmax(104px, 1fr) minmax(0, 2fr) minmax(104px, 1fr); grid-template-rows: auto minmax(0, 1fr); }
+.sa-card.wide .sa-top { grid-column: 1; grid-row: 1; justify-content: center; padding: 8px 8px 6px; }
+.sa-card.wide .sa-kicker { display: none; }
+.sa-card.wide .sa-top-btns { flex-wrap: wrap; justify-content: center; }
+.sa-card.wide .sa-small, .sa-card.wide .sa-small:hover { padding: 5px 6px; font-size: 10px; white-space: nowrap; }
+.sa-card.wide .sa-stage { grid-column: 2; grid-row: 1 / 3; padding: 0; margin: 8px 0; }
+.sa-card.wide .sa-pad { display: contents; }
+.sa-card.wide .sa-pad button, .sa-card.wide .sa-pad button:hover { margin: 0 8px 8px; padding: 6px 2px; line-height: 1.3; }
+.sa-card.wide .sa-pad button[data-move="-1"] { grid-column: 1; grid-row: 2; }
+.sa-card.wide .sa-pad button[data-move="1"] { grid-column: 3; grid-row: 1 / 3; margin-top: 8px; }
 @media (max-width: 400px) {
   .sa-kicker { font-size: 10px; letter-spacing: 1.5px; white-space: nowrap; }
   .sa-small, .sa-small:hover { padding: 5px 7px; font-size: 10px; white-space: nowrap; }
@@ -609,8 +622,11 @@ export function playSinaiAscent({ rewards = [] } = {}) {
       // Largest 360:560 canvas that fits the space the stage really has.
       const stage = card.querySelector('.sa-stage');
       const fit = () => {
+        // A phone held sideways gets the side-by-side layout (.wide in the CSS).
+        const wide = window.innerHeight < 520 && window.innerWidth > window.innerHeight * 1.2;
+        card.classList.toggle('wide', wide);
         const r = stage.getBoundingClientRect();
-        const scale = Math.max(0.3, Math.min((r.width - 20) / CW, r.height / CH));
+        const scale = Math.max(0.3, Math.min((r.width - (wide ? 0 : 20)) / CW, r.height / CH));
         canvas.style.width = `${Math.floor(CW * scale)}px`;
         canvas.style.height = `${Math.floor(CH * scale)}px`;
       };
@@ -676,7 +692,7 @@ export function playSinaiAscent({ rewards = [] } = {}) {
       stopLoop = () => {
         cancelAnimationFrame(raf);
         if (ro) ro.disconnect(); else window.removeEventListener('resize', fit);
-        card.classList.remove('running');
+        card.classList.remove('running', 'wide');
         document.removeEventListener('keydown', onKeyDown);
         document.removeEventListener('keyup', onKeyUp);
         document.removeEventListener('visibilitychange', onVisibility);

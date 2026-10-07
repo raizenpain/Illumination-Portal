@@ -991,6 +991,26 @@ export const SEASON_CONTENT = {
           }
         ]
       },
+      // Game chapter (Jornie, 2026-10-07): after "Return and Rebuilding",
+      // ride with Nehemiah around the ruined walls of Jerusalem by night
+      // (nightRide.js). Deliberately the hardest of the game chapters. No
+      // questions and NO star (noStar), but it must be cleared to continue;
+      // same rewards as the other game chapters (30 of each).
+      {
+        chapterId: 'final_nightride',
+        chapterTitle: "Nehemiah's Night Ride",
+        basedOn: 'Game — ride with Nehemiah by night around the broken walls and burned gates of Jerusalem (Neh 2:12–15), by the light of a single lantern. No questions, no star.',
+        noStar: true,
+        chapterBonus: 20,
+        clearedLabel: 'The Whole Wall Seen',
+        clearedIcon: '🏮',
+        nodes: [
+          {
+            nodeId: 'fnn_n1', type: 'game', game: 'nightRide', title: 'Ride the Ruined Walls',
+            prompt: 'Jump the rubble and the breaches, duck under the broken arches, keep the lantern burning, and ride 1,000 m back to the Valley Gate before your three chances run out.'
+          }
+        ]
+      },
       {
         chapterId: 'final_ch10',
         chapterTitle: 'Between the Testaments',

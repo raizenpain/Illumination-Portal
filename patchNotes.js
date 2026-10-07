@@ -12,6 +12,36 @@
 
 export const PATCHES = [
   {
+    version: '2.2',
+    date: 'October 7, 2026',
+    sections: [
+      {
+        title: 'Final Season',
+        groups: [
+          {
+            title: "New Chapter: Nehemiah's Night Ride",
+            items: [
+              'A sixth game chapter right after "Return and Rebuilding" (now Chapter 15 of 17)',
+              ['Ride with Nehemiah around the ruined walls of Jerusalem by night. This is the hardest game in the portal', [
+                'The mount never stops, and it runs faster the farther you go',
+                'Jump (tap Jump, tap the road, Space or ↑) over rubble, fallen pillars and breaches in the road',
+                'Hold Duck (or ↓) to pass under a broken arch. Duck in the air to drop quickly',
+                'You see only what the lantern lights, and its oil burns down. Jump to catch jars of oil',
+                'You have 3 chances. Passing the Dung Gate or the Fountain Gate gives one back',
+                'After the Fountain Gate the way narrows: more arches, wider breaches, less room between them',
+                'Ride 1,000 m, back to the Valley Gate'
+              ]],
+              'Tap "How to Play" anytime for the full guide',
+              'No star is earned, and the Final Season still has the same 12 stars',
+              'Rewards: +30 of every ticket type and +31 Ember Shards, plus a new Catechism Moment',
+              'Three stumbles? Nothing is lost. Try again as many times as you need'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '2.1',
     date: 'October 5, 2026',
     sections: [

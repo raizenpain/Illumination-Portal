@@ -207,7 +207,7 @@ function renderTicketBar(chapter) {
 // ================================
 
 // A game node (the Semifinal boss battle, the Final Season's Red Sea
-// crossing, Sinai ascent, David's duel, the Temple wall and the siege of Jerusalem) runs full-screen instead of the modal, and is completed only
+// crossing, Sinai ascent, David's duel, the Temple wall, the siege of Jerusalem and Nehemiah's night ride) runs full-screen instead of the modal, and is completed only
 // by winning. Loaded on demand so no one downloads a game they can't play.
 const GAME_MODULES = {
   shadowBoss: () => import('./shadowBoss.js').then((m) => m.playShadowBoss),
@@ -215,7 +215,8 @@ const GAME_MODULES = {
   sinaiAscent: () => import('./sinaiAscent.js').then((m) => m.playSinaiAscent),
   davidGoliath: () => import('./davidGoliath.js').then((m) => m.playDavidGoliath),
   templeBuilder: () => import('./templeBuilder.js').then((m) => m.playTempleBuilder),
-  jerusalemSiege: () => import('./jerusalemSiege.js').then((m) => m.playJerusalemSiege)
+  jerusalemSiege: () => import('./jerusalemSiege.js').then((m) => m.playJerusalemSiege),
+  nightRide: () => import('./nightRide.js').then((m) => m.playNightRide)
 };
 let gameRunning = false;
 async function playGameNode(node) {

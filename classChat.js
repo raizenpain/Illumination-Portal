@@ -30,6 +30,7 @@
 import { db, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, getDocs, serverTimestamp } from './firebase.js';
 import { findBannedWord, looksLikeGibberish } from './contentFilter.js';
 import { startCooldown } from './cooldown.js';
+import { blockPasteInto } from './noCopyPaste.js';
 import { maybePostDailyGreeting } from './dailyGreeting.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { compressImage, createImageSlot, loadInto, deleteChatImage } from './chatImages.js';
@@ -397,6 +398,10 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
   }
 
   sendBtn.addEventListener('click', send);
+  // Type-only for students, like every other box they write in
+  // (noCopyPaste.js leaves the teachers alone).
+  blockPasteInto(inputEl, () => showError("Pasting isn't allowed here. Please type your message yourself."));
+
   inputEl.addEventListener('input', autoGrowInput);
   inputEl.addEventListener('keydown', (event) => {
     // Enter sends; Shift+Enter inserts a real newline, same convention

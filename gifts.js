@@ -36,6 +36,7 @@ import { TICKET_INFO } from './ticketTrader.js';
 import { CRAFTING_CHAINS, artifactIconPath, findArtifact, tierOfArtifact, tokenCostFor } from './artifacts.js';
 import { findBannedWord, looksLikeGibberish } from './contentFilter.js';
 import { startCooldown } from './cooldown.js';
+import { blockPasteInto } from './noCopyPaste.js';
 import { logActivity } from './activity.js';
 
 export const DAILY_TICKET_LIMIT = 50;
@@ -570,7 +571,12 @@ function openSendGift({ artifactId = null } = {}) {
       });
     }
     const noteEl = c.querySelector('#gfNote');
-    if (noteEl) noteEl.oninput = () => { state.note = noteEl.value; };
+    if (noteEl) {
+      // Type-only, like every other box a student writes in. Wired before
+      // oninput so a refused paste is already undone when the note is read.
+      blockPasteInto(noteEl, () => { state.message = { kind: 'error', text: "Pasting isn't allowed here. Please type your note yourself." }; });
+      noteEl.oninput = () => { state.note = noteEl.value; };
+    }
     c.querySelector('#gfSend').onclick = send;
   };
 

@@ -1,6 +1,6 @@
 import { db, doc, getDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
-import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
+import { findBannedWord, looksLikeGibberish, isOffTopic, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE } from './contentFilter.js';
 import { startCooldown } from './cooldown.js';
 import { blockPasteInto } from './noCopyPaste.js';
 import { logActivity } from './activity.js';
@@ -148,6 +148,12 @@ async function handleSubmit() {
 
   if (looksLikeGibberish(text)) {
     statusEl.textContent = "That doesn't look like a real written reflection — please write in complete sentences.";
+    recordMistake();
+    return;
+  }
+
+  if (looksLikeAssistantPaste(text)) {
+    statusEl.textContent = ASSISTANT_PASTE_MESSAGE;
     recordMistake();
     return;
   }

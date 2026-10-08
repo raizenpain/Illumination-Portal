@@ -5,13 +5,13 @@ import { CHAPTER_LESSONS } from './chapterLessons.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
-import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
+import { findBannedWord, looksLikeGibberish, isOffTopic, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE } from './contentFilter.js';
 import { startCooldown } from './cooldown.js';
 import { getRankProgress, getSeasonStars, RANK_TIERS, starIndexOfChapter } from './rank.js';
 import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderChampionPopup, renderNoticePopup } from './rankPopup.js';
 import { TICKET_INFO } from './ticketTrader.js';
 import { blockPasteInto } from './noCopyPaste.js';
-import { pendingRevisions, isRevisionPending, isSameAnswer } from './revisionNotice.js';
+import { pendingRevisions, isRevisionPending, isSameAnswer, pendingReflectionRevisions, revisionReason, reasonsText, wordCount, REVISION_MIN_WORDS } from './revisionNotice.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -57,6 +57,13 @@ async function init() {
   // doc. Fine while overrides are rare/empty (M4 hasn't shipped yet);
   // if an admin later removes/adds nodes in a prior season, revisit this.
   if (!isSeasonUnlocked(seasonId, studentData)) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  // A reflection sent back by the teacher closes every season until it
+  // is rewritten, which happens on the dashboard (see revisionNotice.js).
+  if (!isSeasonPreviewAdmin && pendingReflectionRevisions(studentData).length) {
     window.location.href = 'dashboard.html';
     return;
   }
@@ -448,9 +455,9 @@ function renderTextModal(node, { minLength }) {
   nodeModalBox.innerHTML = `
     <h2>${icon} ${node.title}</h2>
     <p class="reflection-hint">${node.prompt}</p>
-    ${revising ? `<p class="reflection-hint revision-note">✏️ Your teacher has asked you to rewrite this answer in your own words. No tickets are taken away, and none are added.</p>` : ''}
+    ${revising ? `<p class="reflection-hint revision-note">✏️ Your teacher has asked you to rewrite this answer in your own words. <span id="seasonRevisionReason"></span>No tickets are taken away, and none are added.</p>` : ''}
     <textarea id="seasonTextInput" class="reflection-textarea" placeholder="Write your response here…"></textarea>
-    <p class="reflection-hint" id="seasonTextHint">Write at least a short response (${minLength} characters) in your own words — pasting is disabled.</p>
+    <p class="reflection-hint" id="seasonTextHint">${revising ? `Write at least ${REVISION_MIN_WORDS} words` : `Write at least a short response (${minLength} characters)`} in your own words — pasting is disabled.</p>
     <div class="reflection-modal-actions">
       ${modalCloseButtonHtml()}
       <button class="submit-quiz-btn" id="seasonTextSubmitBtn">Submit</button>
@@ -460,6 +467,9 @@ function renderTextModal(node, { minLength }) {
 
   const textarea = document.getElementById('seasonTextInput');
   const hint = document.getElementById('seasonTextHint');
+  // The reason is the teacher's own words: set as text, never as markup.
+  const reasonEl = document.getElementById('seasonRevisionReason');
+  if (reasonEl) { const reason = revisionReason(studentData, node.nodeId); reasonEl.textContent = reason ? `Why: ${reason} ` : ''; }
 
   blockPasteInto(textarea, () => {
     hint.textContent = "Pasting isn't allowed here — please write it yourself.";
@@ -490,6 +500,12 @@ function renderTextModal(node, { minLength }) {
       return;
     }
 
+    if (looksLikeAssistantPaste(text)) {
+      hint.textContent = ASSISTANT_PASTE_MESSAGE;
+      recordMistake();
+      return;
+    }
+
     if (isOffTopic(text, node.prompt, node.title)) {
       hint.textContent = "Your response doesn't seem to address the question — make sure you're actually answering what's asked.";
       recordMistake();
@@ -498,6 +514,11 @@ function renderTextModal(node, { minLength }) {
 
     if (revising && isSameAnswer(text, earlierAnswer)) {
       hint.textContent = 'This is the same as your earlier answer. Please write a new one in your own words.';
+      return;
+    }
+
+    if (revising && wordCount(text) < REVISION_MIN_WORDS) {
+      hint.textContent = `A revised answer needs at least ${REVISION_MIN_WORDS} words — ${REVISION_MIN_WORDS - wordCount(text)} more to go. Explain your answer fully.`;
       return;
     }
 
@@ -525,8 +546,12 @@ function announceRevisions() {
     sub: content.seasonName,
     icon: '✏️',
     eyebrow: here.length === 1 ? 'One answer to revise' : `${here.length} answers to revise`,
-    heading: 'Please Rewrite in Your Own Words',
-    detail: `Your teacher has asked you to rewrite ${here.length === 1 ? 'this answer' : 'these answers'} in your own words. Tap the task marked ✏️ to begin. Your tickets and rewards stay as they are; the chapters after it reopen as soon as you finish.`,
+    heading: 'Please Revise Your Work',
+    detail: [
+      `Your teacher has asked you to rewrite ${here.length === 1 ? 'this answer' : 'these answers'} in your own words, in at least ${REVISION_MIN_WORDS} words${here.length === 1 ? '' : ' each'}.`,
+      reasonsText(studentData, here.map((n) => n.nodeId)),
+      'Tap the task marked ✏️ to begin. Your tickets and rewards stay as they are; the chapters after it reopen as soon as you finish.'
+    ].filter(Boolean).join(' '),
     rewards: here.map((n) => `<span class="popup-reward-icon">✏️</span> ${n.title}`)
   });
 }

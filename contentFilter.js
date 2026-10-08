@@ -250,6 +250,33 @@ export function looksLikeGibberish(text) {
   return realLooking.length / words.length < 0.7;
 }
 
+// Leftovers that show an answer was lifted from an AI assistant rather
+// than written: a menu of options, the assistant talking to the student,
+// chat formatting, unfilled placeholders. Deliberately narrow. It cannot
+// tell whether clean, fluent writing came from a person or a machine
+// (nothing can, reliably), so it only fires on text no student would
+// write as their own answer. Everything else is the teacher's call, via
+// a revision request (revisionNotice.js).
+const ASSISTANT_LEFTOVERS = [
+  /\boption\s*(?:\d|[a-c]\b)\s*[:(\-–—]/i,                                   // "Option 1 (Growth):", "Option B -"
+  /\bas an ai\b|\bai language model\b|\bi(?:'m| am) (?:just |only )?an ai\b/i,
+  /^\s*(?:sure|certainly)(?:!|[,.]\s+here\b)/i,                               // "Sure! Here's...", "Certainly, here is..."
+  /\bhere(?:'s| is| are)\s+(?:a|an|some|the|your|two|three|four|\d+)\s+(?:[\w-]+\s+){0,3}(?:versions?|drafts?|options?|rewrites?|samples?|examples?)\b/i,
+  /\b(?:i hope this helps|would you like me to|let me know if you(?:'d| would)?\s+(?:like|need|want)|feel free to (?:adjust|edit|modify|customi[sz]e|change|tweak|use)|i can (?:also )?(?:make|shorten|lengthen|rewrite|adjust|simplify) (?:it|this|that))\b/i,
+  /\b(?:shorter|longer|simpler|simplified|formal|casual|tagalog|bisaya|cebuano|english|revised|polished)\s+version\s*[:)\-–—]/i,
+  /\[(?:your|insert|name|student|school|teacher|date|topic)\b[^\]]{0,30}\]/i, // "[Your Name]"
+  /\(\s*\d{2,4}\s*words?\s*\)/i,                                              // "(150 words)"
+  /\*\*[^*\n]{2,60}\*\*/,                                                     // **bold**
+  /^\s{0,3}#{1,4}\s+\S/m                                                      // "## Heading"
+];
+
+export function looksLikeAssistantPaste(text) {
+  const value = String(text ?? '');
+  return ASSISTANT_LEFTOVERS.some((pattern) => pattern.test(value));
+}
+
+export const ASSISTANT_PASTE_MESSAGE = 'This reads like text taken from an AI assistant (for example a list of options, or the assistant\'s own notes to you). Please write your answer yourself, in your own words.';
+
 const STOPWORDS = new Set([
   'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
   'of', 'to', 'in', 'on', 'at', 'by', 'for', 'with', 'as', 'from',

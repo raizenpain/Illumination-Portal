@@ -6,7 +6,8 @@
 //
 // 1. blockPasteInto(textarea, onBlocked): for the boxes where a student
 //    must write in their own words (reflections, journals, recitations,
-//    tasks). Stops paste, drag-and-drop and the right-click menu, and
+//    tasks, the class chat, gift notes). Stops paste, drag-and-drop and
+//    the right-click menu, and
 //    also undoes any single edit that adds a big chunk of text at once.
 //    That last check is what catches phone keyboards, whose clipboard
 //    button can insert text without ever firing a "paste".
@@ -148,7 +149,7 @@ function installCopyGuard() {
     if (!isControl(event.target)) remind('copy');
   }, true);
   document.addEventListener('contextmenu', (event) => {
-    // An ordinary box (the class chat, a crossword square) keeps its menu.
+    // An ordinary box (a piece code, a crossword square) keeps its menu.
     const el = event.target;
     const typingBox = el && el.closest && el.closest('input, textarea');
     if (typingBox && !typingBox.dataset.noPaste) return;

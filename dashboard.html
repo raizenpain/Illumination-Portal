@@ -245,7 +245,7 @@
             <div class="activity-icon">🎯</div>
             <div>
               <strong>Next Goal</strong>
-              <p>Complete Puzzle 1 to unlock the next milestone.</p>
+              <p id="nextGoalText">Loading your next goal…</p>
             </div>
           </div>
         </div>
@@ -447,7 +447,7 @@
 </div>
 
 <script type="module">
-import { db, doc, getDoc, updateDoc, increment, runTransaction, arrayUnion, collection, query, orderBy, limit, onSnapshot } from './firebase.js';
+import { db, doc, getDoc, updateDoc, increment, runTransaction, arrayUnion, collection, query, orderBy, limit, onSnapshot, auth, signOut } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { blockPasteInto } from './noCopyPaste.js';
 import { PUZZLE_CONFIG } from './puzzles.js';
@@ -460,8 +460,8 @@ import { initTicketTrader, refreshTicketWallet } from './ticketTrader.js';
 import { initCrafting, refreshCrafting } from './crafting.js';
 import { initGifts, showPendingGifts } from './gifts.js';
 import { initLeaderboard } from './leaderboard.js';
-import { findBannedWord } from './contentFilter.js';
-import { startCooldown } from './cooldown.js';
+import { findBannedWord, looksLikeGibberish } from './contentFilter.js';
+import { startCooldown, isOnCooldown } from './cooldown.js';
 import { getRankProgress, isPuzzleComplete, isPrelimSeasonDone } from './rank.js';
 import { initDashboardTour } from './dashboardTour.js';
 import { initClassChat } from './classChat.js';
@@ -478,9 +478,9 @@ import { renderCertificateShelf } from './certificates.js';
 import { maybeShowRefundNotice } from './refundNotice.js';
 import { maybeShowRevisionNotice } from './revisionNotice.js';
 import { maybeShowPatchNotes, showPatchNotes } from './patchNotes.js';
+import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
 document.getElementById('patchNotesLink')?.addEventListener('click', () => showPatchNotes());
-import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -695,6 +695,11 @@ async function loadStudentCard() {
         return;
       }
 
+      // On a banned-word cooldown the lock screen (cooldown.js) covers
+      // the page and firestore.rules refuses every save: skip the
+      // rewards and popups below rather than have them all fail.
+      if (isOnCooldown(data)) return;
+
       await awardDailyVisitShard(data);
       await healStuckPuzzleCompletions(data);
       discipleBonusJustGranted = await awardDiscipleBonus(data);
@@ -734,6 +739,7 @@ async function loadStudentCard() {
       document.getElementById('progressFill').style.width = progressInfo.percent + '%';
     });
 
+    document.getElementById('nextGoalText').textContent = nextGoalFor(data);
     renderBadges(data.achievements || []);
     renderCertificateShelf(document.getElementById('certShelfMount'), data);
     renderPuzzleCards(data);
@@ -778,33 +784,41 @@ async function loadStudentCard() {
       email,
       hasSeen: !!data.hasSeenFiesta75Announcement,
       isAdmin: isSeasonPreviewAdmin
+    }).catch((err) => {
+      console.error('The Fiesta announcement failed:', err);
     }).then(async () => {
+      // Each popup is its own step: if one fails, it is logged and the
+      // ones after it still appear.
+      const step = async (show) => {
+        try { await show(); } catch (err) { console.error('A dashboard popup failed:', err); }
+      };
       // The patch notes come first (every visit this week -- see
       // patchNotes.js), then Congratulations, then the Prelim deadline
       // reminder -- the order Jornie asked for.
-      await maybeShowPatchNotes();
-      await showHonorPopup({ viewerName: honorViewerName });
-      await maybeShowPrelimReminder({
+      await step(() => maybeShowPatchNotes());
+      await step(() => showHonorPopup({ viewerName: honorViewerName }));
+      await step(() => maybeShowPrelimReminder({
         email,
         midtermUnlocked: !!data.midtermUnlocked,
         hasSeen: !!data.hasSeenPrelimReminder,
         isAdmin: isSeasonPreviewAdmin
-      });
-      if (discipleBonusJustGranted) await showDiscipleBonusReveal();
-      await maybeShowRefundNotice({ email, data, isAdmin: isSeasonPreviewAdmin });
-      await maybeShowRevisionNotice({ data, isAdmin: isSeasonPreviewAdmin });
+      }));
+      if (discipleBonusJustGranted) await step(() => showDiscipleBonusReveal());
+      await step(() => maybeShowRefundNotice({ email, data, isAdmin: isSeasonPreviewAdmin }));
+      await step(() => maybeShowRevisionNotice({ data, isAdmin: isSeasonPreviewAdmin }));
       // Gifts from other students that are waiting to be opened.
-      await showPendingGifts();
+      await step(() => showPendingGifts());
       // The end of the whole journey: "Your Pilgrimage Is Complete" after
       // the Final Reflection, then "The Legendary Is Forged" (each once).
       await craftingReady;
-      await maybeShowFinale({ email, data, isAdmin: isSeasonPreviewAdmin });
-      initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin });
-      maybeShowCapstonePreview({ email, name: data.name || name, data }).then((shown) => {
+      await step(() => maybeShowFinale({ email, data, isAdmin: isSeasonPreviewAdmin }));
+      // Not awaited, as before: the tour and the capstone reveal run on their own.
+      step(() => initDashboardTour({ email, hasSeenTour: !!data.hasSeenDashboardTour, isAdmin: isSeasonPreviewAdmin }));
+      step(() => maybeShowCapstonePreview({ email, name: data.name || name, data }).then((shown) => {
         if (!shown && VAULT_UNLOCKED && !isSeasonPreviewAdmin) {
           checkVaultCapstone({ email, name: data.name || name, data });
         }
-      });
+      }));
     });
 
     // Admins have no students/{email} doc (no fixed teacherEmail/
@@ -1150,6 +1164,30 @@ function calculateOverallProgress(data) {
   };
 }
 
+// The "Next Goal" line in Recent Activity: the first thing on the
+// student's path that isn't done yet, in the same order the cards
+// above unlock (puzzles, then each season and the reflection that
+// opens the one after it).
+function nextGoalFor(data) {
+  const puzzleNumber = Object.keys(PUZZLE_CONFIG).find((n) => !isPuzzleComplete(PUZZLE_CONFIG[n], data));
+  if (puzzleNumber) return `Complete Puzzle ${puzzleNumber} to unlock the next milestone.`;
+  if (!data.midtermUnlocked) return 'Write your Prelim reflection to unlock the Midterm Season.';
+
+  const steps = [
+    ['midterm', 'semifinalUnlocked', 'Write your Midterm reflection to unlock the Semifinal Season.'],
+    ['semifinal', 'finalUnlocked', 'Write your Semifinal reflection to unlock the Final Season.'],
+    ['final', 'apostleUnlocked', 'Write your Final reflection to complete your journey.']
+  ];
+  const completed = data.completedNodes || {};
+  for (const [seasonId, unlockField, reflectionGoal] of steps) {
+    const content = SEASON_CONTENT[seasonId];
+    const chapter = content.chapters.find((ch) => !ch.nodes.every((n) => !!completed[n.nodeId]));
+    if (chapter) return `Continue the ${content.seasonName}: "${chapter.chapterTitle}".`;
+    if (!data[unlockField]) return reflectionGoal;
+  }
+  return 'You have completed every season. Well done!';
+}
+
 // Season cards show their rune stone (assets/seasons/<id>.webp, Jornie's
 // art, 2026-10-06) as a glowing medallion; a small corner badge carries
 // the state (🔒 locked, 📝 reflection due, ✅ completed).
@@ -1168,7 +1206,6 @@ function renderUnlockedSeasonCard(seasonId, cardId, data) {
   const card = document.getElementById(cardId);
   if (!card) return;
 
-  const icon = card.querySelector('.puzzle-icon');
   const label = card.querySelector('p');
   const badge = card.querySelector('.status-badge');
   const content = SEASON_CONTENT[seasonId];
@@ -1194,7 +1231,6 @@ function renderLockedSeasonCard(cardId, message) {
   const card = document.getElementById(cardId);
   if (!card) return;
 
-  const icon = card.querySelector('.puzzle-icon');
   const label = card.querySelector('p');
   const badge = card.querySelector('.status-badge');
 
@@ -1210,7 +1246,6 @@ function renderReflectionChallengeCard(cardId, gateKey) {
   const card = document.getElementById(cardId);
   if (!card) return;
 
-  const icon = card.querySelector('.puzzle-icon');
   const label = card.querySelector('p');
   const badge = card.querySelector('.status-badge');
 
@@ -1321,7 +1356,8 @@ function renderCommunityFeed(snapshot) {
 
   snapshot.forEach((docSnap) => {
     const activity = docSnap.data();
-    const when = activity.timestamp ? timeAgo(activity.timestamp.toDate()) : 'Just now';
+    // No timestamp yet = this device's own line, still on its way to the server.
+    const postedAt = activity.timestamp ? activity.timestamp.toDate() : new Date();
 
     const item = document.createElement('div');
     item.className = 'activity-item';
@@ -1345,7 +1381,8 @@ function renderCommunityFeed(snapshot) {
 
     const timeEl = document.createElement('span');
     timeEl.className = 'activity-time';
-    timeEl.textContent = when;
+    timeEl.dataset.postedAt = postedAt.getTime();
+    timeEl.textContent = timeAgo(postedAt);
 
     item.appendChild(icon);
     item.appendChild(body);
@@ -1365,6 +1402,13 @@ function loadCommunityFeed() {
     console.error('Failed to load community activity:', err);
     feed.innerHTML = '<p class="community-feed-empty">Could not load community activity.</p>';
   });
+
+  // Updates the times in place, so nothing re-animates.
+  setInterval(() => {
+    feed.querySelectorAll('.activity-time[data-posted-at]').forEach((el) => {
+      el.textContent = timeAgo(new Date(Number(el.dataset.postedAt)));
+    });
+  }, 60000);
 }
 
 loadStudentCard();
@@ -1419,8 +1463,17 @@ if (fantasyDivider) {
 
 const logoutBtn = document.getElementById('logoutBtn');
 if (logoutBtn) {
-  logoutBtn.onclick = () => {
-    localStorage.clear();
+  // Ends the Google sign-in too, not just this page's copy of it: on a
+  // shared computer the next person must not inherit this session. Only
+  // the login is cleared; the device's other saved settings (patch notes
+  // already seen, the open badge group, a running cooldown) stay.
+  logoutBtn.onclick = async () => {
+    logoutBtn.disabled = true;
+    try { await signOut(auth); } catch (err) { console.error('Sign-out failed:', err); }
+    try {
+      localStorage.removeItem('studentEmail');
+      localStorage.removeItem('studentName');
+    } catch (err) { /* storage blocked: nothing to clear */ }
     window.location.href = 'login.html';
   };
 }
@@ -1516,6 +1569,11 @@ async function saveReflectionEdit() {
   if (bannedWord) {
     reflectionModalHint.textContent = `Your reflection contains a word that isn't allowed here: "${bannedWord}". Please reword that part and try again.`;
     startCooldown({ email, word: bannedWord, where: 'your reflection' });
+    return;
+  }
+
+  if (looksLikeGibberish(text)) {
+    reflectionModalHint.textContent = "That doesn't look like a real written reflection — please write in complete sentences.";
     return;
   }
 

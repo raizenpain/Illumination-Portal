@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>HCDC Illumination Portal Login</title>
   <link rel="stylesheet" href="style.css">
-  <script type="module" src="clickSound.js"></script>
+  <script type="module" src="js/core/clickSound.js"></script>
 </head>
 <body class="login-page">
 
@@ -28,8 +28,8 @@
   </div>
 
   <script type="module">
-    import { auth, provider, signInWithPopup, signOut, db, doc, getDoc } from './firebase.js';
-    import { ADMIN_EMAILS } from './admins.js';
+    import { auth, provider, signInWithPopup, signOut, db, doc, getDoc } from './js/core/firebase.js';
+    import { ADMIN_EMAILS } from './js/core/admins.js';
 
     const loginBtn = document.getElementById('googleLogin');
     const message = document.getElementById('message');

@@ -1,0 +1,434 @@
+import { db, doc, getDoc, setDoc, updateDoc, increment, arrayUnion } from '../core/firebase.js';
+import { requireLogin } from '../core/auth.js';
+import { PUZZLE_CONFIG } from './puzzles.js';
+import { PIECE_CODES } from './codes.js';
+import { PIECE_LESSONS } from './lessons.js';
+import { logActivity } from '../core/activity.js';
+import { getRankProgress, getSeasonStars, RANK_TIERS } from '../core/rank.js';
+import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderNoticePopup } from '../core/rankPopup.js';
+
+// ================================
+// SETTINGS — adjust freely
+// ================================
+const MAX_ATTEMPTS = 3;        // wrong attempts allowed before cooldown
+const COOLDOWN_SECONDS = 60;   // cooldown length in seconds
+
+const { email, name } = requireLogin();
+
+const params = new URLSearchParams(window.location.search);
+const puzzleNumber = parseInt(params.get('puzzle')) || 1;
+const config = PUZZLE_CONFIG[puzzleNumber];
+
+const board = document.getElementById('board');
+const codeInput = document.getElementById('pieceCode');
+const submitCodeBtn = document.getElementById('submitCodeBtn');
+const status = document.getElementById('status');
+const info = document.getElementById('studentInfo');
+const titleEl = document.getElementById('puzzleTitle');
+const subtitleEl = document.getElementById('puzzleSubtitle');
+
+const uploadedPieces = [];
+
+if (!config) {
+  titleEl.textContent = 'Puzzle Not Found';
+  if (status) status.textContent = 'This puzzle does not exist.';
+} else {
+  init();
+}
+
+// A piece unlock can trigger more than one popup at once (a lesson note
+// plus a milestone/completion achievement) — queue them so each one gets
+// its own moment on screen instead of overwriting the one before it.
+const popupQueue = [];
+let popupBusy = false;
+
+function queuePopup(popup) {
+  popupQueue.push(popup);
+  processPopupQueue();
+}
+
+// Resolvers waiting for the queue to run dry (the completion redirect
+// waits on this, so it never cuts a popup short).
+const popupsDoneWaiters = [];
+
+function whenPopupsDone() {
+  if (!popupBusy && popupQueue.length === 0) return Promise.resolve();
+  return new Promise((resolve) => popupsDoneWaiters.push(resolve));
+}
+
+function processPopupQueue() {
+  if (popupBusy) return;
+  if (popupQueue.length === 0) {
+    popupsDoneWaiters.splice(0).forEach((resolve) => resolve());
+    return;
+  }
+  popupBusy = true;
+
+  const item = popupQueue.shift();
+
+  if (item.kind === 'star' || item.kind === 'rank' || item.kind === 'notice') {
+    ensureRankPopup();
+    if (item.kind === 'star') renderStarPopup(item);
+    else if (item.kind === 'notice') renderNoticePopup(item);
+    else renderRankPopup(item);
+
+    // Waits for Continue (no auto-close: it was too fast to read).
+    openRankPopup().then(() => {
+      popupBusy = false;
+      setTimeout(processPopupQueue, 250);
+    });
+    return;
+  }
+
+  const { heading = 'Achievement Unlocked!', title, text, icon = '🏅' } = item;
+  const popup = document.getElementById('achievementPopup');
+  document.getElementById('achievementHeading').textContent = heading;
+  document.getElementById('achievementTitle').textContent = title;
+  document.getElementById('achievementText').textContent = text;
+  document.querySelector('.achievement-icon').textContent = icon;
+
+  popup.classList.remove('hidden');
+  setTimeout(() => {
+    popup.classList.add('hidden');
+    popupBusy = false;
+    setTimeout(processPopupQueue, 300);
+  }, 3000);
+}
+
+function showAchievement(title, text, icon = '🏅') {
+  queuePopup({ title, text, icon });
+}
+
+// Same dark Catechism Moment popup as the seasons (season.js), waiting
+// for Continue instead of the old 3-second achievement box.
+function showLesson(lesson) {
+  queuePopup({ kind: 'notice', kicker: '✦ Catechism Moment ✦', sub: '', icon: '✝️', eyebrow: '', heading: lesson.title, detail: lesson.text, lesson: true });
+}
+
+function showStarPopup(info) {
+  queuePopup({ kind: 'star', ...info });
+}
+
+function showRankPopup(info) {
+  queuePopup({ kind: 'rank', ...info });
+}
+
+async function init() {
+  titleEl.textContent = config.title;
+  subtitleEl.textContent = config.subtitle;
+  if (info) info.textContent = `${name} (${email})`;
+
+  const studentRef = doc(db, 'students', email);
+  const snap = await getDoc(studentRef);
+  const data = snap.exists() ? snap.data() : {};
+
+  // Gate check — must have unlocked this puzzle first
+  if (config.requiresGate && !data[config.requiresGate]) {
+    window.location.href = `challenge.html?gate=puzzle${puzzleNumber}`;
+    return;
+  }
+
+  if (data[config.piecesField]) {
+    uploadedPieces.push(...data[config.piecesField]);
+  }
+
+  renderBoard();
+  attachCodeHandler();
+}
+
+function renderBoard() {
+  if (!board) return;
+  board.innerHTML = '';
+  board.style.setProperty('--piece-aspect', config.pieceImageAspect || '1 / 1');
+
+  for (let i = 1; i <= config.totalPieces; i++) {
+    const slot = document.createElement('div');
+    slot.className = 'slot';
+
+    if (uploadedPieces.includes(i)) {
+      const img = document.createElement('img');
+      img.src = `assets/puzzle${puzzleNumber}/piece${i}.${config.pieceImageExt || 'png'}`;
+      slot.appendChild(img);
+    } else {
+      slot.textContent = i;
+    }
+
+    board.appendChild(slot);
+  }
+}
+
+async function getReleasedPieces() {
+  const ref = doc(db, 'settings', `puzzle${puzzleNumber}`);
+  const snap = await getDoc(ref);
+  return snap.exists() ? (snap.data().released || []) : [];
+}
+
+function attachCodeHandler() {
+  if (!codeInput || !submitCodeBtn) {
+    console.warn('Code entry elements (#pieceCode / #submitCodeBtn) not found in the DOM.');
+    return;
+  }
+
+  codeInput.addEventListener('input', () => {
+    codeInput.value = codeInput.value.toUpperCase();
+  });
+
+  codeInput.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault();
+      handleCodeSubmit();
+    }
+  });
+
+  submitCodeBtn.addEventListener('click', handleCodeSubmit);
+
+  if (isOnCooldown()) {
+    renderCooldown();
+  }
+}
+
+async function handleCodeSubmit() {
+  if (isOnCooldown()) return;
+
+  const code = codeInput.value.trim().toUpperCase();
+
+  if (!code) {
+    if (status) status.textContent = 'Please enter a code.';
+    return;
+  }
+
+  const puzzleCodes = PIECE_CODES[`puzzle${puzzleNumber}`] || {};
+  const matchedKey = Object.keys(puzzleCodes).find((key) => puzzleCodes[key] === code);
+
+  if (!matchedKey) {
+    registerFailedAttempt();
+    return;
+  }
+
+  const pieceNumber = parseInt(matchedKey);
+
+  if (uploadedPieces.includes(pieceNumber)) {
+    if (status) status.textContent = 'You have already collected this piece.';
+    return;
+  }
+
+  const releasedPieces = await getReleasedPieces();
+
+  if (!releasedPieces.includes(pieceNumber)) {
+    if (status) status.textContent = '🔒 That piece has not been released yet.';
+    return;
+  }
+
+  uploadedPieces.push(pieceNumber);
+
+  try {
+    const studentRef = doc(db, 'students', email);
+
+    // arrayUnion, not the whole uploadedPieces array — two devices/tabs
+    // redeeming different codes for the same puzzle at nearly the same
+    // moment must both land, not have the second overwrite the first.
+    await setDoc(studentRef, {
+      name,
+      email,
+      [config.piecesField]: arrayUnion(pieceNumber)
+    }, { merge: true });
+
+    const snap = await getDoc(studentRef);
+    if (snap.exists()) {
+      const data = snap.data();
+      const achievements = data.achievements || [];
+
+      for (const milestone of config.milestoneAchievements) {
+        if (uploadedPieces.length >= milestone.count && !achievements.includes(milestone.id)) {
+          achievements.push(milestone.id);
+          await updateDoc(studentRef, { achievements });
+          showAchievement(milestone.title, milestone.text, milestone.icon);
+          logActivity({
+            email, name, type: 'achievement',
+            title: `Unlocked "${milestone.title}"`,
+            icon: milestone.icon
+          });
+        }
+      }
+    }
+
+  } catch (err) {
+    console.error('Failed to save progress:', err);
+    uploadedPieces.pop();
+    if (status) status.textContent = 'Error saving progress. Please try again.';
+    return;
+  }
+
+  clearAttempts();
+  renderBoard();
+  if (status) status.textContent = `✅ Piece ${pieceNumber} unlocked!`;
+  codeInput.value = '';
+
+  logActivity({
+    email, name, type: 'piece',
+    title: `Collected Piece ${pieceNumber} of ${config.subtitle}`,
+    icon: '🧩'
+  });
+
+  const lesson = (PIECE_LESSONS[`puzzle${puzzleNumber}`] || {})[pieceNumber];
+  if (lesson) {
+    showLesson(lesson);
+  }
+
+  if (uploadedPieces.length === config.totalPieces) {
+    // This write marks the whole puzzle "officially complete" -- the flag
+    // the dashboard checks to unlock the next puzzle. It used to have no
+    // error handling at all: if it failed (a dropped connection, a
+    // Firestore quota blip), the student had already seen "Piece
+    // unlocked!" from the block above and had no way to know anything
+    // was wrong -- they'd just find the next puzzle locked later, with no
+    // explanation. Now it retries once, and if it still fails, says so
+    // clearly instead of failing silently. (The dashboard also self-heals
+    // this exact mismatch on load as a second safety net -- see
+    // healStuckPuzzleCompletions in dashboard.html.)
+    const studentRef = doc(db, 'students', email);
+
+    const markComplete = async () => {
+      const snap = await getDoc(studentRef);
+      if (!snap.exists()) return;
+
+      const data = snap.data();
+      const achievements = data.achievements || [];
+      const comp = config.completionAchievement;
+      if (achievements.includes(comp.id)) return;
+
+      achievements.push(comp.id);
+      const rankBefore = getRankProgress(data);
+
+      await updateDoc(studentRef, {
+        achievements,
+        [config.completedField]: true,
+        'tickets.scrap_ticket': increment(2)
+      });
+      showAchievement(comp.title, comp.text, comp.icon);
+
+      logActivity({
+        email, name, type: 'puzzle',
+        title: `Completed ${config.title} — ${config.subtitle}`,
+        icon: '👑'
+      });
+
+      const afterData = { ...data, [config.completedField]: true };
+      const rankAfter = getRankProgress(afterData);
+
+      showStarPopup({
+        rank: rankBefore.rank,
+        stars: getSeasonStars('prelim', afterData),
+        justEarnedIndex: puzzleNumber - 1,
+        subtitle: `${config.title} — ${config.subtitle}, completed`
+      });
+
+      if (rankAfter.rank !== rankBefore.rank) {
+        logActivity({
+          email, name, type: 'rank',
+          title: `Reached ${rankAfter.rank} Rank`,
+          icon: '⭐'
+        });
+
+        const nextTier = RANK_TIERS.find((t) => t.rank === rankAfter.rank);
+        showRankPopup({ rank: rankAfter.rank, seasonName: nextTier ? nextTier.seasonName : null });
+      }
+    };
+
+    try {
+      await markComplete();
+    } catch (err) {
+      console.error(`Failed to save ${config.title} completion, retrying once:`, err);
+      try {
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        await markComplete();
+      } catch (err2) {
+        console.error(`Retry also failed to save ${config.title} completion:`, err2);
+        if (status) {
+          status.textContent = '⚠️ All pieces collected, but we could not confirm completion. Please return to the Dashboard — it will fix itself automatically when it loads.';
+        }
+        return; // don't redirect to completion.html on an unconfirmed save
+      }
+    }
+
+    // On to the certificate once every popup has been read and closed.
+    whenPopupsDone().then(() => {
+      setTimeout(() => { window.location.href = `completion.html?puzzle=${puzzleNumber}`; }, 400);
+    });
+  }
+}
+
+// ================================
+// COOLDOWN / ATTEMPT TRACKING (per browser)
+// ================================
+
+function attemptsKey() {
+  return `piece_attempts_puzzle${puzzleNumber}_${email}`;
+}
+
+function cooldownKey() {
+  return `piece_cooldown_puzzle${puzzleNumber}_${email}`;
+}
+
+function registerFailedAttempt() {
+  const current = parseInt(localStorage.getItem(attemptsKey()) || '0') + 1;
+  localStorage.setItem(attemptsKey(), current);
+  recordMistake();
+
+  if (current >= MAX_ATTEMPTS) {
+    const cooldownEnd = Date.now() + COOLDOWN_SECONDS * 1000;
+    localStorage.setItem(cooldownKey(), cooldownEnd);
+    renderCooldown();
+  } else {
+    const remaining = MAX_ATTEMPTS - current;
+    if (status) status.textContent = `Not quite right — try again! (${remaining} attempt${remaining === 1 ? '' : 's'} left before a short cooldown)`;
+  }
+}
+
+// Feeds the "no mistakes" leaderboard filter (see leaderboard.js) — a
+// running count on the student's own record, never reset, never shown
+// to the student directly. Fire-and-forget: a failed write here should
+// never block the retry/cooldown flow the student is actually waiting on.
+function recordMistake() {
+  updateDoc(doc(db, 'students', email), { mistakeCount: increment(1) })
+    .catch((err) => console.error('Failed to record mistake:', err));
+}
+
+function clearAttempts() {
+  localStorage.removeItem(attemptsKey());
+  localStorage.removeItem(cooldownKey());
+}
+
+function isOnCooldown() {
+  const end = parseInt(localStorage.getItem(cooldownKey()) || '0');
+  return end > Date.now();
+}
+
+function renderCooldown() {
+  codeInput.disabled = true;
+  submitCodeBtn.disabled = true;
+
+  function updateCountdown() {
+    const end = parseInt(localStorage.getItem(cooldownKey()) || '0');
+    const remainingMs = end - Date.now();
+
+    if (remainingMs <= 0) {
+      clearAttempts();
+      codeInput.disabled = false;
+      submitCodeBtn.disabled = false;
+      if (status) status.textContent = '';
+      return;
+    }
+
+    const totalSeconds = Math.ceil(remainingMs / 1000);
+    const mins = Math.floor(totalSeconds / 60);
+    const secs = totalSeconds % 60;
+    const display = `${mins}:${secs.toString().padStart(2, '0')}`;
+
+    if (status) status.textContent = `⏳ Too many tries! Take a breather — try again in ${display}`;
+
+    setTimeout(updateCountdown, 500);
+  }
+
+  updateCountdown();
+}

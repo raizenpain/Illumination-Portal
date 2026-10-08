@@ -9,10 +9,10 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Dancing+Script:wght@600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-  <script type="module" src="clickSound.js"></script>
-  <script type="module" src="legendaryCountdown.js"></script>
-  <script type="module" src="emberBackground.js"></script>
-  <script type="module" src="noCopyPaste.js"></script>
+  <script type="module" src="js/core/clickSound.js"></script>
+  <script type="module" src="js/dashboard/legendaryCountdown.js"></script>
+  <script type="module" src="js/core/emberBackground.js"></script>
+  <script type="module" src="js/core/noCopyPaste.js"></script>
 </head>
 <body class="dashboard-page">
 
@@ -447,38 +447,38 @@
 </div>
 
 <script type="module">
-import { db, doc, getDoc, updateDoc, increment, runTransaction, arrayUnion, collection, query, orderBy, limit, onSnapshot, auth, signOut } from './firebase.js';
-import { requireLogin } from './auth.js';
-import { blockPasteInto } from './noCopyPaste.js';
-import { PUZZLE_CONFIG } from './puzzles.js';
-import { SEASON_CONTENT } from './seasonContent.js';
-import { resolveSeasonBadge } from './seasonBadges.js';
-import { PRELIM_BADGE_INFO } from './prelimBadges.js';
-import { ADMIN_EMAILS, ADMINS } from './admins.js';
-import { loadGospelQuote } from './gospel.js';
-import { initTicketTrader, refreshTicketWallet } from './ticketTrader.js';
-import { initCrafting, refreshCrafting } from './crafting.js';
-import { initGifts, showPendingGifts } from './gifts.js';
-import { initLeaderboard } from './leaderboard.js';
-import { findBannedWord, looksLikeGibberish, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE } from './contentFilter.js';
-import { startCooldown, isOnCooldown } from './cooldown.js';
-import { getRankProgress, isPuzzleComplete, isPrelimSeasonDone } from './rank.js';
-import { initDashboardTour } from './dashboardTour.js';
-import { initClassChat } from './classChat.js';
-import { initDashboardMusic } from './dashboardMusic.js';
-import { getFeaturedQuest, getQuestStatus, resolveSideQuestBadge } from './sideQuests.js';
-import { VAULT_GAMES, VAULT_UNLOCKED, resolveVaultGameBadge } from './vaultGames.js';
-import { checkVaultCapstone, maybeShowCapstonePreview } from './vaultCapstone.js';
-import { TICKETS } from './vaultTickets.js';
-import { showTreasureReveal } from './treasureReveal.js';
-import { maybeShowPrelimReminder } from './prelimDeadline.js';
-import { showHonorPopup, renderHonorStrip } from './midtermHonorRoll.js';
-import { maybeShowFinale, awardFinalGift } from './journeyFinale.js';
-import { renderCertificateShelf } from './certificates.js';
-import { maybeShowRefundNotice } from './refundNotice.js';
-import { maybeShowRevisionNotice, pendingReflectionRevisions, revisionReason, isSameAnswer, wordCount, wordsToGo, MIN_WORDS } from './revisionNotice.js';
-import { maybeShowPatchNotes, showPatchNotes } from './patchNotes.js';
-import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
+import { db, doc, getDoc, updateDoc, increment, runTransaction, arrayUnion, collection, query, orderBy, limit, onSnapshot, auth, signOut } from './js/core/firebase.js';
+import { requireLogin } from './js/core/auth.js';
+import { blockPasteInto } from './js/core/noCopyPaste.js';
+import { PUZZLE_CONFIG } from './js/puzzles/puzzles.js';
+import { SEASON_CONTENT } from './js/seasons/seasonContent.js';
+import { resolveSeasonBadge } from './js/seasons/seasonBadges.js';
+import { PRELIM_BADGE_INFO } from './js/dashboard/prelimBadges.js';
+import { ADMIN_EMAILS, ADMINS } from './js/core/admins.js';
+import { loadGospelQuote } from './js/dashboard/gospel.js';
+import { initTicketTrader, refreshTicketWallet } from './js/dashboard/ticketTrader.js';
+import { initCrafting, refreshCrafting } from './js/dashboard/crafting.js';
+import { initGifts, showPendingGifts } from './js/dashboard/gifts.js';
+import { initLeaderboard } from './js/dashboard/leaderboard.js';
+import { findBannedWord, looksLikeGibberish, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE } from './js/core/contentFilter.js';
+import { startCooldown, isOnCooldown } from './js/core/cooldown.js';
+import { getRankProgress, isPuzzleComplete, isPrelimSeasonDone } from './js/core/rank.js';
+import { initDashboardTour } from './js/dashboard/dashboardTour.js';
+import { initClassChat } from './js/dashboard/classChat.js';
+import { initDashboardMusic } from './js/dashboard/dashboardMusic.js';
+import { getFeaturedQuest, getQuestStatus, resolveSideQuestBadge } from './js/sidequests/sideQuests.js';
+import { VAULT_GAMES, VAULT_UNLOCKED, resolveVaultGameBadge } from './js/vault/vaultGames.js';
+import { checkVaultCapstone, maybeShowCapstonePreview } from './js/vault/vaultCapstone.js';
+import { TICKETS } from './js/vault/vaultTickets.js';
+import { showTreasureReveal } from './js/core/treasureReveal.js';
+import { maybeShowPrelimReminder } from './js/core/prelimDeadline.js';
+import { showHonorPopup, renderHonorStrip } from './js/dashboard/midtermHonorRoll.js';
+import { maybeShowFinale, awardFinalGift } from './js/dashboard/journeyFinale.js';
+import { renderCertificateShelf } from './js/core/certificates.js';
+import { maybeShowRefundNotice } from './js/dashboard/refundNotice.js';
+import { maybeShowRevisionNotice, pendingReflectionRevisions, revisionReason, isSameAnswer, wordCount, wordsToGo, MIN_WORDS } from './js/seasons/revisionNotice.js';
+import { maybeShowPatchNotes, showPatchNotes } from './js/dashboard/patchNotes.js';
+import { maybeShowFiesta75Announcement } from './js/dashboard/fiesta75Announcement.js';
 
 document.getElementById('patchNotesLink')?.addEventListener('click', () => showPatchNotes());
 

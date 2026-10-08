@@ -12,6 +12,111 @@
 
 export const PATCHES = [
   {
+    version: '2.2',
+    date: 'October 8, 2026',
+    sections: [
+      {
+        title: 'Gifts',
+        groups: [
+          {
+            title: 'Send Tickets to a Classmate',
+            items: [
+              'A new "Send a Gift" button sits beside the Ticket Trader',
+              ['How it works', [
+                'Type your classmate\'s school email. The portal shows you their name before anything is sent',
+                'Pick which ticket to give and how many, and add a short note if you like',
+                'The tickets leave your wallet right away'
+              ]],
+              'A note follows the same rules as the class chat: a note with a bad word, or one that is not real words, cannot be sent',
+              'You can give the same student up to 50 tickets a day, all ticket types added together. After that you need to wait for tomorrow',
+              'You can still give 50 tickets a day to each other student'
+            ]
+          },
+          {
+            title: 'Sell an Artifact',
+            items: [
+              'Bought the wrong artifact? Every artifact you own in Tiers 1 to 4 now has a Sell button',
+              'Selling gives back its price minus 5 Unlock Tokens. For example, a Tier 1 artifact that cost 15 returns 10',
+              'You see exactly what you will receive before you confirm',
+              'Legendary artifacts, and the four artifacts that went into your Legendary, cannot be sold'
+            ]
+          },
+          {
+            title: 'Gift an Artifact',
+            items: [
+              'Beside Sell there is a Gift button',
+              'The artifact leaves your collection, and your classmate receives Unlock Tokens: its price minus 5',
+              'The artifact itself is not passed on, so your classmate can spend the tokens on whatever they need',
+              'The same artifact can be gifted once a day'
+            ]
+          },
+          {
+            title: 'Receiving a Gift',
+            items: [
+              'When someone sends you a gift, a wrapped present appears on your dashboard. Tap "Open Gift" to see what is inside',
+              'Not ready? Tap "Open Later" and it waits for you',
+              ['A new 🎁 button at the top of the dashboard is your gift box', [
+                'A red number shows how many gifts are waiting',
+                'Received: every gift sent to you, unopened ones first',
+                'Sent: every gift you gave, and whether it has been opened'
+              ]],
+              'A gift is only added to your tickets or tokens when you open it'
+            ]
+          }
+        ]
+      },
+      {
+        title: 'Interface',
+        groups: [
+          {
+            title: 'Respectful Words',
+            items: [
+              'The portal has always blocked bad words. It now also catches the ways of hiding one',
+              ['A bad word is still blocked when it is', [
+                'Spelled out with spaces, dots or dashes between the letters',
+                'Written with numbers or symbols in place of letters',
+                'Stretched out with repeated letters',
+                'A phrase typed with the spaces taken out'
+              ]],
+              'This applies everywhere you write: the class chat, your reflections, season tasks, and gift notes',
+              'Honest writing is not affected. Numbers, Bible references, website addresses and words like "sooo" still work as before'
+            ]
+          },
+          {
+            title: '30-Day Cooldown',
+            items: [
+              'Trying to send a bad word now starts a 30-day cooldown',
+              ['During the cooldown', [
+                'You cannot open the portal',
+                'A screen shows how many days, hours and minutes are left',
+                'Your progress, tickets and artifacts are kept safe until you return'
+              ]],
+              'This applies everywhere you write: the class chat, your reflections, season tasks, and gift notes',
+              'If you believe your cooldown was a mistake, talk to your teacher. Only a teacher can lift it'
+            ]
+          },
+          {
+            title: 'Ticket Trader',
+            items: [
+              'The Ticket Trader has a new, cleaner design',
+              'Your Artifact Unlock Tokens now have their own card at the top',
+              'Each ticket shows its name and how many you have',
+              ['Every trade is its own card', [
+                'A progress bar shows how close you are',
+                'The button tells you how many more you need, for example "Need 33 more"',
+                'When you have enough, the bar turns gold and the Trade button lights up'
+              ]],
+              'A successful trade shows in green, and a problem in red',
+              'Close it with the ✕, the Close button, the Escape key, or a tap outside the window',
+              'On a phone held sideways, your balance stays on the left while the trades scroll on the right',
+              'The trades themselves have not changed: 36 of the same kind, 72 mixed, or 135 Ember Shards for 1 Unlock Token'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '2.1',
     date: 'October 5, 2026',
     sections: [

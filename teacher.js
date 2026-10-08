@@ -23,6 +23,7 @@ import { getRankProgress } from './rank.js';
 import { initSeasonEditor } from './seasonEditor.js';
 import { getOfferingsForTeacher } from './classOfferings.js';
 import { containsBannedWord, looksLikeGibberish } from './contentFilter.js';
+import { COOLDOWN_DAYS, isOnCooldown, cooldownEndsAt } from './cooldown.js';
 import { maybePostDailyGreeting } from './dailyGreeting.js';
 import { createImageSlot, loadInto, deleteChatImage } from './chatImages.js';
 import { publishMidtermHonorRoll } from './midtermHonorRoll.js';
@@ -331,7 +332,7 @@ if (user) {
 
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${escapeHtml(data.name || '(no name)')}</td>
+        <td>${escapeHtml(data.name || '(no name)')}${isOnCooldown(data) ? ` <span title="On a ${COOLDOWN_DAYS}-day cooldown for a banned word. Right-click to lift it.">⏳</span>` : ''}</td>
         <td>${escapeHtml(data.email || data._docId || '')}</td>
         <td>${progressPill(p1, data.puzzle1Completed)}</td>
         <td>${progressPill(p2, data.puzzle2Completed)}</td>
@@ -399,9 +400,10 @@ if (user) {
 
     contextMenu.classList.remove('hidden');
     document.getElementById('ctxFixFlag').classList.toggle('hidden', findFlaggedPuzzles(data).length === 0);
+    document.getElementById('ctxLiftCooldown').classList.toggle('hidden', !isOnCooldown(data));
 
     const menuWidth = 200;
-    const menuHeight = 160;
+    const menuHeight = 200;
     contextMenu.style.left = `${Math.min(event.clientX, window.innerWidth - menuWidth - 10)}px`;
     contextMenu.style.top = `${Math.min(event.clientY, window.innerHeight - menuHeight - 10)}px`;
   }
@@ -434,6 +436,33 @@ if (user) {
     closeContextMenu();
     if (contextMenuStudent) fixFlaggedCompletion(contextMenuStudent, contextMenuSection);
   };
+
+  document.getElementById('ctxLiftCooldown').onclick = () => {
+    closeContextMenu();
+    if (contextMenuStudent) liftCooldown(contextMenuStudent, contextMenuSection);
+  };
+
+  // Ends a student's banned-word cooldown early (cooldown.js). Only a
+  // teacher can: firestore.rules stops the student clearing it themselves.
+  async function liftCooldown(data, section) {
+    if (!isOnCooldown(data)) return;
+
+    const label = data.name || data.email || data._docId;
+    const { word, where } = data.cooldown;
+    const ends = new Date(cooldownEndsAt(data)).toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'long', day: 'numeric', year: 'numeric' });
+    if (!confirm(`Lift the cooldown for ${label}?\n\nWord: "${word || '(not recorded)'}"${where ? `\nWhere: ${where}` : ''}\nEnds on its own: ${ends}\n\nThey will be able to open the portal again right away.`)) {
+      return;
+    }
+
+    try {
+      await setDoc(doc(db, 'students', data._docId || data.email), { cooldown: null }, { merge: true });
+      data.cooldown = null;
+      showRoster(section);
+    } catch (err) {
+      console.error('Failed to lift cooldown:', err);
+      alert("Could not lift this student's cooldown. Please try again.");
+    }
+  }
 
   // Clears a *Completed flag that's out of sync with actual pieces
   // collected -- e.g. set directly via devtools rather than earned.

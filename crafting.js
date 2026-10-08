@@ -22,6 +22,7 @@ import {
 import { getRankProgress } from './rank.js';
 import { runForgeGate, FORGE_DAYS } from './legendaryForge.js';
 import { downloadLegendaryCard, forgedDateFor } from './legendaryCard.js';
+import { openSellArtifact, openGiftArtifact, artifactLockReason } from './gifts.js';
 
 let email = null;
 let name = null;
@@ -67,6 +68,11 @@ function isOwned(id) {
 function renderCrafting() {
   renderChainArea();
   renderGridArea();
+}
+
+/** Redraws both areas after an artifact is sold or gifted, or tokens change (gifts.js). */
+export function refreshCrafting() {
+  if (studentData) renderCrafting();
 }
 
 // ================================
@@ -245,6 +251,13 @@ function buildArtifactCard(a, tier) {
       <button type="button" class="submit-quiz-btn artifact-buy-btn legendary-card-btn" data-artifact-id="${a.id}">🃏 Download Card</button>`;
   } else if (state.kind === 'owned') {
     statusHtml = `<span class="artifact-status-badge">✓ Owned</span>`;
+    // Sell it back or gift it (gifts.js), unless it went into a Legendary.
+    if (!artifactLockReason(studentData, a.id)) {
+      statusHtml += `<div class="artifact-actions">
+        <button type="button" class="artifact-action" data-action="sell" aria-label="Sell ${a.name}">Sell</button>
+        <button type="button" class="artifact-action" data-action="gift" aria-label="Gift ${a.name}">Gift</button>
+      </div>`;
+    }
   } else if (state.kind === 'tier5-pending') {
     statusHtml = `<span class="artifact-status-badge">🔒 Complete the chain</span>`;
   } else if (state.kind === 'tier5-ready') {
@@ -286,6 +299,11 @@ function buildArtifactCard(a, tier) {
       cardBtn.disabled = false;
     };
   }
+
+  const sellBtn = card.querySelector('[data-action="sell"]');
+  if (sellBtn) sellBtn.onclick = () => openSellArtifact(a.id);
+  const giftBtn = card.querySelector('[data-action="gift"]');
+  if (giftBtn) giftBtn.onclick = () => openGiftArtifact(a.id);
 
   const buyBtn = card.querySelector('.artifact-buy-btn:not(.legendary-card-btn)');
   if (buyBtn) {

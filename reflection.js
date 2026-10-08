@@ -1,6 +1,7 @@
 import { db, doc, getDoc, updateDoc, increment } from './firebase.js';
 import { requireLogin } from './auth.js';
 import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
+import { startCooldown } from './cooldown.js';
 import { blockPasteInto } from './noCopyPaste.js';
 import { getRankProgress, getSeasonStars, isSeasonChaptersComplete, isPrelimSeasonDone, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
@@ -140,6 +141,7 @@ async function handleSubmit() {
     // to change, so they were stuck on the reflection that opens the next season.
     statusEl.textContent = `Your reflection contains a word that isn't allowed here: "${bannedWord}". Please reword that part and try again.`;
     recordMistake();
+    startCooldown({ email, word: bannedWord, where: 'your reflection' });
     return;
   }
 

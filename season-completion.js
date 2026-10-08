@@ -12,11 +12,13 @@
 
 import { db, doc, getDoc, setDoc } from './firebase.js';
 import { enforcePrelimLockout } from './prelimDeadline.js';
+import { enforceCooldown } from './cooldown.js';
 import { certificateByKey, isCertificateEarned, certificateDate, formatCertificateDate } from './certificates.js';
 
 const email = localStorage.getItem('studentEmail');
 const name = localStorage.getItem('studentName');
 enforcePrelimLockout(email);
+enforceCooldown(email);
 
 if (!email) {
   window.location.href = 'login.html';

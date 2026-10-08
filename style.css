@@ -3589,6 +3589,31 @@ body.cert-page {
   font-size: 13px;
 }
 
+/* Open Trader + Send a Gift (gifts.js), side by side. */
+.ticket-trader-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.ticket-trader-actions .submit-quiz-btn {
+  margin: 0;
+}
+
+#sendGiftBtn,
+#sendGiftBtn:hover {
+  width: auto;
+  padding: 10px 18px;
+  font-size: 13px;
+  color: #FFE9B0;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.5);
+}
+
+#sendGiftBtn:hover {
+  background: rgba(251,191,36,0.24);
+}
+
 /* Generic locked/blurred preview wrapper — reused for the artifact
    grid + crafting status in a later pass. Wrap the content to hide in
    .locked-blur-target, add .is-locked to the outer wrap to blur it and
@@ -3634,54 +3659,281 @@ body.cert-page {
   color: #D7E3F0;
 }
 
-/* Ticket Trader modal */
+/* Ticket Trader modal (redesigned 2026-10-07): a fixed header and
+   footer around a scrolling body -- balance first, then one card per
+   trade with a progress bar and a button that says what is still
+   needed. Selectors carry two classes on purpose: .achievement-box and
+   the global button / button:hover rules are declared elsewhere in this
+   file and would otherwise win or tie. */
 
-.ticket-trader-box {
-  width: min(460px, calc(100% - 32px));
+.achievement-box.ticket-trader-box {
+  display: flex;
+  flex-direction: column;
+  width: min(480px, calc(100% - 24px));
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow: hidden;
   text-align: left;
-}
-
-.ticket-trader-box .puzzle-status {
   color: #D7E3F0;
+  background: linear-gradient(165deg, #1C2238 0%, #0D1226 100%);
+  border: 1px solid rgba(86,178,187,0.4);
+  border-radius: 18px;
+  box-shadow: 0 24px 64px rgba(0,0,0,0.6), inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
-.ticket-trader-box .reflection-hint {
-  color: #9FDDE3;
+.ticket-trader-box .trader-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 18px 18px 16px 20px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  background: linear-gradient(180deg, rgba(86,178,187,0.1), transparent);
 }
 
-.trade-row {
-  border: 1px solid rgba(255,255,255,0.1);
-  border-radius: 14px;
-  padding: 12px 14px;
-  margin-top: 12px;
-}
-
-.trade-row-label {
-  font-size: 13px;
-  color: #9CA9C4;
-  margin-bottom: 10px;
-}
-
-.trade-row-label strong {
-  color: #D8FBFF;
-}
-
-.trade-row-flow {
+.ticket-trader-box .trader-head-icon {
+  flex: none;
+  width: 42px;
+  height: 42px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
+  justify-content: center;
+  font-size: 21px;
+  line-height: 1;
+  border-radius: 12px;
+  background: rgba(251,191,36,0.12);
+  border: 1px solid rgba(251,191,36,0.4);
 }
 
-.trade-select {
-  flex: 1 1 160px;
-  background: rgba(255,255,255,0.05);
-  color: #D7E3F0;
-  border: 1.5px solid rgba(255,255,255,0.15);
-  border-radius: 8px;
-  padding: 8px 10px;
+.ticket-trader-box .trader-head-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.ticket-trader-box .trader-head h2 {
+  margin: 1px 0 4px;
+  font-family: 'Cinzel', Georgia, serif;
+  font-size: 21px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: #EAFBFD;
+}
+
+.ticket-trader-box .trader-head p {
+  margin: 0;
   font-size: 13px;
+  line-height: 1.5;
+  color: #9CA9C4;
+}
+
+.ticket-trader-box .trader-x,
+.ticket-trader-box .trader-x:hover {
+  flex: none;
+  width: 32px;
+  height: 32px;
+  margin: 0;
+  padding: 0;
+  font-size: 14px;
+  line-height: 1;
+  color: #9CA9C4;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.12);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.ticket-trader-box .trader-x:hover {
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.12);
+  border-color: rgba(255,255,255,0.3);
+}
+
+.ticket-trader-box .trader-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 16px 20px 18px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(86,178,187,0.5) transparent;
+}
+
+.ticket-trader-box .trader-body::-webkit-scrollbar { width: 8px; }
+.ticket-trader-box .trader-body::-webkit-scrollbar-track { background: transparent; }
+.ticket-trader-box .trader-body::-webkit-scrollbar-thumb { background: rgba(86,178,187,0.5); border-radius: 4px; }
+
+/* The token balance: the one number every trade is for. */
+.ticket-trader-box .trader-token {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(251,191,36,0.14), rgba(251,191,36,0.04));
+  border: 1px solid rgba(251,191,36,0.38);
+}
+
+.ticket-trader-box .trader-token img {
+  flex: none;
+  width: 38px;
+  height: 38px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.ticket-trader-box .trader-token-label {
+  flex: 1;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #F2E3BC;
+}
+
+.ticket-trader-box .trader-token-count {
+  font-size: 26px;
+  font-weight: 700;
+  line-height: 1;
+  color: #FFE9B0;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-trader-box .trader-label {
+  margin: 18px 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.4px;
+  text-transform: uppercase;
+  color: #7FD4DC;
+}
+
+.ticket-trader-box .trader-tickets {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ticket-trader-box .trader-ticket {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 10px 4px 9px;
+  text-align: center;
+  border-radius: 10px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.09);
+}
+
+.ticket-trader-box .trader-ticket-icon {
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 20px;
+  line-height: 1;
+}
+
+.ticket-trader-box .trader-ticket-icon .inline-icon {
+  width: 26px;
+  height: 26px;
+  vertical-align: 0;
+}
+
+.ticket-trader-box .trader-ticket b {
+  font-size: 17px;
+  font-weight: 700;
+  line-height: 1.1;
+  color: #FFFFFF;
+  font-variant-numeric: tabular-nums;
+}
+
+.ticket-trader-box .trader-ticket-name {
+  font-size: 10.5px;
+  line-height: 1.25;
+  color: #9CA9C4;
+}
+
+/* One card per trade. */
+.ticket-trader-box .trade-row {
+  margin-top: 10px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.035);
+  border: 1px solid rgba(255,255,255,0.1);
+}
+
+.ticket-trader-box .trader-label + .trade-row {
+  margin-top: 0;
+}
+
+.ticket-trader-box .trade-row-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.ticket-trader-box .trade-row-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 700;
+  color: #EAFBFD;
+}
+
+.ticket-trader-box .trade-row-desc {
+  margin: 2px 0 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: #9CA9C4;
+}
+
+.ticket-trader-box .trade-reward {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 10px 4px 6px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+  color: #FFE9B0;
+  border-radius: 999px;
+  background: rgba(251,191,36,0.1);
+  border: 1px solid rgba(251,191,36,0.35);
+}
+
+.ticket-trader-box .trade-reward img {
+  width: 20px;
+  height: 20px;
+  object-fit: cover;
+  border-radius: 50%;
+}
+
+.ticket-trader-box .trade-select {
+  display: block;
+  width: 100%;
+  margin: 12px 0 0;
+  padding: 10px 36px 10px 12px;
+  box-sizing: border-box;
   font-family: inherit;
+  font-size: 13.5px;
+  color: #EAFBFD;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 9px;
+  background-color: rgba(10,15,34,0.6);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%237FD4DC' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.ticket-trader-box .trade-select:focus-visible,
+.ticket-trader-box .trade-btn:focus-visible,
+.ticket-trader-box .trader-x:focus-visible,
+.ticket-trader-box .trader-close:focus-visible {
+  outline: 2px solid #7FD4DC;
+  outline-offset: 2px;
 }
 
 /* The dropdown popup list is browser-rendered, not styled by the rule
@@ -3693,30 +3945,204 @@ body.cert-page {
   color: #D7E3F0;
 }
 
-.trade-input {
-  flex: 1 1 auto;
-  font-size: 13px;
+.ticket-trader-box .trade-row-foot {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.ticket-trader-box .trade-progress {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ticket-trader-box .trade-progress-track {
+  flex: 1;
+  height: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(255,255,255,0.09);
+}
+
+.ticket-trader-box .trade-progress-track i {
+  display: block;
+  width: 0;
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #3C98A1, #7FD4DC);
+  transition: width 0.35s ease;
+}
+
+.ticket-trader-box .trade-progress-track i.is-ready {
+  background: linear-gradient(90deg, #F59E0B, #FCD34D);
+}
+
+.ticket-trader-box .trade-progress-count {
+  flex: none;
+  min-width: 62px;
+  text-align: right;
+  font-size: 12.5px;
   font-weight: 600;
-  color: #D7E3F0;
+  color: #C7D2E3;
+  font-variant-numeric: tabular-nums;
 }
 
-.trade-arrow {
-  color: #56B2BB;
-  font-size: 16px;
-}
-
-.trade-output {
+.ticket-trader-box .trade-btn,
+.ticket-trader-box .trade-btn:hover {
+  flex: none;
+  width: auto;
+  min-width: 124px;
+  margin: 0;
+  padding: 10px 16px;
   font-size: 13px;
   font-weight: 700;
-  color: #FBBF24;
-  white-space: nowrap;
+  color: #06222A;
+  background: linear-gradient(180deg, #7FD4DC, #56B2BB);
+  border: 1px solid #A6E6EC;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.2s ease;
 }
 
-.trade-btn {
-  width: auto;
+.ticket-trader-box .trade-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.ticket-trader-box .trade-btn:disabled,
+.ticket-trader-box .trade-btn:disabled:hover {
+  color: #8B97B0;
+  background: transparent;
+  border-color: rgba(255,255,255,0.14);
+  cursor: not-allowed;
+  filter: none;
+  transform: none;
+}
+
+.ticket-trader-box .trader-status {
   margin: 0;
-  padding: 9px 16px;
-  font-size: 12.5px;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.ticket-trader-box .trader-status.is-ok,
+.ticket-trader-box .trader-status.is-error {
+  margin-top: 12px;
+  padding: 10px 12px;
+  border-radius: 9px;
+}
+
+.ticket-trader-box .trader-status.is-ok {
+  color: #BBF7D0;
+  background: rgba(34,197,94,0.12);
+  border: 1px solid rgba(34,197,94,0.4);
+}
+
+.ticket-trader-box .trader-status.is-error {
+  color: #FECACA;
+  background: rgba(239,68,68,0.12);
+  border: 1px solid rgba(239,68,68,0.4);
+}
+
+.ticket-trader-box .trader-foot {
+  padding: 12px 20px 16px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+}
+
+.ticket-trader-box .trader-close,
+.ticket-trader-box .trader-close:hover {
+  display: block;
+  width: 100%;
+  margin: 0;
+  padding: 11px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #C7D2E3;
+  background: transparent;
+  border: 1px solid rgba(255,255,255,0.22);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease;
+}
+
+.ticket-trader-box .trader-close:hover {
+  color: #FFFFFF;
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(255,255,255,0.4);
+}
+
+@media (max-width: 440px) {
+  .ticket-trader-box .trader-head { padding: 14px 14px 12px 16px; }
+  .ticket-trader-box .trader-body { padding: 14px 16px 16px; }
+  .ticket-trader-box .trader-foot { padding: 10px 16px 14px; }
+  .ticket-trader-box .trader-head h2 { font-size: 18px; }
+  .ticket-trader-box .trader-head p { font-size: 12.5px; }
+  .ticket-trader-box .trader-tickets { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .ticket-trader-box .trade-row { padding: 12px 14px; }
+  .ticket-trader-box .trade-row-foot { flex-wrap: wrap; gap: 10px; }
+  .ticket-trader-box .trade-progress { flex-basis: 100%; }
+  .ticket-trader-box .trade-btn,
+  .ticket-trader-box .trade-btn:hover { width: 100%; }
+}
+
+/* Fingers need bigger targets than a mouse pointer does. */
+@media (pointer: coarse) {
+  .ticket-trader-box .trader-x,
+  .ticket-trader-box .trader-x:hover { width: 42px; height: 42px; font-size: 16px; }
+  .ticket-trader-box .trade-btn,
+  .ticket-trader-box .trade-btn:hover { min-height: 44px; }
+  .ticket-trader-box .trade-select { min-height: 44px; }
+  .ticket-trader-box .trader-close,
+  .ticket-trader-box .trader-close:hover { min-height: 44px; }
+}
+
+/* A short, wide screen (a phone held sideways): there is width to spare
+   and very little height, so the window widens, the balance sits on the
+   left and stays put, and the trades scroll on the right. The header
+   slims down and the footer goes (the ✕ still closes it). */
+@media (max-height: 480px) and (min-width: 441px) {
+  .ticket-trader-box .trader-head { align-items: center; padding: 8px 12px 8px 16px; }
+  .ticket-trader-box .trader-head h2 { margin: 0; font-size: 18px; }
+  .ticket-trader-box .trader-head p { display: none; }
+  .ticket-trader-box .trader-head-icon { width: 32px; height: 32px; font-size: 17px; border-radius: 9px; }
+  .ticket-trader-box .trader-foot { display: none; }
+}
+
+@media (max-height: 480px) and (min-width: 560px) {
+  .achievement-box.ticket-trader-box {
+    width: min(800px, calc(100% - 20px));
+    max-height: calc(100vh - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+  .ticket-trader-box .trader-body {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 0 16px;
+    align-items: start;
+    padding: 12px 14px 14px 16px;
+  }
+  .ticket-trader-box .trader-col:first-child { position: sticky; top: 0; }
+  .ticket-trader-box .trader-col + .trader-col .trader-label:first-child { margin-top: 0; }
+  .ticket-trader-box .trader-token { padding: 9px 14px; }
+  .ticket-trader-box .trader-token img { width: 30px; height: 30px; }
+  .ticket-trader-box .trader-token-count { font-size: 22px; }
+  .ticket-trader-box .trader-label { margin-top: 12px; }
+  .ticket-trader-box .trader-tickets { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+  .ticket-trader-box .trader-ticket { padding: 7px 3px 6px; gap: 2px; }
+  .ticket-trader-box .trade-row { padding: 11px 14px; }
+}
+
+/* On the narrower sideways phones the trade column is too slim for the
+   bar and the button to share a line. */
+@media (max-height: 480px) and (min-width: 560px) and (max-width: 720px) {
+  .ticket-trader-box .trade-row-foot { flex-wrap: wrap; gap: 8px; }
+  .ticket-trader-box .trade-progress { flex-basis: 100%; }
+  .ticket-trader-box .trade-btn,
+  .ticket-trader-box .trade-btn:hover { width: 100%; }
 }
 
 /* ================================

@@ -63,10 +63,22 @@ export function initTicketTrader({ email, studentData, prelimDone }) {
   openBtn.disabled = false;
   openBtn.onclick = () => openTraderModal(email, studentData, wallet);
 
-  const closeBtn = document.getElementById('ticketTraderCloseBtn');
-  if (closeBtn) {
-    closeBtn.onclick = () => document.getElementById('ticketTraderModal').classList.add('hidden');
-  }
+  // Close by either button, a tap on the dimmed backdrop, or Escape.
+  const modal = document.getElementById('ticketTraderModal');
+  const close = () => modal.classList.add('hidden');
+  ['ticketTraderCloseBtn', 'ticketTraderXBtn'].forEach((id) => {
+    const btn = document.getElementById(id);
+    if (btn) btn.onclick = close;
+  });
+  modal.onclick = (e) => { if (e.target === modal) close(); };
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+  });
+}
+
+/** Redraws the sidebar wallet after tickets or tokens change elsewhere (gifts.js). */
+export function refreshTicketWallet(studentData) {
+  renderWallet(document.getElementById('ticketWallet'), studentData);
 }
 
 function renderWallet(walletEl, studentData) {
@@ -97,14 +109,49 @@ function openTraderModal(email, studentData, sidebarWallet) {
   modalStudentData = studentData;
   modalSidebarWallet = sidebarWallet;
 
+  setStatus('');
   document.getElementById('ticketTraderModal').classList.remove('hidden');
   renderTraderModal();
+}
+
+// The modal's own balance: the token total on its own, and each ticket
+// as a labelled tile (the sidebar keeps the compact renderWallet pills).
+function renderModalBalance() {
+  const tickets = modalStudentData.tickets || {};
+  document.getElementById('traderTokenCount').textContent = modalStudentData.unlockTokens || 0;
+
+  const grid = document.getElementById('traderModalWallet');
+  grid.innerHTML = '';
+  Object.entries(TICKET_INFO).forEach(([key, info]) => {
+    const tile = document.createElement('div');
+    tile.className = 'trader-ticket';
+    tile.innerHTML = `<span class="trader-ticket-icon">${info.icon}</span><b>${tickets[key] || 0}</b><span class="trader-ticket-name">${info.label}</span>`;
+    grid.appendChild(tile);
+  });
+}
+
+// One trade option: how far along the student is, and a button that
+// says how many more are needed instead of just greying out.
+function setTradeProgress({ barId, countId, btn, have, need }) {
+  const ready = have >= need;
+  const bar = document.getElementById(barId);
+  bar.style.width = `${Math.min(100, (have / need) * 100)}%`;
+  bar.classList.toggle('is-ready', ready);
+  document.getElementById(countId).textContent = `${Math.min(have, need)} / ${need}`;
+  btn.disabled = !ready;
+  btn.textContent = ready ? 'Trade' : `Need ${need - have} more`;
+}
+
+function setStatus(text, kind) {
+  const statusEl = document.getElementById('ticketTraderStatus');
+  statusEl.textContent = text;
+  statusEl.className = `trader-status${text ? ` is-${kind}` : ''}`;
 }
 
 function renderTraderModal() {
   const tickets = modalStudentData.tickets || {};
 
-  renderWallet(document.getElementById('traderModalWallet'), modalStudentData);
+  renderModalBalance();
 
   // --- Same 3 ---
   const select = document.getElementById('sameThreeSelect');
@@ -119,7 +166,9 @@ function renderTraderModal() {
   select.value = previousSelection;
 
   const sameThreeBtn = document.getElementById('sameThreeTradeBtn');
-  const updateSameThreeBtn = () => { sameThreeBtn.disabled = (tickets[select.value] || 0) < SAME_COUNT; };
+  const updateSameThreeBtn = () => setTradeProgress({
+    barId: 'sameThreeBar', countId: 'sameThreeCount', btn: sameThreeBtn, have: tickets[select.value] || 0, need: SAME_COUNT
+  });
   select.onchange = updateSameThreeBtn;
   updateSameThreeBtn();
 
@@ -131,10 +180,8 @@ function renderTraderModal() {
 
   // --- Any ANY_COUNT ---
   const nonScrapTotal = TRADEABLE_TYPES.reduce((sum, t) => sum + (tickets[t] || 0), 0);
-  document.getElementById('anyFourInputLabel').textContent = `${Math.min(nonScrapTotal, ANY_COUNT)}/${ANY_COUNT}`;
-
   const anyFourBtn = document.getElementById('anyFourTradeBtn');
-  anyFourBtn.disabled = nonScrapTotal < ANY_COUNT;
+  setTradeProgress({ barId: 'anyFourBar', countId: 'anyFourInputLabel', btn: anyFourBtn, have: nonScrapTotal, need: ANY_COUNT });
   anyFourBtn.onclick = () => {
     const deduction = pickAnyFourDeduction(tickets);
     if (!deduction) return;
@@ -143,10 +190,8 @@ function renderTraderModal() {
 
   // --- Scrap ---
   const scrapCount = tickets.scrap_ticket || 0;
-  document.getElementById('sixScrapCount').textContent = `${Math.min(scrapCount, SCRAP_COUNT)}/${SCRAP_COUNT}`;
-
   const sixScrapBtn = document.getElementById('sixScrapTradeBtn');
-  sixScrapBtn.disabled = scrapCount < SCRAP_COUNT;
+  setTradeProgress({ barId: 'sixScrapBar', countId: 'sixScrapCount', btn: sixScrapBtn, have: scrapCount, need: SCRAP_COUNT });
   sixScrapBtn.onclick = () => {
     handleTrade(
       { quiz_ticket: 0, task_ticket: 0, journal_ticket: 0, recitation_ticket: 0, scrap_ticket: SCRAP_COUNT },
@@ -185,8 +230,7 @@ function pickAnyFourDeduction(tickets) {
 }
 
 async function handleTrade(deduction, label) {
-  const statusEl = document.getElementById('ticketTraderStatus');
-
+  setStatus('');
   setTradeRowsBusy(true);
   let succeeded = false;
   let insufficientTickets = false;
@@ -234,11 +278,11 @@ async function handleTrade(deduction, label) {
   renderWallet(modalSidebarWallet, modalStudentData);
 
   if (insufficientTickets) {
-    statusEl.textContent = "You don't have enough tickets for that trade anymore.";
+    setStatus("You don't have enough tickets for that trade anymore.", 'error');
+  } else if (succeeded) {
+    setStatus(`Traded for 1 Artifact Unlock Token (${label}).`, 'ok');
   } else {
-    statusEl.textContent = succeeded
-      ? `✅ Traded for 1 Artifact Unlock Token! (${label})`
-      : 'Something went wrong. Please try again.';
+    setStatus('Something went wrong. Please try again.', 'error');
   }
 }
 

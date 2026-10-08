@@ -1,4 +1,5 @@
 import { enforcePrelimLockout } from './prelimDeadline.js';
+import { enforceCooldown } from './cooldown.js';
 
 export function requireLogin() {
   const email = localStorage.getItem('studentEmail');
@@ -12,6 +13,8 @@ export function requireLogin() {
   // Every student page comes through here, so this is the one place
   // the Prelim lockout needs to hook in (admins are skipped inside).
   enforcePrelimLockout(email);
+  // Same for the 30-day cooldown after a banned word (cooldown.js).
+  enforceCooldown(email);
 
   return { email, name };
 }

@@ -6,6 +6,7 @@ import { ADMIN_EMAILS } from './admins.js';
 import { logActivity } from './activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
 import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
+import { startCooldown } from './cooldown.js';
 import { getRankProgress, getSeasonStars, RANK_TIERS, starIndexOfChapter } from './rank.js';
 import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderChampionPopup, renderNoticePopup } from './rankPopup.js';
 import { TICKET_INFO } from './ticketTrader.js';
@@ -479,6 +480,7 @@ function renderTextModal(node, { minLength }) {
     if (bannedWord) {
       hint.textContent = `Your response contains a word that isn't allowed here: "${bannedWord}". Please reword that part and try again.`;
       recordMistake();
+      startCooldown({ email, word: bannedWord, where: 'your written response' });
       return;
     }
 

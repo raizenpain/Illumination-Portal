@@ -92,6 +92,25 @@ service cloud.firestore {
              (!('puzzle3Completed' in touched) || request.resource.data.puzzle3Completed == false);
     }
 
+    // The 30-day cooldown a student gets for trying to submit a banned
+    // word (cooldown.js; keep the 30 in sync with COOLDOWN_DAYS there).
+    // `data` is a students/{email} record. A teacher lifts it by setting
+    // cooldown to null.
+    function onCooldown(data) {
+      return data.get('cooldown', null) != null &&
+             request.time < data.cooldown.startedAt + duration.value(30, 'd');
+    }
+
+    // A student may only ever START a cooldown, stamped with the real
+    // server time: never back-date, shorten or clear one.
+    function isNewCooldown(cooldown) {
+      return cooldown is map &&
+             cooldown.keys().hasOnly(['startedAt', 'word', 'where']) &&
+             cooldown.startedAt == request.time &&
+             cooldown.word is string && cooldown.word.size() <= 40 &&
+             cooldown.where is string && cooldown.where.size() <= 40;
+    }
+
     // Students collection — doc ID is the student's email
     match /students/{studentId} {
       // A student can read their own record, and so can an admin (for the progress table)
@@ -127,10 +146,15 @@ service cloud.firestore {
                          request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                          (!prelimLockPassed() || isAdmin() || resource.data.get('midtermUnlocked', false) == true) &&
                          request.resource.data.diff(resource.data).affectedKeys()
-                           .hasOnly(studentSelfFields())) ||
+                           .hasOnly(studentSelfFields().concat(['cooldown'])) &&
+                         // On cooldown: the record is frozen until it
+                         // runs out or a teacher lifts it.
+                         !onCooldown(resource.data) &&
+                         (!('cooldown' in request.resource.data.diff(resource.data).affectedKeys()) ||
+                          isNewCooldown(request.resource.data.cooldown))) ||
                         (isAdmin() &&
                          request.resource.data.diff(resource.data).affectedKeys()
-                           .hasOnly(['teacherEmail', 'teacherName', 'section', 'tickets',
+                           .hasOnly(['teacherEmail', 'teacherName', 'section', 'tickets', 'cooldown',
                                      'puzzle1Completed', 'puzzle2Completed', 'puzzle3Completed']) &&
                          isValidAdminCompletionFix()));
 
@@ -244,7 +268,9 @@ service cloud.firestore {
                          exists(/databases/$(database)/documents/classChatImages/$(messageId)))) &&
                        request.resource.data.reported == false &&
                        (!('type' in request.resource.data) || request.resource.data.type == 'greeting') &&
-                       (isAdmin() || isInCallerClass(request.resource.data));
+                       (isAdmin() ||
+                        (isInCallerClass(request.resource.data) &&
+                         !onCooldown(get(/databases/$(database)/documents/students/$(request.auth.token.email)).data)));
 
       // Report-only: the one allowed change after a message exists.
       // Anyone in the same class (or admin) can flip reported to true
@@ -326,6 +352,163 @@ service cloud.firestore {
                        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['lastDate']) &&
                        request.resource.data.lastDate is string &&
                        (isAdmin() || isInCallerClass(resource.data));
+    }
+
+    // ============================================
+    // GIFTS (gifts.js) -- a student sends tickets, or an artifact that
+    // turns into Unlock Tokens, to another student. Nobody can write
+    // to someone else's students/{email} record, so a gift waits here
+    // until the receiver opens it; opening it is what credits their own
+    // record.
+    //
+    // Unlike the students rules above, these DO check values, using
+    // get()/getAfter() on the caller's own record inside the same
+    // transaction: a gift can only be created together with the matching
+    // deduction from the sender, and only be marked opened together
+    // with the matching credit to the receiver. (A student can still
+    // edit their own balances directly -- that older gap is unchanged.)
+    // ============================================
+
+    // The calendar day in Philippine time (UTC+8), as a whole number of
+    // days. Mirrors giftDay() in gifts.js.
+    function giftDayNow() {
+      return int((request.time.toMillis() + 28800000) / 86400000);
+    }
+
+    // Unlock Tokens the receiver gets for a gifted artifact: its price
+    // minus 5. Mirrors artifactTokenValue() in gifts.js; keep in sync
+    // with TOKEN_COST_BY_TIER / TOKEN_COST_OVERRIDES in artifacts.js.
+    // Legendary (Tier 5) artifacts are deliberately absent.
+    function giftTokenValues() {
+      return {
+        'sisters_shroud': 10, 'spark_of_courage': 10, 'occult_bracelet': 10,
+        'kobold_cup': 10, 'orb_of_destruction': 11, 'dormant_curio': 10,
+        'mana_draught': 20, 'brigands_blade': 20, 'essence_ring': 20,
+        'gossamer_cape': 20, 'iron_talon': 22, 'searing_signet': 20,
+        'gale_guard': 30, 'serrated_shiv': 30, 'psychic_headband': 30,
+        'jidi_pollen_bag': 30, 'ceremonial_robe': 33, 'whisper_of_the_dread': 30,
+        'outworld_staff': 45, 'giants_maul': 45, 'magnifying_monocle': 45,
+        'dezun_bloodrite': 45, 'crippling_crossbow': 50, 'pyrrhic_cloak': 45
+      };
+    }
+
+    // A ticket gift: 1-50 of one ticket type, taken off the sender's own
+    // balance in this same transaction, and counted against the day's
+    // limit for this sender -> receiver pair (see giftLimits below).
+    //
+    // The gift's id must end in the day's running total AFTER this gift.
+    // Without that, one crafted transaction could create two gifts that
+    // each point at the same single increase of the limit (and the same
+    // single deduction) -- with it, they would need the same id.
+    function isTicketGift(g, giftId) {
+      let limitPath = /databases/$(database)/documents/giftLimits/$(g.from + '__' + g.to + '__' + string(g.day));
+      let usedBefore = exists(limitPath) ? get(limitPath).data.total : 0;
+      let me = /databases/$(database)/documents/students/$(request.auth.token.email);
+      let had = get(me).data.get('tickets', {}).get(g.ticketType, 0);
+      return g.kind == 'tickets' &&
+             g.ticketType in ['quiz_ticket', 'task_ticket', 'journal_ticket', 'recitation_ticket', 'scrap_ticket'] &&
+             g.amount is int && g.amount >= 1 && g.amount <= 50 &&
+             !('artifactId' in g) && !('tokens' in g) &&
+             getAfter(limitPath).data.total == usedBefore + g.amount &&
+             giftId == g.from + '__' + g.to + '__' + string(g.day) + '__' + string(usedBefore + g.amount) &&
+             had >= g.amount &&
+             getAfter(me).data.tickets[g.ticketType] == had - g.amount;
+    }
+
+    // An artifact gift: the sender owned it before this transaction and
+    // does not after, and the receiver's token value is the fixed one.
+    // The id is fixed per sender / artifact / day for the same reason as
+    // above (one removal can't pay for two gifts), which also means the
+    // same artifact can be gifted at most once a day.
+    function isArtifactGift(g, giftId) {
+      let me = /databases/$(database)/documents/students/$(request.auth.token.email);
+      return g.kind == 'artifact' &&
+             g.artifactId in giftTokenValues() &&
+             g.tokens == giftTokenValues()[g.artifactId] &&
+             !('ticketType' in g) && !('amount' in g) &&
+             giftId == g.from + '__art__' + g.artifactId + '__' + string(g.day) &&
+             g.artifactId in get(me).data.get('ownedArtifacts', []) &&
+             !(g.artifactId in getAfter(me).data.get('ownedArtifacts', []));
+    }
+
+    // Opening a gift credits exactly what it holds to the opener's own
+    // record, in the same transaction.
+    function giftIsCredited(g) {
+      let me = /databases/$(database)/documents/students/$(request.auth.token.email);
+      let before = get(me).data;
+      let after = getAfter(me).data;
+      return g.kind == 'tickets'
+        ? after.tickets[g.ticketType] == before.get('tickets', {}).get(g.ticketType, 0) + g.amount
+        : after.unlockTokens == before.get('unlockTokens', 0) + g.tokens;
+    }
+
+    match /gifts/{giftId} {
+      // Only the two people involved (and admins) can see a gift.
+      // resource is null when the id has no gift yet: gifts.js looks one
+      // up before gifting an artifact (to say "already gifted today"),
+      // and without the null check that lookup errors on resource.data
+      // and the whole transaction is denied. A missing doc reveals
+      // nothing, and a query still has to match one of the other lines.
+      allow read: if request.auth != null &&
+                     (isAdmin() ||
+                      resource == null ||
+                      resource.data.to == request.auth.token.email ||
+                      resource.data.from == request.auth.token.email);
+
+      allow create: if request.auth != null &&
+                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                       request.resource.data.keys().hasOnly(
+                         ['from', 'fromName', 'to', 'toName', 'kind', 'ticketType', 'amount',
+                          'artifactId', 'tokens', 'note', 'day', 'createdAt', 'claimed']
+                       ) &&
+                       request.resource.data.from == request.auth.token.email &&
+                       request.resource.data.to is string &&
+                       request.resource.data.to != request.auth.token.email &&
+                       // The receiver must be an enrolled student.
+                       exists(/databases/$(database)/documents/students/$(request.resource.data.to)) &&
+                       request.resource.data.fromName is string && request.resource.data.fromName.size() <= 120 &&
+                       request.resource.data.toName is string && request.resource.data.toName.size() <= 120 &&
+                       (!('note' in request.resource.data) ||
+                        (request.resource.data.note is string && request.resource.data.note.size() <= 140)) &&
+                       request.resource.data.day == giftDayNow() &&
+                       request.resource.data.createdAt == request.time &&
+                       request.resource.data.claimed == false &&
+                       (isTicketGift(request.resource.data, giftId) || isArtifactGift(request.resource.data, giftId));
+
+      // The one change ever allowed: the receiver opening it, once.
+      allow update: if request.auth != null &&
+                       resource.data.to == request.auth.token.email &&
+                       resource.data.claimed == false &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['claimed', 'claimedAt']) &&
+                       request.resource.data.claimed == true &&
+                       request.resource.data.claimedAt == request.time &&
+                       giftIsCredited(resource.data);
+
+      allow delete: if isAdmin();
+    }
+
+    // How many tickets one student has gifted another today: one doc per
+    // sender / receiver / day, id `${from}__${to}__${day}`. The total can
+    // only go up, and never past 50 -- this is what makes the daily limit
+    // real rather than just a message in the app.
+    match /giftLimits/{limitId} {
+      allow read: if request.auth != null &&
+                     (isAdmin() || resource == null || resource.data.from == request.auth.token.email);
+
+      allow create, update: if request.auth != null &&
+                               request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                               request.resource.data.keys().hasOnly(['from', 'to', 'day', 'total']) &&
+                               request.resource.data.from == request.auth.token.email &&
+                               request.resource.data.to is string &&
+                               request.resource.data.to != request.auth.token.email &&
+                               request.resource.data.day == giftDayNow() &&
+                               limitId == request.resource.data.from + '__' + request.resource.data.to + '__' + string(request.resource.data.day) &&
+                               request.resource.data.total is int &&
+                               request.resource.data.total >= 1 &&
+                               request.resource.data.total <= 50 &&
+                               (resource == null || request.resource.data.total > resource.data.total);
+
+      allow delete: if isAdmin();
     }
 
     // Everything else — denied by default

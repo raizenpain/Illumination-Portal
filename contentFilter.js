@@ -120,15 +120,107 @@ const COURSEWORK_EXEMPT = new Set([
 // "Fr." before a name is Father (Fr. Pedro), not the slang "fr" (for real).
 const FATHER_TITLE = /\bFr\.?(?=\s+[A-Z])/g;
 
-/** The first banned word found in `text`, or null. `coursework: true`
- *  applies COURSEWORK_EXEMPT (see above). */
+// ---- disguised words ----
+// Matching whole words exactly as typed lets "b o b o", "b.o.b.o",
+// "8080", "b0b0" and "bobooo" all walk straight past the list, so every
+// check also undoes the usual tricks and looks again (Jornie, 2026-10-07:
+// "block it in the entire system of the portal"):
+//   spelled out    letters split by spaces, dots, dashes, underscores
+//                  or stars are joined back up ("b o b o" -> "bobo"),
+//                  and a word hidden among other single letters is
+//                  still found ("u r a b o b o")
+//   look-alikes    digits and symbols standing in for letters inside a
+//                  word are swapped back ("b0b0", "g@go", "$hit")
+//   all digits     a word written entirely in digits ("8080" for bobo).
+//                  Only the spellings listed in DIGIT_WORDS: turning
+//                  every number into letters would start rejecting room
+//                  numbers and scores ("473" reads as "ate")
+//   stretched      a letter repeated three or more times is cut down
+//                  ("bobooo", "gaaago")
+//   run together   a listed phrase typed without its spaces
+//                  ("putangina" for "putang ina")
+//
+// Un-disguising can only ever flag MORE text, and a wrongly rejected
+// reflection blocks a student from the next season, so two limits keep
+// it honest:
+//   - Look-alikes and stretched letters only count for list entries of
+//     four letters or more. Without that, "www.vatican.va" reads as the
+//     slang "w", vitamin "B5" as "bs" and "1mo" (one month) as "imo".
+//   - The coursework exemptions (COURSEWORK_EXEMPT) apply here too.
+// Still not caught: misspellings ("bubu"), words run together, and any
+// sentence that is unkind without using a listed word. That needs a
+// human, as the note at the top of this file says.
+
+const LOOKALIKES = { 0: 'o', 1: 'i', 3: 'e', 4: 'a', 5: 's', 7: 't', 8: 'b', '@': 'a', $: 's' };
+const DIGIT_WORDS = { 8080: 'bobo' };
+const unswap = (token) => {
+  if (DIGIT_WORDS[token]) return DIGIT_WORDS[token];
+  return /[a-z]/.test(token) && /[0134578@$]/.test(token) ? token.replace(/[0134578@$]/g, (ch) => LOOKALIKES[ch]) : token;
+};
+// Entries long enough that a match after un-disguising is not a coincidence.
+const LONG_WORDS = BANNED_WORDS.filter((word) => word.length >= 4);
+// ...and, of those, the single words that can be spotted INSIDE a run of
+// spelled-out letters.
+const HIDEABLE_WORDS = LONG_WORDS.filter((word) => /^[a-z]+$/.test(word));
+// Listed phrases with their spaces taken out ("putang ina" -> "putangina").
+const SQUASHED_PHRASES = BANNED_WORDS
+  .filter((word) => /^[a-z]+(?: [a-z]+)+$/.test(word))
+  .map((word) => ({ word, squashed: word.replace(/ /g, '') }))
+  .filter((phrase) => phrase.squashed.length >= 6);
+const squashedIn = (text, coursework, wholeWord) => {
+  const hit = SQUASHED_PHRASES.find((p) => allowed(p.word, coursework) &&
+    (wholeWord ? new RegExp(`\\b${p.squashed}`).test(text) : text.includes(p.squashed)));
+  return hit ? hit.word : null;
+};
+
+const allowed = (word, coursework) => !(coursework && COURSEWORK_EXEMPT.has(word));
+
+/** The first entry of `words` present in `normalized` as a whole word, or null. */
+function matchWholeWord(words, normalized, coursework) {
+  return words.find((word) => allowed(word, coursework) && new RegExp(`\\b${escapeRegExp(word)}\\b`, 'i').test(normalized)) || null;
+}
+
+/** A banned word written exactly as it is on the list. */
+function findPlainWord(text, coursework) {
+  return matchWholeWord(BANNED_WORDS, text.replace(FATHER_TITLE, ' ').toLowerCase(), coursework);
+}
+
+/** A banned word hidden by one of the tricks described above. */
+function findDisguisedWord(text, coursework) {
+  const lower = text.toLowerCase();
+
+  // Spelled out: three or more single characters in a row with only
+  // separators between them.
+  const runs = lower.match(/(?<![a-z0-9@$])(?:[a-z0-9@$][\s.\-_*]+){2,}[a-z0-9@$](?![a-z0-9@$])/g) || [];
+  for (const run of runs) {
+    const joined = unswap(run.replace(/[\s.\-_*]+/g, ''));
+    const exact = matchWholeWord(BANNED_WORDS, joined, coursework);
+    if (exact) return exact;
+    const inside = HIDEABLE_WORDS.find((word) => allowed(word, coursework) && joined.includes(word));
+    if (inside) return inside;
+    const phrase = squashedIn(joined, coursework, false);
+    if (phrase) return phrase;
+  }
+
+  // Look-alikes and stretched letters, word by word.
+  const swapped = lower.replace(/[a-z0-9@$]+/g, unswap);
+  for (const variant of [swapped, swapped.replace(/([a-z])\1{2,}/g, '$1'), swapped.replace(/([a-z])\1{2,}/g, '$1$1')]) {
+    const phrase = squashedIn(variant, coursework, true);
+    if (phrase) return phrase;
+    if (variant === lower) continue;
+    const found = matchWholeWord(LONG_WORDS, variant, coursework);
+    if (found) return found;
+  }
+  return null;
+}
+
+/** The first banned word found in `text`, written plainly or disguised,
+ *  or null. `coursework: true` applies COURSEWORK_EXEMPT (see above).
+ *  Every free-text box in the portal goes through this one function:
+ *  class chat, reflections, season tasks, and gift notes. */
 export function findBannedWord(text, { coursework = false } = {}) {
-  const normalized = text.replace(FATHER_TITLE, ' ').toLowerCase();
-  const match = BANNED_WORDS.find((word) =>
-    !(coursework && COURSEWORK_EXEMPT.has(word)) &&
-    new RegExp(`\\b${escapeRegExp(word)}\\b`, 'i').test(normalized)
-  );
-  return match || null;
+  const value = String(text ?? '');
+  return findPlainWord(value, coursework) || findDisguisedWord(value, coursework);
 }
 
 export function containsBannedWord(text, options) {

@@ -29,6 +29,7 @@
 
 import { db, collection, doc, addDoc, setDoc, updateDoc, deleteDoc, onSnapshot, query, where, orderBy, limit, getDocs, serverTimestamp } from './firebase.js';
 import { findBannedWord, looksLikeGibberish } from './contentFilter.js';
+import { startCooldown } from './cooldown.js';
 import { maybePostDailyGreeting } from './dailyGreeting.js';
 import { ADMIN_EMAILS } from './admins.js';
 import { compressImage, createImageSlot, loadInto, deleteChatImage } from './chatImages.js';
@@ -337,6 +338,7 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
     const bannedWord = text ? findBannedWord(text) : null;
     if (bannedWord) {
       showError(`That message contains a word that isn’t allowed here: “${bannedWord}”.`);
+      if (!isAdmin) startCooldown({ email, word: bannedWord, where: 'the Class Chat' });
       return;
     }
 

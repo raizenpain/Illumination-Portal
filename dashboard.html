@@ -33,6 +33,7 @@
     </a>
 
     <button id="dungeonMasterBtn" class="logout-btn hidden" type="button" onclick="window.location.href='teacher.html'">🐉 Dungeon Master</button>
+    <button id="giftInboxBtn" class="music-toggle-btn gift-inbox-btn hidden" type="button" title="Your gifts" aria-label="Your gifts">🎁<span class="gift-badge hidden" id="giftBadge">0</span></button>
     <button id="musicToggleBtn" class="music-toggle-btn" type="button" aria-pressed="false" title="Mute background music">🔊</button>
     <button id="logoutBtn" class="logout-btn">Sign Out</button>
   </header>
@@ -308,7 +309,10 @@
           <div class="locked-blur-wrap" id="ticketTraderWrap">
             <div class="locked-blur-target" id="ticketTraderTarget">
               <div class="ticket-wallet" id="ticketWallet"></div>
-              <button type="button" class="submit-quiz-btn" id="openTicketTraderBtn">Open Trader</button>
+              <div class="ticket-trader-actions">
+                <button type="button" class="submit-quiz-btn" id="openTicketTraderBtn">Open Trader</button>
+                <button type="button" class="submit-quiz-btn" id="sendGiftBtn">🎁 Send a Gift</button>
+              </div>
             </div>
             <div class="locked-blur-overlay hidden" id="ticketTraderLockOverlay">
               <span class="locked-blur-icon">🔒</span>
@@ -337,47 +341,94 @@
 </div>
 
 <div id="ticketTraderModal" class="achievement-popup hidden">
-  <div class="achievement-box ticket-trader-box">
-    <h2>🎫 Ticket Trader</h2>
-    <p class="reflection-hint">Trade your tickets for Artifact Unlock Tokens, spendable on artifacts once crafting opens.</p>
+  <div class="achievement-box ticket-trader-box" role="dialog" aria-modal="true" aria-labelledby="ticketTraderHeading">
+    <header class="trader-head">
+      <span class="trader-head-icon" aria-hidden="true">🎫</span>
+      <div class="trader-head-text">
+        <h2 id="ticketTraderHeading">Ticket Trader</h2>
+        <p>Trade your tickets for Artifact Unlock Tokens, spendable on artifacts once crafting opens.</p>
+      </div>
+      <button type="button" class="trader-x" id="ticketTraderXBtn" aria-label="Close the Ticket Trader">✕</button>
+    </header>
 
-    <div class="ticket-wallet" id="traderModalWallet"></div>
+    <!-- Two columns: stacked on most screens, side by side on a phone
+         held sideways (see the Ticket Trader modal styles). -->
+    <div class="trader-body">
+      <div class="trader-col">
+      <div class="trader-token">
+        <img src="assets/unlock-token.png" alt="">
+        <span class="trader-token-label">Artifact Unlock Tokens</span>
+        <b class="trader-token-count" id="traderTokenCount">0</b>
+      </div>
 
-    <div class="trade-row">
-      <div class="trade-row-label">Trade the <strong>same 36 tickets</strong></div>
-      <div class="trade-row-flow">
-        <select class="trade-select" id="sameThreeSelect"></select>
-        <span class="trade-arrow">&rarr;</span>
-        <span class="trade-output"><img src="assets/unlock-token.png" class="inline-icon" alt=""> x1</span>
-        <button type="button" class="submit-quiz-btn trade-btn" id="sameThreeTradeBtn">Trade</button>
+      <p class="trader-label">Your tickets</p>
+      <div class="trader-tickets" id="traderModalWallet"></div>
+      </div>
+
+      <div class="trader-col">
+      <p class="trader-label">Choose a trade</p>
+
+      <!-- The amounts (36 / 72 / 135) match SAME_COUNT / ANY_COUNT /
+           SCRAP_COUNT in ticketTrader.js. -->
+      <section class="trade-row" aria-labelledby="tradeSameTitle">
+        <div class="trade-row-head">
+          <div>
+            <p class="trade-row-title" id="tradeSameTitle">Same kind</p>
+            <p class="trade-row-desc">36 tickets of one kind</p>
+          </div>
+          <span class="trade-reward"><img src="assets/unlock-token.png" alt=""> +1 Token</span>
+        </div>
+        <select class="trade-select" id="sameThreeSelect" aria-label="Which kind of ticket to trade"></select>
+        <div class="trade-row-foot">
+          <div class="trade-progress">
+            <div class="trade-progress-track"><i id="sameThreeBar"></i></div>
+            <span class="trade-progress-count" id="sameThreeCount">0 / 36</span>
+          </div>
+          <button type="button" class="trade-btn" id="sameThreeTradeBtn">Trade</button>
+        </div>
+      </section>
+
+      <section class="trade-row" aria-labelledby="tradeAnyTitle">
+        <div class="trade-row-head">
+          <div>
+            <p class="trade-row-title" id="tradeAnyTitle">Mixed</p>
+            <p class="trade-row-desc">Any 72 tickets, no Ember Shards</p>
+          </div>
+          <span class="trade-reward"><img src="assets/unlock-token.png" alt=""> +1 Token</span>
+        </div>
+        <div class="trade-row-foot">
+          <div class="trade-progress">
+            <div class="trade-progress-track"><i id="anyFourBar"></i></div>
+            <span class="trade-progress-count" id="anyFourInputLabel">0 / 72</span>
+          </div>
+          <button type="button" class="trade-btn" id="anyFourTradeBtn">Trade</button>
+        </div>
+      </section>
+
+      <section class="trade-row" aria-labelledby="tradeShardTitle">
+        <div class="trade-row-head">
+          <div>
+            <p class="trade-row-title" id="tradeShardTitle">Ember Shards</p>
+            <p class="trade-row-desc">135 Ember Shards, the catch-up path</p>
+          </div>
+          <span class="trade-reward"><img src="assets/unlock-token.png" alt=""> +1 Token</span>
+        </div>
+        <div class="trade-row-foot">
+          <div class="trade-progress">
+            <div class="trade-progress-track"><i id="sixScrapBar"></i></div>
+            <span class="trade-progress-count" id="sixScrapCount">0 / 135</span>
+          </div>
+          <button type="button" class="trade-btn" id="sixScrapTradeBtn">Trade</button>
+        </div>
+      </section>
+
+      <p class="trader-status" id="ticketTraderStatus" role="status"></p>
       </div>
     </div>
 
-    <div class="trade-row">
-      <div class="trade-row-label">Trade <strong>any 72 tickets</strong> (mixed, no Ember Shards)</div>
-      <div class="trade-row-flow">
-        <span class="trade-input" id="anyFourInputLabel">0/72</span>
-        <span class="trade-arrow">&rarr;</span>
-        <span class="trade-output"><img src="assets/unlock-token.png" class="inline-icon" alt=""> x1</span>
-        <button type="button" class="submit-quiz-btn trade-btn" id="anyFourTradeBtn">Trade</button>
-      </div>
-    </div>
-
-    <div class="trade-row">
-      <div class="trade-row-label">Trade <strong>135 Ember Shards</strong> — the catch-up path</div>
-      <div class="trade-row-flow">
-        <span class="trade-input" id="sixScrapInputLabel"><img src="assets/ember-shard.png" class="inline-icon" alt=""> <span id="sixScrapCount">0/135</span></span>
-        <span class="trade-arrow">&rarr;</span>
-        <span class="trade-output"><img src="assets/unlock-token.png" class="inline-icon" alt=""> x1</span>
-        <button type="button" class="submit-quiz-btn trade-btn" id="sixScrapTradeBtn">Trade</button>
-      </div>
-    </div>
-
-    <p class="puzzle-status" id="ticketTraderStatus"></p>
-
-    <div class="reflection-modal-actions">
-      <button class="back-btn" id="ticketTraderCloseBtn">Close</button>
-    </div>
+    <footer class="trader-foot">
+      <button type="button" class="trader-close" id="ticketTraderCloseBtn">Close</button>
+    </footer>
   </div>
 </div>
 
@@ -405,10 +456,12 @@ import { resolveSeasonBadge } from './seasonBadges.js';
 import { PRELIM_BADGE_INFO } from './prelimBadges.js';
 import { ADMIN_EMAILS, ADMINS } from './admins.js';
 import { loadGospelQuote } from './gospel.js';
-import { initTicketTrader } from './ticketTrader.js';
-import { initCrafting } from './crafting.js';
+import { initTicketTrader, refreshTicketWallet } from './ticketTrader.js';
+import { initCrafting, refreshCrafting } from './crafting.js';
+import { initGifts, showPendingGifts } from './gifts.js';
 import { initLeaderboard } from './leaderboard.js';
 import { findBannedWord } from './contentFilter.js';
+import { startCooldown } from './cooldown.js';
 import { getRankProgress, isPuzzleComplete, isPrelimSeasonDone } from './rank.js';
 import { initDashboardTour } from './dashboardTour.js';
 import { initClassChat } from './classChat.js';
@@ -692,6 +745,14 @@ async function loadStudentCard() {
     // Legendary on this very load, and that deserves its celebration.
     const craftingReady = initCrafting({ email, name: data.name || name, studentData: data, prelimDone: isSeasonPreviewAdmin || isPrelimSeasonDone(data) })
       .catch((err) => console.error('Crafting failed to initialise:', err));
+    // Sending, selling and opening gifts all change this same record:
+    // redraw the wallet and the artifact grid whenever one does.
+    initGifts({
+      email,
+      name: data.name || name,
+      studentData: data,
+      onChange: () => { refreshTicketWallet(data); refreshCrafting(); }
+    });
     initLeaderboard({
       email,
       name: data.name || name,
@@ -732,6 +793,8 @@ async function loadStudentCard() {
       if (discipleBonusJustGranted) await showDiscipleBonusReveal();
       await maybeShowRefundNotice({ email, data, isAdmin: isSeasonPreviewAdmin });
       await maybeShowRevisionNotice({ data, isAdmin: isSeasonPreviewAdmin });
+      // Gifts from other students that are waiting to be opened.
+      await showPendingGifts();
       // The end of the whole journey: "Your Pilgrimage Is Complete" after
       // the Final Reflection, then "The Legendary Is Forged" (each once).
       await craftingReady;
@@ -1452,6 +1515,7 @@ async function saveReflectionEdit() {
   const bannedWord = findBannedWord(text, { coursework: true });
   if (bannedWord) {
     reflectionModalHint.textContent = `Your reflection contains a word that isn't allowed here: "${bannedWord}". Please reword that part and try again.`;
+    startCooldown({ email, word: bannedWord, where: 'your reflection' });
     return;
   }
 

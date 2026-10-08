@@ -3,6 +3,7 @@ import { requireLogin } from './auth.js';
 import { findBannedWord, looksLikeGibberish, isOffTopic, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE } from './contentFilter.js';
 import { startCooldown } from './cooldown.js';
 import { blockPasteInto } from './noCopyPaste.js';
+import { MIN_WORDS, wordCount, wordsToGo } from './revisionNotice.js';
 import { logActivity } from './activity.js';
 import { getRankProgress, getSeasonStars, isSeasonChaptersComplete, isPrelimSeasonDone, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
@@ -10,7 +11,7 @@ import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.j
 // ================================
 // SETTINGS — adjust freely
 // ================================
-const MIN_LENGTH = 150; // characters required before a reflection counts as "written"
+const MIN_WORDS_NEEDED = MIN_WORDS.reflection; // words required before a reflection counts as "written"
 
 // One entry per capstone reflection. "midterm" is the original Prelim
 // exit gate; the rest were added later, gating Semifinal/Final and,
@@ -131,8 +132,8 @@ blockPasteInto(inputEl, () => {
 async function handleSubmit() {
   const text = inputEl.value.trim();
 
-  if (text.length < MIN_LENGTH) {
-    statusEl.textContent = `Please write a bit more — ${MIN_LENGTH - text.length} characters to go.`;
+  if (wordCount(text) < MIN_WORDS_NEEDED) {
+    statusEl.textContent = `Please write at least ${MIN_WORDS_NEEDED} words — ${wordsToGo(text, MIN_WORDS_NEEDED)}.`;
     return;
   }
 

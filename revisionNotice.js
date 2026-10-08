@@ -22,8 +22,8 @@
 //    reflection is rewritten from the dashboard.
 //
 // Resubmitting sets revisionRequests.<id> back to false. A rewrite earns
-// no tickets, since the work was already paid for, and it must be at
-// least REVISION_MIN_WORDS words and not the same answer again.
+// no tickets, since the work was already paid for. It must meet the
+// same MIN_WORDS as a first answer and not be the same answer again.
 //
 // This file: the helpers both pages share, and the dashboard reminder
 // (shown every visit while a request is open).
@@ -37,8 +37,14 @@ export const REFLECTION_REVISIONS = {
   reflection_midterm: { seasonName: 'Prelim Season', title: 'Prelim Reflection', textField: 'puzzle3Reflection' }
 };
 
-/** A rewrite has to be a real answer, not another one-liner. */
-export const REVISION_MIN_WORDS = 25;
+/** Fewest words a piece of writing may have, first time or rewritten
+ *  (Jornie, 2026-10-08; before this the minimums were 150 / 100 / 40
+ *  characters, which let one-line answers through). `season` covers
+ *  tasks, journals and recitations. */
+export const MIN_WORDS = { reflection: 100, season: 50 };
+
+/** "12 more words to go", for the hint under a box that is still too short. */
+export const wordsToGo = (text, min) => { const left = min - wordCount(text); return `${left} more word${left === 1 ? '' : 's'} to go`; };
 
 export const wordCount = (text) => String(text || '').trim().split(/\s+/).filter(Boolean).length;
 
@@ -76,6 +82,13 @@ export function reasonsText(data, ids) {
   return reasons.length ? `Why: ${reasons.join(' ')}` : '';
 }
 
+/** "50 words each", "100 words", or both, for a notice covering these many tasks and reflections. */
+export function minWordsText(taskCount, reflectionCount) {
+  if (taskCount && reflectionCount) return `${MIN_WORDS.season} words for a season answer and ${MIN_WORDS.reflection} for a reflection`;
+  if (reflectionCount) return `${MIN_WORDS.reflection} words`;
+  return `${MIN_WORDS.season} words${taskCount > 1 ? ' each' : ''}`;
+}
+
 /** True when two answers are the same, or nearly the same, piece of writing. */
 export function isSameAnswer(a, b) {
   const words = (t) => String(t || '').toLowerCase().replace(/[^a-z0-9\s]/g, ' ').split(/\s+/).filter(Boolean);
@@ -109,7 +122,7 @@ export async function maybeShowRevisionNotice({ data, isAdmin }) {
     eyebrow: one ? 'One answer to revise' : `${items.length} answers to revise`,
     heading: 'Please Revise Your Work',
     detail: [
-      `Your teacher has asked you to rewrite ${one ? 'this answer' : 'these answers'} in your own words, in at least ${REVISION_MIN_WORDS} words${one ? '' : ' each'}.`,
+      `Your teacher has asked you to rewrite ${one ? 'this answer' : 'these answers'} in your own words, in at least ${minWordsText(tasks.length, reflections.length)}.`,
       reasonsText(data, items.map((i) => i.id)),
       ...where,
       'Your tickets and rewards stay as they are.'

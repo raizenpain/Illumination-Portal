@@ -11,7 +11,7 @@ import { getRankProgress, getSeasonStars, RANK_TIERS, starIndexOfChapter } from 
 import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderChampionPopup, renderNoticePopup } from './rankPopup.js';
 import { TICKET_INFO } from './ticketTrader.js';
 import { blockPasteInto } from './noCopyPaste.js';
-import { pendingRevisions, isRevisionPending, isSameAnswer, pendingReflectionRevisions, revisionReason, reasonsText, wordCount, REVISION_MIN_WORDS } from './revisionNotice.js';
+import { pendingRevisions, isRevisionPending, isSameAnswer, pendingReflectionRevisions, revisionReason, reasonsText, wordCount, wordsToGo, minWordsText, MIN_WORDS } from './revisionNotice.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -253,9 +253,7 @@ function openNodeModal(node) {
   nodeModal.classList.remove('hidden');
 
   if (node.type === 'quiz' || node.type === 'identification') renderQuizModal(node);
-  else if (node.type === 'journal') renderTextModal(node, { minLength: 100 });
-  else if (node.type === 'recitation') renderTextModal(node, { minLength: 40 });
-  else if (node.type === 'task') renderTextModal(node, { minLength: 100 });
+  else if (['journal', 'recitation', 'task'].includes(node.type)) renderTextModal(node, { minWords: MIN_WORDS.season });
 }
 
 function closeNodeModal() {
@@ -447,7 +445,7 @@ function renderQuizCooldown(node) {
 
 // --- Journal / Recitation (written response) ---
 
-function renderTextModal(node, { minLength }) {
+function renderTextModal(node, { minWords }) {
   const icon = NODE_TYPE_HEADING_ICON[node.type];
   const revising = isRevisionPending(studentData, node.nodeId);
   const earlierAnswer = (studentData.nodeSubmissions || {})[node.nodeId];
@@ -457,7 +455,7 @@ function renderTextModal(node, { minLength }) {
     <p class="reflection-hint">${node.prompt}</p>
     ${revising ? `<p class="reflection-hint revision-note">✏️ Your teacher has asked you to rewrite this answer in your own words. <span id="seasonRevisionReason"></span>No tickets are taken away, and none are added.</p>` : ''}
     <textarea id="seasonTextInput" class="reflection-textarea" placeholder="Write your response here…"></textarea>
-    <p class="reflection-hint" id="seasonTextHint">${revising ? `Write at least ${REVISION_MIN_WORDS} words` : `Write at least a short response (${minLength} characters)`} in your own words — pasting is disabled.</p>
+    <p class="reflection-hint" id="seasonTextHint">Write at least ${minWords} words in your own words — pasting is disabled.</p>
     <div class="reflection-modal-actions">
       ${modalCloseButtonHtml()}
       <button class="submit-quiz-btn" id="seasonTextSubmitBtn">Submit</button>
@@ -481,8 +479,8 @@ function renderTextModal(node, { minLength }) {
 
     const text = textarea.value.trim();
 
-    if (text.length < minLength) {
-      hint.textContent = `Please write a bit more — ${minLength - text.length} characters to go.`;
+    if (wordCount(text) < minWords) {
+      hint.textContent = `Please write at least ${minWords} words — ${wordsToGo(text, minWords)}. Explain your answer fully.`;
       return;
     }
 
@@ -517,11 +515,6 @@ function renderTextModal(node, { minLength }) {
       return;
     }
 
-    if (revising && wordCount(text) < REVISION_MIN_WORDS) {
-      hint.textContent = `A revised answer needs at least ${REVISION_MIN_WORDS} words — ${REVISION_MIN_WORDS - wordCount(text)} more to go. Explain your answer fully.`;
-      return;
-    }
-
     textSubmitBtn.disabled = true;
     if (revising) await reviseNode(node, text);
     else await awardNode(node, text);
@@ -548,7 +541,7 @@ function announceRevisions() {
     eyebrow: here.length === 1 ? 'One answer to revise' : `${here.length} answers to revise`,
     heading: 'Please Revise Your Work',
     detail: [
-      `Your teacher has asked you to rewrite ${here.length === 1 ? 'this answer' : 'these answers'} in your own words, in at least ${REVISION_MIN_WORDS} words${here.length === 1 ? '' : ' each'}.`,
+      `Your teacher has asked you to rewrite ${here.length === 1 ? 'this answer' : 'these answers'} in your own words, in at least ${minWordsText(here.length, 0)}.`,
       reasonsText(studentData, here.map((n) => n.nodeId)),
       'Tap the task marked ✏️ to begin. Your tickets and rewards stay as they are; the chapters after it reopen as soon as you finish.'
     ].filter(Boolean).join(' '),

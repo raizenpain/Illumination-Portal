@@ -74,8 +74,65 @@ export const PATCHES = [
         ]
       },
       {
+        title: 'Written Work',
+        groups: [
+          {
+            title: 'How Much to Write',
+            items: [
+              'Written answers are now counted in words, not characters',
+              ['The minimum for each kind', [
+                'Reflections (Prelim, Midterm, Semifinal and Final): 100 words',
+                'Season tasks: 50 words',
+                'Season journals: 50 words',
+                'Season recitations: 50 words'
+              ]],
+              'If your answer is too short, the box tells you how many more words you need',
+              'Answers that were already accepted stay as they are'
+            ]
+          },
+          {
+            title: 'Your Own Words',
+            items: [
+              'Every box you write in is now type-only. The class chat and gift notes have joined reflections and season answers: pasting, drag and drop, and the clipboard button on a phone keyboard are all refused',
+              ['Writing taken from an AI assistant is refused when it still shows the signs', [
+                'A list of options to choose from',
+                'The assistant talking to you, such as an offer to make it shorter',
+                'Chat formatting such as bold marks and headings',
+                'Blanks that were never filled in'
+              ]],
+              'Your teacher reads your work and can send back anything that is not your own, even when the portal accepted it'
+            ]
+          },
+          {
+            title: 'When Your Teacher Sends Work Back',
+            items: [
+              'Your teacher can ask you to rewrite an answer or a reflection. A note on your dashboard tells you which one and why',
+              ['A season answer sent back', [
+                'The task reopens with a pencil mark',
+                'The chapters and seasons after it stay closed until you rewrite it'
+              ]],
+              ['A reflection sent back', [
+                'Every season stays closed until you rewrite it',
+                'Tap any season card to open the reflection and write it again'
+              ]],
+              'A rewrite must reach the same word minimum, and cannot be the same answer again',
+              'You keep the tickets and rewards you already earned. A rewrite does not add any'
+            ]
+          }
+        ]
+      },
+      {
         title: 'Interface',
         groups: [
+          {
+            title: 'Dashboard',
+            items: [
+              'Next Goal under Recent Activity now shows your real next step, such as the next puzzle, the next chapter, or the reflection that opens the next season',
+              'Sign Out now signs you out fully. Use it when you finish on a shared computer',
+              'Times in Community Activity keep counting, so "Just now" becomes "3 minutes ago" without a refresh',
+              'If one popup has a problem, the popups after it still appear'
+            ]
+          },
           {
             title: 'Respectful Words',
             items: [

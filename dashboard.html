@@ -437,7 +437,7 @@
     <h2>📝 Your Prelim Reflection</h2>
     <p class="reflection-modal-meta" id="reflectionModalMeta"></p>
     <textarea id="reflectionModalText" class="reflection-textarea" readonly></textarea>
-    <p class="reflection-hint" id="reflectionModalHint">Write at least a short paragraph (150 characters) in your own words — pasting is disabled.</p>
+    <p class="reflection-hint" id="reflectionModalHint">Write at least 100 words in your own words — pasting is disabled.</p>
     <div class="reflection-modal-actions">
       <button class="back-btn" id="reflectionModalClose">Close</button>
       <button class="submit-quiz-btn" id="reflectionModalEdit">Revise</button>
@@ -476,7 +476,7 @@ import { showHonorPopup, renderHonorStrip } from './midtermHonorRoll.js';
 import { maybeShowFinale, awardFinalGift } from './journeyFinale.js';
 import { renderCertificateShelf } from './certificates.js';
 import { maybeShowRefundNotice } from './refundNotice.js';
-import { maybeShowRevisionNotice, pendingReflectionRevisions, revisionReason, isSameAnswer, wordCount, REVISION_MIN_WORDS } from './revisionNotice.js';
+import { maybeShowRevisionNotice, pendingReflectionRevisions, revisionReason, isSameAnswer, wordCount, wordsToGo, MIN_WORDS } from './revisionNotice.js';
 import { maybeShowPatchNotes, showPatchNotes } from './patchNotes.js';
 import { maybeShowFiesta75Announcement } from './fiesta75Announcement.js';
 
@@ -1553,7 +1553,7 @@ if (avatarCircle && avatarPicker) {
 // ================================
 // REFLECTION MODAL — view/revise the saved Prelim reflection
 // ================================
-const REFLECTION_MIN_LENGTH = 150;
+const REFLECTION_MIN_WORDS = MIN_WORDS.reflection;
 
 const reflectionModal = document.getElementById('reflectionModal');
 const reflectionModalText = document.getElementById('reflectionModalText');
@@ -1581,7 +1581,7 @@ function openReflectionModal() {
     reflectionModalText.readOnly = false;
     reflectionModalEdit.classList.add('hidden');
     reflectionModalSave.classList.remove('hidden');
-    reflectionModalHint.textContent = `✏️ Your teacher has asked you to rewrite this reflection in your own words, in at least ${REVISION_MIN_WORDS} words. ${reason ? `Why: ${reason} ` : ''}Every season stays closed until you save a new one. Pasting is disabled.`;
+    reflectionModalHint.textContent = `✏️ Your teacher has asked you to rewrite this reflection in your own words, in at least ${REFLECTION_MIN_WORDS} words. ${reason ? `Why: ${reason} ` : ''}Every season stays closed until you save a new one. Pasting is disabled.`;
     reflectionModalText.focus();
   }
 }
@@ -1593,8 +1593,8 @@ function closeReflectionModal() {
 async function saveReflectionEdit() {
   const text = reflectionModalText.value.trim();
 
-  if (text.length < REFLECTION_MIN_LENGTH) {
-    reflectionModalHint.textContent = `Please write a bit more — ${REFLECTION_MIN_LENGTH - text.length} characters to go.`;
+  if (wordCount(text) < REFLECTION_MIN_WORDS) {
+    reflectionModalHint.textContent = `Please write at least ${REFLECTION_MIN_WORDS} words — ${wordsToGo(text, REFLECTION_MIN_WORDS)}.`;
     return;
   }
 
@@ -1614,10 +1614,6 @@ async function saveReflectionEdit() {
   const sentBack = prelimReflectionSentBack(studentData);
   if (sentBack && isSameAnswer(text, studentData.puzzle3Reflection)) {
     reflectionModalHint.textContent = 'This is the same as your earlier reflection. Please write a new one in your own words.';
-    return;
-  }
-  if (sentBack && wordCount(text) < REVISION_MIN_WORDS) {
-    reflectionModalHint.textContent = `A revised reflection needs at least ${REVISION_MIN_WORDS} words — ${REVISION_MIN_WORDS - wordCount(text)} more to go.`;
     return;
   }
   if (looksLikeAssistantPaste(text)) {

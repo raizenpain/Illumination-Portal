@@ -104,6 +104,14 @@ export const PATCHES = [
             ]
           },
           {
+            title: 'Games in Community Activity',
+            items: [
+              'Winning a season game now gets its own line in Community Activity, with the game's own icon',
+              'This covers the Shadow of Sin battle and all six Final Season games, from Crossing the Red Sea to Nehemiah's Night Ride',
+              'Side quests and Sanctuarium games were already announced when completed, and still are'
+            ]
+          },
+          {
             title: 'Rank-Ups in Community Activity',
             items: [
               'Reaching a new rank is announced in Community Activity',

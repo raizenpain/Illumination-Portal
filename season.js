@@ -816,7 +816,14 @@ async function awardNode(node, submissionText) {
   studentData.unlockTokens = unlockTokens;
 
   if (chapterJustCompleted) {
-    logActivity({
+    // A game chapter is won, not just finished: it gets its own line in
+    // Community Activity, with the game's own icon, instead of the plain
+    // chapter one. (Every game chapter is a single game node.)
+    logActivity(node.type === 'game' ? {
+      email, name, type: 'game',
+      title: `Conquered the game "${chapter.chapterTitle}" in ${content.seasonName}`,
+      icon: chapter.clearedIcon || '⚔️'
+    } : {
       email, name, type: 'season',
       title: `Completed "${chapter.chapterTitle}" in ${content.seasonName}`,
       icon: '🏁'

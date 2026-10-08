@@ -1300,6 +1300,10 @@ body {
   background: rgba(236,72,153,0.14);
 }
 
+.activity-icon[data-type="game"] {
+  background: rgba(239,68,68,0.16);
+}
+
 /* ================================
    DASHBOARD PAGE (dashboard.html)
 ================================ */

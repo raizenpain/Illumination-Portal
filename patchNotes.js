@@ -62,6 +62,14 @@ export const PATCHES = [
               ]],
               'A gift is only added to your tickets or tokens when you open it'
             ]
+          },
+          {
+            title: 'Gifts in Community Activity',
+            items: [
+              'Sending a gift and opening one now both appear in Community Activity on the dashboard',
+              'The line shows who gave, who received and what was given',
+              'Your note is never shown there. It stays between you and your classmate'
+            ]
           }
         ]
       },
@@ -93,6 +101,13 @@ export const PATCHES = [
               ]],
               'This applies everywhere you write: the class chat, your reflections, season tasks, and gift notes',
               'If you believe your cooldown was a mistake, talk to your teacher. Only a teacher can lift it'
+            ]
+          },
+          {
+            title: 'Rank-Ups in Community Activity',
+            items: [
+              'Reaching a new rank is announced in Community Activity',
+              'Fixed: a rank earned by submitting a season reflection was not being announced. This is how most students reach Missionary and Apostle, so those rank-ups now appear too'
             ]
           },
           {

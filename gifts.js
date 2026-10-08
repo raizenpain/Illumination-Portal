@@ -36,6 +36,7 @@ import { TICKET_INFO } from './ticketTrader.js';
 import { CRAFTING_CHAINS, artifactIconPath, findArtifact, tierOfArtifact, tokenCostFor } from './artifacts.js';
 import { findBannedWord, looksLikeGibberish } from './contentFilter.js';
 import { startCooldown } from './cooldown.js';
+import { logActivity } from './activity.js';
 
 export const DAILY_TICKET_LIMIT = 50;
 export const ARTIFACT_FEE = 5;
@@ -140,6 +141,13 @@ async function ticketsLeftToday(to) {
   return Math.max(0, DAILY_TICKET_LIMIT - (snap.exists() ? snap.data().total || 0 : 0));
 }
 
+// A line in the dashboard's Community Activity feed. Names what was
+// given and to whom -- never the note, which stays between the two.
+// Not awaited: logActivity() never throws, and the gift is already done.
+function announce(title) {
+  logActivity({ email: me.email, name: me.name, type: 'gift', title, icon: '🎁' });
+}
+
 function codedError(code) { const err = new Error(code); err.code = code; return err; }
 
 async function sendTickets({ to, toName, ticketType, amount, note }) {
@@ -162,6 +170,7 @@ async function sendTickets({ to, toName, ticketType, amount, note }) {
   });
   me.data.tickets = { ...(me.data.tickets || {}), [ticketType]: left };
   me.onChange();
+  announce(`Sent ${amount} × ${TICKET_INFO[ticketType].label} to ${firstName(toName)} as a gift`);
 }
 
 async function giftArtifact({ to, toName, artifactId, note }) {
@@ -182,6 +191,8 @@ async function giftArtifact({ to, toName, artifactId, note }) {
   });
   me.data.ownedArtifacts = ownedAfter;
   me.onChange();
+  const art = findArtifact(artifactId);
+  announce(`Gifted the artifact ${art ? art.name : artifactId} to ${firstName(toName)}`);
 }
 
 async function sellArtifact(artifactId) {
@@ -225,6 +236,10 @@ async function claimGift(gift) {
     if (patch.tickets) me.data.tickets = { ...(me.data.tickets || {}), ...patch.tickets };
     else me.data.unlockTokens = patch.unlockTokens;
     me.onChange();
+    const what = gift.kind === 'tickets'
+      ? `${gift.amount} × ${(TICKET_INFO[gift.ticketType] || { label: 'Ticket' }).label}`
+      : plural(gift.tokens, 'Unlock Token');
+    announce(`Opened a gift from ${firstName(gift.fromName)}: ${what}`);
   }
   pending = pending.filter((g) => g.id !== gift.id);
   updateBadge();

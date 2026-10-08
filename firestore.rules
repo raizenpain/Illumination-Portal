@@ -211,7 +211,7 @@ service cloud.firestore {
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                        request.resource.data.userId == request.auth.token.email &&
                        request.resource.data.keys().hasOnly(['userId', 'studentName', 'type', 'title', 'icon', 'timestamp']) &&
-                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact', 'sidequest', 'vaultgame'] &&
+                       request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact', 'sidequest', 'vaultgame', 'gift'] &&
                        // The feed orders by timestamp, so it must be a real
                        // server time (serverTimestamp() resolves to
                        // request.time) -- a string or far-future value

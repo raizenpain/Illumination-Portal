@@ -1296,6 +1296,10 @@ body {
   background: rgba(176,132,240,0.16);
 }
 
+.activity-icon[data-type="gift"] {
+  background: rgba(236,72,153,0.14);
+}
+
 /* ================================
    DASHBOARD PAGE (dashboard.html)
 ================================ */

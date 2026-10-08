@@ -3,6 +3,7 @@ import { requireLogin } from './auth.js';
 import { findBannedWord, looksLikeGibberish, isOffTopic } from './contentFilter.js';
 import { startCooldown } from './cooldown.js';
 import { blockPasteInto } from './noCopyPaste.js';
+import { logActivity } from './activity.js';
 import { getRankProgress, getSeasonStars, isSeasonChaptersComplete, isPrelimSeasonDone, RANK_TIERS } from './rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from './rankPopup.js';
 
@@ -67,7 +68,7 @@ const GATE_INFO = {
   }
 };
 
-const { email } = requireLogin();
+const { email, name } = requireLogin();
 
 const params = new URLSearchParams(window.location.search);
 const gateKey = params.get('gate') || 'midterm';
@@ -189,6 +190,15 @@ async function handleSubmit() {
       popupsQueued++;
 
       if (rankAfter.rank !== rankBefore.rank) {
+        // Same line app.js and season.js post. The reflection's bonus star
+        // is usually the one that completes a tier, so most rank-ups
+        // past Disciple happen right here.
+        logActivity({
+          email, name, type: 'rank',
+          title: `Reached ${rankAfter.rank} Rank`,
+          icon: '⭐'
+        });
+
         const nextTier = RANK_TIERS.find((t) => t.rank === rankAfter.rank);
         showRankPopup({ rank: rankAfter.rank, seasonName: nextTier ? nextTier.seasonName : null });
         popupsQueued++;

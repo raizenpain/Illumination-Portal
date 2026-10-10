@@ -28,6 +28,11 @@ import { COOLDOWN_DAYS, isOnCooldown, cooldownEndsAt } from '../core/cooldown.js
 import { maybePostDailyGreeting } from '../dashboard/dailyGreeting.js';
 import { createImageSlot, loadInto, deleteChatImage } from '../dashboard/chatImages.js';
 import { publishMidtermHonorRoll } from '../dashboard/midtermHonorRoll.js';
+import { TICKET_INFO } from '../dashboard/ticketTrader.js';
+import { findArtifact } from '../dashboard/artifacts.js';
+import { SIDE_QUESTS } from '../sidequests/sideQuests.js';
+import { VAULT_GAMES } from '../vault/vaultGames.js';
+import { pendingRevisions, wordCount } from '../seasons/revisionNotice.js';
 
 const UNASSIGNED_KEY = '__unassigned__';
 
@@ -771,26 +776,121 @@ if (user) {
     return str.replace(/[^a-z0-9]+/gi, '-').replace(/^-+|-+$/g, '');
   }
 
+  // Student-written text goes into this file, and a spreadsheet runs a
+  // cell that starts with = + - or @ as a formula. A leading apostrophe
+  // makes it plain text (numbers are left alone).
   function csvCell(value) {
-    const str = String(value);
-    return /[",\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
+    let str = String(value);
+    if (typeof value === 'string' && /^[=+\-@\t\r]/.test(str)) str = `'${str}`;
+    return /[",\r\n]/.test(str) ? `"${str.replace(/"/g, '""')}"` : str;
   }
 
+  // The capstone reflection that closes each season, in season order.
+  // (The field names are a season behind their labels: writing the
+  // Midterm reflection is what sets semifinalUnlocked, and so on.)
+  const CSV_REFLECTIONS = [
+    { label: 'Prelim', textField: 'puzzle3Reflection', dateField: 'puzzle3ReflectionSubmittedAt' },
+    { label: 'Midterm', textField: 'semifinalReflection', dateField: 'semifinalReflectionSubmittedAt' },
+    { label: 'Semifinal', textField: 'finalReflection', dateField: 'finalReflectionSubmittedAt' },
+    { label: 'Final', textField: 'apostleReflection', dateField: 'apostleReflectionSubmittedAt' }
+  ];
+
+  // Node types answered in writing (season.js saves them to
+  // nodeSubmissions); quizzes, identification and games store no answer.
+  const WRITTEN_NODE_TYPES = ['task', 'journal', 'recitation'];
+
+  // YYYY-MM-DD in Philippine time, from an ISO string, a millisecond
+  // number or a Firestore Timestamp. Blank when missing or unreadable.
+  function csvDate(value) {
+    if (!value) return '';
+    const date = typeof value.toDate === 'function' ? value.toDate() : new Date(value);
+    return Number.isNaN(date.getTime()) ? '' : date.toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });
+  }
+
+  function chapterText(chapter, completed) {
+    const done = chapter.nodes.filter((n) => !!completed[n.nodeId]).length;
+    if (done >= chapter.nodes.length) return 'Done';
+    return done > 0 ? `${done}/${chapter.nodes.length} tasks` : 'Not started';
+  }
+
+  // Everything on record for each student, Prelim to Final, one row per
+  // student. Progress comes first and the written work last, so the
+  // long text columns are out of the way when reading the sheet.
   function buildCsv(students) {
-    const header = ['Name', 'Email', 'Puzzle 1', 'Puzzle 2', 'Puzzle 3', 'Prelim', ...SEASON_COLUMNS.map((column) => column.label), 'Rank'];
+    const seasons = SEASON_COLUMNS.map((column) => ({ column, content: SEASON_CONTENT[column.seasonId] }));
+    const ticketTypes = Object.keys(TICKET_INFO);
+    const sideQuests = Object.values(SIDE_QUESTS);
+    const vaultGames = Object.values(VAULT_GAMES);
 
-    const rows = students.map((data) => [
-      data.name || '',
-      data.email || data._docId || '',
-      progressText(pieceCount(data, 'puzzle1'), data.puzzle1Completed),
-      progressText(pieceCount(data, 'puzzle2'), data.puzzle2Completed),
-      progressText(pieceCount(data, 'puzzle3'), data.puzzle3Completed),
-      statusText(prelimStatus(data)),
-      ...SEASON_COLUMNS.map((column) => statusText(seasonStatus(column, data))),
-      getRankProgress(data).rank
-    ]);
+    // [header, (data) => value] pairs, in sheet order.
+    const columns = [
+      ['Name', (d) => d.name || ''],
+      ['Email', (d) => d.email || d._docId || ''],
+      ['Student ID', (d) => d.studentId || ''],
+      ['Class', (d) => d.section || ''],
+      ['Teacher', (d) => d.teacherName || ''],
+      ['Enrolled', (d) => csvDate(d.createdAt)],
+      ['Rank', (d) => getRankProgress(d).rank],
 
-    return [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
+      ['Prelim', (d) => statusText(prelimStatus(d))],
+      ...seasons.map(({ column }) => [column.label, (d) => statusText(seasonStatus(column, d))]),
+
+      ['Puzzle 1', (d) => progressText(pieceCount(d, 'puzzle1'), d.puzzle1Completed)],
+      ['Puzzle 2', (d) => progressText(pieceCount(d, 'puzzle2'), d.puzzle2Completed)],
+      ['Puzzle 3', (d) => progressText(pieceCount(d, 'puzzle3'), d.puzzle3Completed)]
+    ];
+
+    seasons.forEach(({ column, content }) => {
+      content.chapters.forEach((chapter, i) => {
+        columns.push([`${column.label} ${i + 1}: ${chapter.chapterTitle}`, (d) => chapterText(chapter, d.completedNodes || {})]);
+      });
+    });
+
+    CSV_REFLECTIONS.forEach((r) => {
+      columns.push([`${r.label} Reflection: date`, (d) => csvDate(d[r.dateField])]);
+      columns.push([`${r.label} Reflection: words`, (d) => (d[r.textField] ? wordCount(d[r.textField]) : '')]);
+    });
+
+    ticketTypes.forEach((type) => {
+      columns.push([`Tickets: ${TICKET_INFO[type].label}`, (d) => (d.tickets || {})[type] || 0]);
+    });
+    columns.push(
+      ['Unlock Tokens', (d) => d.unlockTokens || 0],
+      ['Artifacts owned', (d) => (d.ownedArtifacts || []).length],
+      ['Artifact names', (d) => (d.ownedArtifacts || []).map((id) => (findArtifact(id) || {}).name || id).join('; ')],
+      ['Achievements', (d) => (d.achievements || []).length],
+      ['Side quests done', (d) => `${sideQuests.filter((q) => ((d.sideQuests || {})[q.id] || {}).completed).length}/${sideQuests.length}`],
+      ['Sanctuarium games done', (d) => `${vaultGames.filter((g) => ((d.vaultGames || {})[g.id] || {}).completed).length}/${vaultGames.length}`],
+      ['Mistakes', (d) => d.mistakeCount || 0],
+      ['Sent back to revise', (d) => pendingRevisions(d).length],
+      ['On cooldown until', (d) => (isOnCooldown(d) ? csvDate(cooldownEndsAt(d)) : '')]
+    );
+
+    CSV_REFLECTIONS.forEach((r) => {
+      columns.push([`${r.label} Reflection: text`, (d) => d[r.textField] || '']);
+    });
+
+    const knownNodes = new Set();
+    seasons.forEach(({ column, content }) => {
+      content.chapters.forEach((chapter, i) => {
+        chapter.nodes.filter((n) => WRITTEN_NODE_TYPES.includes(n.type)).forEach((node) => {
+          knownNodes.add(node.nodeId);
+          columns.push([`${column.label} ${i + 1}: ${node.title} (${node.type})`, (d) => (d.nodeSubmissions || {})[node.nodeId] || '']);
+        });
+      });
+    });
+    // Answers saved under a task that is no longer in the season content.
+    columns.push(['Other written answers', (d) => Object.entries(d.nodeSubmissions || {})
+      .filter(([nodeId]) => !knownNodes.has(nodeId))
+      .map(([nodeId, text]) => `[${nodeId}] ${text}`)
+      .join('\n\n')]);
+
+    const header = columns.map(([title]) => title);
+    const rows = students.map((data) => columns.map(([, value]) => value(data)));
+
+    // The leading BOM tells Excel the file is UTF-8, so ñ, dashes and
+    // quotation marks in names and answers open correctly.
+    return '﻿' + [header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n');
   }
 
   function downloadCsv(filename, csvContent) {

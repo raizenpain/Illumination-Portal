@@ -110,7 +110,7 @@ function renderProfile(data, studentEmail) {
   });
 }
 
-// See the matching comment in teacher.js's progressPill() -- completed
+// See the matching comment in teacher.js's progressText() -- completed
 // true with count short of total can only happen from a direct write
 // outside any real code path (e.g. devtools), since rules validate
 // field names, not values.
@@ -139,7 +139,7 @@ function renderPrelimProgress(data) {
     const pill = document.createElement('span');
     pill.className = progressPillClass(count, config.totalPieces, completed);
     // A full piece count shows ✅ even if the flag hasn't saved yet (the
-    // student's dashboard repairs it) -- see teacher.js's progressPill().
+    // student's dashboard repairs it) -- see teacher.js's progressText().
     pill.textContent = `${count}/${config.totalPieces}${(completed || count >= config.totalPieces) ? ' ✅' : ''}`;
     if (completed && count < config.totalPieces) {
       pill.title = 'Flagged as completed but fewer than 9 pieces on record — likely edited outside the app';

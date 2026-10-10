@@ -20,6 +20,7 @@ import { PUZZLE_CONFIG } from '../puzzles/puzzles.js';
 import { PIECE_CODES } from '../puzzles/codes.js';
 import { ADMIN_EMAILS, ADMINS } from '../core/admins.js';
 import { getRankProgress } from '../core/rank.js';
+import { SEASON_CONTENT } from '../seasons/seasonContent.js';
 import { initSeasonEditor } from './seasonEditor.js';
 import { getOfferingsForTeacher } from '../core/classOfferings.js';
 import { containsBannedWord, looksLikeGibberish } from '../core/contentFilter.js';
@@ -179,22 +180,86 @@ if (user) {
   // the student's own dashboard repairs on its next load (see
   // healStuckPuzzleCompletions in dashboard.html). So a full piece count
   // shows as complete here regardless of the flag, same as rank.js.
-  function progressPill(count, completed) {
-    const mismatch = completed && count < 9;
-    const done = count >= 9;
-    const state = mismatch ? 'flagged' : done ? 'complete' : count > 0 ? 'in-progress' : '';
-    const label = `${count}/9${(done || completed) ? ' ✅' : ''}`;
-    const title = mismatch ? ' title="Flagged as completed but fewer than 9 pieces on record — likely edited outside the app"' : '';
-    return `<span class="progress-pill${state ? ' ' + state : ''}"${title}>${label}</span>`;
-  }
-
+  // (On the roster the flag shows on the Prelim status -- see
+  // prelimStatus below.)
   function progressText(count, completed) {
     if (completed && count < 9) return `${count}/9 (FLAGGED — completed but incomplete)`;
     return (completed || count >= 9) ? `${count}/9 (Completed)` : `${count}/9`;
   }
 
+  // Every student address ends in the school's domain, so the roster
+  // shows only the part before it (the full address is the hover text
+  // and stays in the CSV). Any other domain is shown in full.
+  function shortEmail(email) {
+    return String(email).replace(/@hcdc\.edu\.ph$/i, '');
+  }
+
   function pieceCount(data, field) {
     return data[field] ? data[field].length : 0;
+  }
+
+  // ---- Season status (roster columns + CSV) ----
+  //
+  // One cell per season. A season counts as accomplished once its
+  // capstone reflection is in, which is what unlocks the next step
+  // (doneField) -- the same signal rank.js uses for the bonus star.
+  // Chapters are counted the way rank.js counts them: every node done,
+  // and a node sent back for revision (completedNodes[id] === false)
+  // is not done.
+  const SEASON_COLUMNS = [
+    { seasonId: 'midterm', label: 'Midterm', openField: 'midtermUnlocked', doneField: 'semifinalUnlocked' },
+    { seasonId: 'semifinal', label: 'Semifinal', openField: 'semifinalUnlocked', doneField: 'finalUnlocked' },
+    { seasonId: 'final', label: 'Final', openField: 'finalUnlocked', doneField: 'apostleUnlocked' }
+  ];
+
+  // { state, label, short, note } -- state is the pill's look, label
+  // what it shows, short the CSV wording, note the hover text.
+  function unitStatus({ done, total, unit, open, reflected, flagged }) {
+    const count = `${done}/${total}`;
+    if (flagged) return { state: 'flagged', label: count, short: 'Flagged', note: flagged };
+    if (!open && done === 0) return { state: 'locked', label: '🔒', short: 'Locked', note: 'Locked: not unlocked yet' };
+    if (done >= total && reflected) return { state: 'complete', label: `${count} ✅`, short: 'Completed', note: 'Completed: reflection submitted' };
+    if (done >= total) return { state: 'reflection', label: `${count} 📝`, short: 'Reflection pending', note: `All ${unit} done: reflection not yet submitted` };
+    if (reflected) return { state: 'in-progress', label: count, short: 'Reflection in, not all done', note: `Reflection submitted, but ${total - done} of the ${unit} ${total - done === 1 ? 'is' : 'are'} not done (added later or sent back to revise)` };
+    if (done > 0) return { state: 'in-progress', label: count, short: 'In progress', note: `In progress: ${done} of ${total} ${unit} done` };
+    return { state: '', label: count, short: 'Not started', note: 'Not started' };
+  }
+
+  function prelimStatus(data) {
+    const configs = Object.values(PUZZLE_CONFIG);
+    const done = configs.filter((c) => pieceCount(data, c.piecesField) >= c.totalPieces).length;
+    const flagged = findFlaggedPuzzles(data);
+    return unitStatus({
+      done,
+      total: configs.length,
+      unit: 'puzzles',
+      open: true,
+      reflected: !!data.midtermUnlocked,
+      flagged: flagged.length
+        ? `Flagged: ${flagged.map((c) => c.title).join(', ')} marked completed with fewer than 9 pieces on record — likely edited outside the app`
+        : ''
+    });
+  }
+
+  function seasonStatus(column, data) {
+    const completed = data.completedNodes || {};
+    const chapters = SEASON_CONTENT[column.seasonId].chapters;
+    const done = chapters.filter((chapter) => chapter.nodes.every((n) => !!completed[n.nodeId])).length;
+    return unitStatus({
+      done,
+      total: chapters.length,
+      unit: 'chapters',
+      open: !!data[column.openField],
+      reflected: !!data[column.doneField]
+    });
+  }
+
+  function statusPill(status) {
+    return `<span class="progress-pill${status.state ? ' ' + status.state : ''}" title="${escapeHtml(status.note)}">${status.label}</span>`;
+  }
+
+  function statusText(status) {
+    return status.state === 'locked' ? status.short : `${status.label.replace(/ [✅📝]$/u, '')} (${status.short})`;
   }
 
   async function loadStudents() {
@@ -330,14 +395,15 @@ if (user) {
       const p2 = pieceCount(data, 'puzzle2');
       const p3 = pieceCount(data, 'puzzle3');
 
+      const fullEmail = data.email || data._docId || '';
+
       const row = document.createElement('tr');
       row.innerHTML = `
-        <td>${escapeHtml(data.name || '(no name)')}${isOnCooldown(data) ? ` <span title="On a ${COOLDOWN_DAYS}-day cooldown for a banned word. Right-click to lift it.">⏳</span>` : ''}</td>
-        <td>${escapeHtml(data.email || data._docId || '')}</td>
-        <td>${progressPill(p1, data.puzzle1Completed)}</td>
-        <td>${progressPill(p2, data.puzzle2Completed)}</td>
-        <td>${progressPill(p3, data.puzzle3Completed)}</td>
-        <td><span class="rank-chip" data-rank="${getRankProgress(data).rank}">${getRankProgress(data).rank}</span></td>
+        <td class="roster-name">${escapeHtml(data.name || '(no name)')}${isOnCooldown(data) ? ` <span title="On a ${COOLDOWN_DAYS}-day cooldown for a banned word. Right-click to lift it.">⏳</span>` : ''}</td>
+        <td class="roster-email" title="${escapeHtml(fullEmail)}">${escapeHtml(shortEmail(fullEmail)).replace(/\./g, '.<wbr>')}</td>
+        <td data-label="Prelim">${statusPill(prelimStatus(data))}<span class="roster-pieces" title="Pieces collected in Puzzle 1 · Puzzle 2 · Puzzle 3 (9 each)">${p1} · ${p2} · ${p3}</span></td>
+        ${SEASON_COLUMNS.map((column) => `<td data-label="${column.label}">${statusPill(seasonStatus(column, data))}</td>`).join('')}
+        <td class="roster-rank"><span class="rank-chip" data-rank="${getRankProgress(data).rank}">${getRankProgress(data).rank}</span></td>
       `;
 
       row.title = 'Click to review this student — right-click for more actions';
@@ -351,6 +417,20 @@ if (user) {
       };
 
       const actionCell = document.createElement('td');
+      actionCell.className = 'roster-actions';
+      // Phones and tablets have no right-click, so the same menu also
+      // opens from this button.
+      const moreBtn = document.createElement('button');
+      moreBtn.type = 'button';
+      moreBtn.className = 'roster-delete-btn roster-more-btn';
+      moreBtn.title = 'More actions';
+      moreBtn.setAttribute('aria-label', 'More actions');
+      moreBtn.textContent = '⋯';
+      moreBtn.onclick = (event) => {
+        event.stopPropagation();
+        openContextMenu(event, data, section);
+      };
+      actionCell.appendChild(moreBtn);
       const deleteBtn = document.createElement('button');
       deleteBtn.type = 'button';
       deleteBtn.className = 'roster-delete-btn';
@@ -385,7 +465,7 @@ if (user) {
 
   // Puzzles whose completedField is true despite fewer than 9 pieces on
   // record -- can't happen through any real write path (see the comment
-  // on progressPill above), so this is what the roster's Fix Flagged
+  // on progressText above), so this is what the roster's Fix Flagged
   // Completion action targets.
   function findFlaggedPuzzles(data) {
     return Object.values(PUZZLE_CONFIG).filter((config) => {
@@ -697,7 +777,7 @@ if (user) {
   }
 
   function buildCsv(students) {
-    const header = ['Name', 'Email', 'Puzzle 1', 'Puzzle 2', 'Puzzle 3', 'Rank'];
+    const header = ['Name', 'Email', 'Puzzle 1', 'Puzzle 2', 'Puzzle 3', 'Prelim', ...SEASON_COLUMNS.map((column) => column.label), 'Rank'];
 
     const rows = students.map((data) => [
       data.name || '',
@@ -705,6 +785,8 @@ if (user) {
       progressText(pieceCount(data, 'puzzle1'), data.puzzle1Completed),
       progressText(pieceCount(data, 'puzzle2'), data.puzzle2Completed),
       progressText(pieceCount(data, 'puzzle3'), data.puzzle3Completed),
+      statusText(prelimStatus(data)),
+      ...SEASON_COLUMNS.map((column) => statusText(seasonStatus(column, data))),
       getRankProgress(data).rank
     ]);
 

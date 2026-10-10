@@ -2562,6 +2562,183 @@ body.teacher-page {
   cursor: help;
 }
 
+/* Roster season columns: all chapters done, reflection still owed */
+.progress-pill.reflection {
+  background: rgba(96,165,250,0.16);
+  color: #93C5FD;
+}
+
+.progress-pill.locked {
+  background: rgba(255,255,255,0.04);
+  opacity: 0.6;
+}
+
+.student-table .progress-pill {
+  white-space: nowrap;
+}
+
+/* Safety net: if a very long name or rank ever makes the table wider
+   than its panel, it scrolls inside the panel instead of spilling out. */
+#rosterView {
+  overflow-x: auto;
+}
+
+/* The roster: tighter cells so the four season columns fit beside
+   the name, and a short email (the part before @) that can wrap. */
+#studentTable th,
+#studentTable td {
+  padding: 13px 10px;
+}
+
+#studentTable th:first-child,
+#studentTable td:first-child {
+  padding-left: 16px;
+}
+
+#studentTable .roster-email {
+  min-width: 112px;
+  font-size: 13px;
+  color: #A9B7D0;
+  overflow-wrap: anywhere;
+}
+
+#studentTable .roster-actions {
+  white-space: nowrap;
+  text-align: right;
+}
+
+#studentTable .roster-more-btn {
+  margin-right: 6px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+/* Cards instead of a table wherever the roster is narrow: phones,
+   tablets, and small laptops where the Relic Release sidebar leaves the
+   roster too little room for seven columns. Each student becomes a
+   card with the four seasons side by side under the name. */
+@media (max-width: 1339px) {
+  #studentTable,
+  #studentTable tbody,
+  #studentTable td {
+    display: block;
+  }
+
+  #studentTable thead {
+    display: none;
+  }
+
+  #studentTable tbody tr {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px 8px;
+    padding: 14px 14px 16px;
+    margin-bottom: 12px;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    background: rgba(255,255,255,0.03);
+  }
+
+  #studentTable td,
+  #studentTable td:first-child {
+    padding: 0;
+  }
+
+  #studentTable .roster-name,
+  #studentTable .roster-email,
+  #studentTable .roster-rank {
+    grid-column: 1 / -1;
+  }
+
+  /* Room for the two buttons pinned to the card's top-right corner. */
+  #studentTable td.roster-name {
+    padding-right: 96px;
+    font-size: 15px;
+  }
+
+  #studentTable .roster-email {
+    margin-top: -8px;
+  }
+
+  #studentTable td[data-label]::before {
+    content: attr(data-label);
+    display: block;
+    margin-bottom: 5px;
+    font-family: 'Cinzel', serif;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #9FDDE3;
+  }
+
+  #studentTable .roster-actions {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+  }
+}
+
+/* Phones: smaller pills so "17/17 ✅" fits a quarter of the card, and
+   the roster's buttons stack instead of squeezing. */
+@media (max-width: 720px) {
+  #studentTable .progress-pill {
+    padding: 3px 7px;
+    font-size: 11px;
+    gap: 4px;
+  }
+
+  .roster-view-actions {
+    flex-wrap: wrap;
+  }
+
+  .roster-view-actions .roster-back-btn {
+    margin-bottom: 0;
+  }
+}
+
+/* Very narrow phones: two seasons per line. */
+@media (max-width: 360px) {
+  #studentTable tbody tr {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Pieces per Prelim puzzle, under the Prelim status */
+.roster-pieces {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  color: #7C8AA8;
+  white-space: nowrap;
+}
+
+.roster-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 18px;
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: #9CA9C4;
+}
+
+.roster-legend > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.roster-legend .progress-pill {
+  white-space: nowrap;
+}
+
+.roster-legend .roster-legend-note {
+  flex-basis: 100%;
+  color: #7C8AA8;
+}
+
 .roster-delete-btn {
   margin: 0;
   padding: 6px 10px;

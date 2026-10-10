@@ -800,7 +800,9 @@ async function loadStudentCard() {
         email,
         midtermUnlocked: !!data.midtermUnlocked,
         hasSeen: !!data.hasSeenPrelimReminder,
-        isAdmin: isSeasonPreviewAdmin
+        isAdmin: isSeasonPreviewAdmin,
+        teacherEmail: data.teacherEmail,
+        section: data.section
       }));
       if (discipleBonusJustGranted) await step(() => showDiscipleBonusReveal());
       await step(() => maybeShowRefundNotice({ email, data, isAdmin: isSeasonPreviewAdmin }));

@@ -22,6 +22,31 @@ service cloud.firestore {
       return request.time >= timestamp.value(1791561600000);
     }
 
+    // One class was given a final extension (Jornie, 2026-10-10): its
+    // students may keep working until 2026-10-12 00:00 Philippine time
+    // (= 1791734400000 ms; shown to them as "October 11, 11:59 PM").
+    // Mirrored from PRELIM_EXTENSION in prelimDeadline.js. `data` is the
+    // student's record AS STORED, never the incoming write -- a locked-out
+    // student can't write their record at all, so they can't move
+    // themselves into this class to get the extension.
+    function inPrelimExtensionClass(data) {
+      return data.get('teacherEmail', '') == 'jornie.hinay@hcdc.edu.ph' &&
+             data.get('section', '') == '01555 | ReEd 203: The Catholic Church (MWF 4:00-5:00 PM)';
+    }
+
+    // Is the Prelim Season closed for the student whose stored record is
+    // `data`? After the extension runs out this is true for everyone.
+    function prelimLockedFor(data) {
+      return prelimLockPassed() &&
+             (request.time >= timestamp.value(1791734400000) || !inPrelimExtensionClass(data));
+    }
+
+    // May this student still use the portal: they unlocked Midterm, or
+    // the Prelim Season is still open for them.
+    function mayEnterPortal(data) {
+      return !prelimLockedFor(data) || data.get('midtermUnlocked', false) == true;
+    }
+
     // A student's teacherEmail/section aren't in their auth token, so
     // class-scoped collections (classChatMessages) need a cross-
     // document lookup to know "which class is the CALLER actually in"
@@ -39,7 +64,7 @@ service cloud.firestore {
       let caller = get(/databases/$(database)/documents/students/$(request.auth.token.email)).data;
       return caller.teacherEmail == msgData.teacherEmail &&
              caller.section == msgData.section &&
-             (!prelimLockPassed() || caller.get('midtermUnlocked', false) == true);
+             mayEnterPortal(caller);
     }
 
     // The same lock for the public collections a student writes to
@@ -47,7 +72,7 @@ service cloud.firestore {
     // A missing record makes the get() fail, which denies the write.
     function portalOpenToCaller() {
       return !prelimLockPassed() || isAdmin() ||
-             get(/databases/$(database)/documents/students/$(request.auth.token.email)).data.get('midtermUnlocked', false) == true;
+             mayEnterPortal(get(/databases/$(database)/documents/students/$(request.auth.token.email)).data);
     }
 
     // Every field a student's own record can legitimately hold, across
@@ -158,7 +183,7 @@ service cloud.firestore {
       allow update: if request.auth != null &&
                        ((request.auth.token.email == studentId &&
                          request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
-                         (!prelimLockPassed() || isAdmin() || resource.data.get('midtermUnlocked', false) == true) &&
+                         (isAdmin() || mayEnterPortal(resource.data)) &&
                          request.resource.data.diff(resource.data).affectedKeys()
                            .hasOnly(studentSelfFields().concat(['cooldown'])) &&
                          // On cooldown: the record is frozen until it

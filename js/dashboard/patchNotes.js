@@ -198,7 +198,8 @@ export const PATCHES = [
               'The Prelim Season closed on October 10, 2026 at 12:00 AM. Only students who unlocked the Midterm Season can enter the portal',
               'The closed screen now appears on every device, whatever date the device is set to',
               'The class chat, Community Activity and the leaderboard are now closed to locked-out accounts as well',
-              'If you unlocked the Midterm Season in time, nothing changes for you'
+              'If you unlocked the Midterm Season in time, nothing changes for you',
+              'One class has an extension until October 11, 2026 at 11:59 PM. Students in that class who have not unlocked the Midterm Season see a countdown on the dashboard, and the portal locks for them when it ends'
             ]
           }
         ]

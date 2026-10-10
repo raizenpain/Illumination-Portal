@@ -43,6 +43,42 @@ export function isPrelimLocked() {
   return Date.now() >= LOCK_MS;
 }
 
+// One class was given a final extension (Jornie, 2026-10-10). Its
+// students who have not unlocked Midterm may keep working until
+// locksAt, see the countdown again on every dashboard visit, and are
+// then locked out like everyone else. Keep in sync with
+// inPrelimExtensionClass() / prelimLockedFor() in firestore.rules.
+// The lock falls at midnight; students are told "11:59 PM".
+export const PRELIM_EXTENSION = {
+  teacherEmail: 'jornie.hinay@hcdc.edu.ph',
+  section: '01555 | ReEd 203: The Catholic Church (MWF 4:00-5:00 PM)',
+  locksAt: '2026-10-12T00:00:00+08:00',
+  dateText: 'October 11, 2026',
+  timeText: '11:59 PM'
+};
+const EXT_MS = new Date(PRELIM_EXTENSION.locksAt).getTime();
+
+export function inPrelimExtensionClass(data) {
+  return !!data && data.teacherEmail === PRELIM_EXTENSION.teacherEmail && data.section === PRELIM_EXTENSION.section;
+}
+
+// The device's clock can be set back, so the lockout asks the web host
+// what time it is (the Date header of a tiny same-site request) and
+// only falls back to the device if that fails. firestore.rules uses
+// Google's clock either way.
+let clockOffset = null;
+async function trustedNow() {
+  if (clockOffset === null) {
+    clockOffset = 0;
+    try {
+      const res = await fetch(new URL('./admins.js', import.meta.url), { method: 'HEAD', cache: 'no-store' });
+      const hostMs = new Date(res.headers.get('Date')).getTime();
+      if (Number.isFinite(hostMs)) clockOffset = hostMs - Date.now();
+    } catch (err) { /* keep the device clock */ }
+  }
+  return Date.now() + clockOffset;
+}
+
 // ---------- shared styles ----------
 
 const CSS = `
@@ -302,9 +338,14 @@ function embersHtml() {
 /** Returns a Promise that resolves once the popup is dismissed (or
  *  immediately if it doesn't apply), so dashboard.html can sequence
  *  the tour and other reveals after it. */
-export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdmin }) {
+export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdmin, teacherEmail, section }) {
   return new Promise((resolve) => {
-    if (isPrelimLocked()) { resolve(); return; }
+    // The extension class: its students who are still behind, plus the
+    // class's own teacher so they can see what the students see.
+    const teacherPreview = !!isAdmin && email === PRELIM_EXTENSION.teacherEmail;
+    const extended = teacherPreview || (!isAdmin && !midtermUnlocked && inPrelimExtensionClass({ teacherEmail, section }));
+    const deadlineMs = extended ? EXT_MS : LOCK_MS;
+    if (Date.now() >= deadlineMs) { resolve(); return; }
 
     // Admins: every visit (Jornie asked to keep seeing it). Behind
     // students: every visit. Safe students: once.
@@ -312,9 +353,22 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
     if (seen) { resolve(); return; }
 
     injectStyles();
-    const seal = midtermUnlocked
+    const seal = teacherPreview
+      ? `<div class="prelim-reminder-seal safe">${SEAL_SAFE}<div><strong>Shown to you as the teacher</strong>Only students of ${PRELIM_EXTENSION.section} who have not unlocked the Midterm Season see this countdown.</div></div>`
+      : midtermUnlocked
       ? `<div class="prelim-reminder-seal safe">${SEAL_SAFE}<div><strong>Your path is secured</strong>You've already unlocked the Midterm Season. You're all set. Keep going!</div></div>`
       : `<div class="prelim-reminder-seal warn">${SEAL_WARN}<div><strong>Your path is not yet secured</strong>You haven't unlocked the Midterm Season yet. Finish your puzzles now so you don't lose access.</div></div>`;
+    const kicker = extended ? '✦ A Final Extension ✦' : '✦ A Warning to All Seekers ✦';
+    const gift = extended
+      ? `🕯️ <strong>An extension for your class:</strong> the Prelim Season has been reopened for you until <strong>${PRELIM_EXTENSION.dateText} at ${PRELIM_EXTENSION.timeText}</strong>. Use this time well!`
+      : `🍎 <strong>A Teachers' Day gift:</strong> the deadline has been extended from October 5 to <strong>${LOCK_DATE_TEXT}</strong>. Use these extra days well!`;
+    const sealsAt = extended ? `${PRELIM_EXTENSION.dateText} · ${PRELIM_EXTENSION.timeText}` : `${LOCK_DATE_TEXT} · 12:00 AM`;
+    const afterText = extended
+      ? `After that, the Prelim Season is locked again, and <strong>only students who have unlocked the Midterm Season will be able to open the portal.</strong>`
+      : `After the Prelim Season is locked, <strong>only students who have unlocked the Midterm Season will be able to open the portal.</strong>`;
+    const howText = extended
+      ? `<strong>Solve all three Prelim puzzles</strong> and submit your reflection to unlock the Midterm Season. Don't wait until the last hour!`
+      : `If you haven't yet, <strong>solve all three Prelim puzzles</strong> and submit your reflection to unlock the Midterm Season. Don't wait until the last day!`;
 
     const overlay = document.createElement('div');
     overlay.className = 'prelim-reminder-overlay';
@@ -323,13 +377,13 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
       <div class="prelim-reminder-card" role="dialog" aria-modal="true" aria-labelledby="prelimReminderHeading">
         ${cornersHtml()}
         <div class="prelim-reminder-scroll">
-        <p class="prelim-reminder-kicker">✦ A Warning to All Seekers ✦</p>
+        <p class="prelim-reminder-kicker">${kicker}</p>
         <h2 class="prelim-reminder-heading" id="prelimReminderHeading">The Prelim Season Closes Soon</h2>
         <div class="prelim-reminder-divider"><i></i></div>
 
-        <p class="prelim-reminder-gift">🍎 <strong>A Teachers' Day gift:</strong> the deadline has been extended from October 5 to <strong>${LOCK_DATE_TEXT}</strong>. Use these extra days well!</p>
+        <p class="prelim-reminder-gift">${gift}</p>
 
-        <p class="prelim-reminder-deadline-label">The gate seals ${LOCK_DATE_TEXT} · 12:00 AM</p>
+        <p class="prelim-reminder-deadline-label">The gate seals ${sealsAt}</p>
         <div class="prelim-reminder-countdown" role="timer" aria-label="Time left before the Prelim Season locks">
           <div class="prelim-reminder-rune"><b data-cd="d">00</b><span>Days</span></div>
           <span class="prelim-reminder-sep">:</span>
@@ -340,8 +394,8 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
           <div class="prelim-reminder-rune"><b data-cd="s">00</b><span>Secs</span></div>
         </div>
 
-        <p class="prelim-reminder-text">After the Prelim Season is locked, <strong>only students who have unlocked the Midterm Season will be able to open the portal.</strong></p>
-        <p class="prelim-reminder-text">If you haven't yet, <strong>solve all three Prelim puzzles</strong> and submit your reflection to unlock the Midterm Season. Don't wait until the last day!</p>
+        <p class="prelim-reminder-text">${afterText}</p>
+        <p class="prelim-reminder-text">${howText}</p>
 
         ${seal}
         </div>
@@ -353,7 +407,7 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
 
     // Stops at 00:00:00:00 instead of going negative.
     const tick = () => {
-      const ms = Math.max(0, LOCK_MS - Date.now());
+      const ms = Math.max(0, deadlineMs - Date.now());
       const s = Math.floor(ms / 1000);
       const parts = { d: Math.floor(s / 86400), h: Math.floor(s / 3600) % 24, m: Math.floor(s / 60) % 60, s: s % 60 };
       Object.entries(parts).forEach(([k, v]) => {
@@ -379,7 +433,7 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
 
 // ---------- 2. the lockout ----------
 
-function showLockoutScreen() {
+function showLockoutScreen(sealedText = `${LOCK_DATE_TEXT} at 12:00 AM`) {
   injectStyles();
   document.querySelector('.prelim-veil')?.remove();
   if (document.querySelector('.prelim-lockout')) return;
@@ -395,7 +449,7 @@ function showLockoutScreen() {
       ${PADLOCK_SVG}
       <h2 class="prelim-reminder-heading" id="prelimLockoutHeading">The Prelim Season Has Closed</h2>
       <div class="prelim-reminder-divider"><i></i></div>
-      <p class="prelim-reminder-text">The Prelim Season was sealed on <strong>${LOCK_DATE_TEXT} at 12:00 AM</strong>. Only students who unlocked the Midterm Season may enter the portal.</p>
+      <p class="prelim-reminder-text">The Prelim Season was sealed on <strong>${sealedText}</strong>. Only students who unlocked the Midterm Season may enter the portal.</p>
       <div class="prelim-reminder-seal warn">${SEAL_WARN}<div><strong>Your path was not secured in time</strong>Your Midterm Season was not unlocked before the deadline, so your access to the portal has ended.</div></div>
       </div>
       <div class="prelim-reminder-foot"><button type="button" class="prelim-reminder-btn" id="prelimLockoutSignOut">Sign Out</button></div>
@@ -427,9 +481,22 @@ async function checkLockout(email) {
   }
 
   let allowed = true; // fail open -- see the header comment
+  let sealedText;
   try {
     const snap = await getDoc(doc(db, 'students', email));
-    allowed = snap.exists() && snap.data().midtermUnlocked === true;
+    const data = snap.exists() ? snap.data() : null;
+    allowed = !!data && data.midtermUnlocked === true;
+    // The extension class stays open until its own deadline, then this
+    // runs again so a page left open locks on the dot.
+    if (!allowed && inPrelimExtensionClass(data)) {
+      const left = EXT_MS - await trustedNow();
+      if (left > 0) {
+        allowed = true;
+        if (left < 2147483647) setTimeout(() => checkLockout(email), left + 1000);
+      } else {
+        sealedText = `${PRELIM_EXTENSION.dateText} at ${PRELIM_EXTENSION.timeText}`;
+      }
+    }
   } catch (err) {
     console.error('Could not check the Prelim lockout, letting the page load:', err);
   }
@@ -437,7 +504,7 @@ async function checkLockout(email) {
   if (allowed) {
     veil?.remove();
   } else {
-    showLockoutScreen();
+    showLockoutScreen(sealedText);
   }
 }
 

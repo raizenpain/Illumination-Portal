@@ -442,17 +442,11 @@ async function checkLockout(email) {
 }
 
 /** Called by requireLogin() on every student page. Admins/teachers are
- *  never affected. Before the lock time it only arms a timer, so a page
- *  left open across midnight still locks on the dot. */
+ *  never affected. The lock time has passed for good, so this no longer
+ *  looks at the device's clock: a phone or laptop with its date set back
+ *  before the lock used to skip the check and open the portal. */
 export function enforcePrelimLockout(email) {
   if (!email || ADMIN_EMAILS.includes(email)) return;
-
-  const wait = LOCK_MS - Date.now();
-  if (wait > 0) {
-    // setTimeout can't hold more than ~24.8 days; a later reload will arm it.
-    if (wait < 2147483647) setTimeout(() => checkLockout(email), wait + 1000);
-    return;
-  }
 
   if (document.body) {
     checkLockout(email);

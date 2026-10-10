@@ -30,10 +30,24 @@ service cloud.firestore {
     // field compared. msgData is either resource.data (read/update,
     // the doc as it already exists) or request.resource.data (create,
     // the doc being written).
+    //
+    // After the Prelim lock it also requires the caller to have unlocked
+    // Midterm, so a locked-out student who gets past the lock screen
+    // (device clock set back, overlay deleted in devtools) can neither
+    // read nor post in the class chat. Same single read as before.
     function isInCallerClass(msgData) {
       let caller = get(/databases/$(database)/documents/students/$(request.auth.token.email)).data;
       return caller.teacherEmail == msgData.teacherEmail &&
-             caller.section == msgData.section;
+             caller.section == msgData.section &&
+             (!prelimLockPassed() || caller.get('midtermUnlocked', false) == true);
+    }
+
+    // The same lock for the public collections a student writes to
+    // without touching their own record (activities, leaderboard).
+    // A missing record makes the get() fail, which denies the write.
+    function portalOpenToCaller() {
+      return !prelimLockPassed() || isAdmin() ||
+             get(/databases/$(database)/documents/students/$(request.auth.token.email)).data.get('midtermUnlocked', false) == true;
     }
 
     // Every field a student's own record can legitimately hold, across
@@ -175,6 +189,7 @@ service cloud.firestore {
       allow create, update: if request.auth != null &&
                       request.auth.token.email == studentId &&
                       request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
+                      portalOpenToCaller() &&
                       request.resource.data.keys().hasOnly(['name', 'progressPercent', 'createdAt', 'rank', 'starsEarned', 'mistakeCount', 'rankScore']) &&
                       (!('rankScore' in request.resource.data) || request.resource.data.rankScore is number);
 
@@ -210,6 +225,7 @@ service cloud.firestore {
       allow create: if request.auth != null &&
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                        request.resource.data.userId == request.auth.token.email &&
+                       portalOpenToCaller() &&
                        request.resource.data.keys().hasOnly(['userId', 'studentName', 'type', 'title', 'icon', 'timestamp']) &&
                        request.resource.data.type in ['piece', 'achievement', 'puzzle', 'rank', 'challenge', 'season', 'artifact', 'sidequest', 'vaultgame', 'gift', 'game'] &&
                        // The feed orders by timestamp, so it must be a real

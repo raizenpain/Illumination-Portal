@@ -191,6 +191,15 @@ export const PATCHES = [
               'On a phone held sideways, your balance stays on the left while the trades scroll on the right',
               'The trades themselves have not changed: 36 of the same kind, 72 mixed, or 135 Ember Shards for 1 Unlock Token'
             ]
+          },
+          {
+            title: 'Prelim Season Lock',
+            items: [
+              'The Prelim Season closed on October 10, 2026 at 12:00 AM. Only students who unlocked the Midterm Season can enter the portal',
+              'The closed screen now appears on every device, whatever date the device is set to',
+              'The class chat, Community Activity and the leaderboard are now closed to locked-out accounts as well',
+              'If you unlocked the Midterm Season in time, nothing changes for you'
+            ]
           }
         ]
       }

@@ -621,13 +621,12 @@ export const SEASON_CONTENT = {
       // Game chapter (Jornie, 2026-10-05), right after "Out of Egypt":
       // lead the people through the Red Sea (redSea.js). No questions and
       // NO star (noStar), but it must be cleared to continue; same rewards
-      // as the Semifinal boss (task +10 and chapter +20 = 30 of each).
+      // as every Final chapter (100 of each: see chapterBonusFor in season.js).
       {
         chapterId: 'final_redsea',
         chapterTitle: 'Crossing the Red Sea',
         basedOn: 'Game — lead Moses and the Israelites through the sea on dry land (Ex 14:21–22) before Pharaoh\'s chariots catch up. No questions, no star.',
         noStar: true,
-        chapterBonus: 20,
         clearedLabel: 'Safe on the Far Shore',
         clearedIcon: '🌊',
         nodes: [
@@ -723,13 +722,12 @@ export const SEASON_CONTENT = {
       // Game chapter (Jornie, 2026-10-05): after "The Covenant at Sinai",
       // climb the mountain as Moses (sinaiAscent.js). No questions and NO
       // star (noStar), but it must be cleared to continue; same rewards as
-      // the other game chapters (task +10 and chapter +20 = 30 of each).
+      // the other game chapters (100 of each).
       {
         chapterId: 'final_sinai',
         chapterTitle: 'Ascent of Mount Sinai',
         basedOn: 'Game — climb Mount Sinai as Moses through thunder and lightning (Ex 19:16–20) to receive the tablets of the covenant. No questions, no star.',
         noStar: true,
-        chapterBonus: 20,
         clearedLabel: 'The Summit Reached',
         clearedIcon: '⛰️',
         nodes: [
@@ -820,13 +818,12 @@ export const SEASON_CONTENT = {
       // Game chapter (Jornie, 2026-10-05): after "A Kingdom United", face
       // Goliath as David with a sling and five stones (davidGoliath.js).
       // No questions and NO star (noStar), but it must be cleared to
-      // continue; same rewards as the other game chapters (30 of each).
+      // continue; same rewards as the other game chapters (100 of each).
       {
         chapterId: 'final_goliath',
         chapterTitle: 'David and Goliath',
         basedOn: 'Game — face the giant Goliath as David in the Valley of Elah with a sling and five smooth stones (1 Sam 17). No questions, no star.',
         noStar: true,
-        chapterBonus: 20,
         clearedLabel: 'The Giant Has Fallen',
         clearedIcon: '🪨',
         nodes: [
@@ -839,13 +836,12 @@ export const SEASON_CONTENT = {
       // Game chapter (Jornie, 2026-10-05): after "David and Goliath", raise
       // the wall of Solomon's Temple stone by stone (templeBuilder.js).
       // No questions and NO star (noStar), but it must be cleared to
-      // continue; same rewards as the other game chapters (30 of each).
+      // continue; same rewards as the other game chapters (100 of each).
       {
         chapterId: 'final_temple',
         chapterTitle: "Building Solomon's Temple",
         basedOn: 'Game — raise the wall of the First Temple with King Solomon, one course of stone at a time (1 Kgs 6). No questions, no star.',
         noStar: true,
-        chapterBonus: 20,
         clearedLabel: 'The Temple Is Raised',
         clearedIcon: '🏛️',
         nodes: [
@@ -903,7 +899,6 @@ export const SEASON_CONTENT = {
         chapterTitle: 'The Fall of Jerusalem',
         basedOn: "Game — hold the wall of Jerusalem against Babylon's army in 587 BC (2 Kgs 25:1–4) long enough for a remnant to escape. No questions, no star.",
         noStar: true,
-        chapterBonus: 20,
         clearedLabel: 'A Remnant Is Saved',
         clearedIcon: '🔥',
         nodes: [
@@ -995,13 +990,12 @@ export const SEASON_CONTENT = {
       // ride with Nehemiah around the ruined walls of Jerusalem by night
       // (nightRide.js). Deliberately the hardest of the game chapters. No
       // questions and NO star (noStar), but it must be cleared to continue;
-      // same rewards as the other game chapters (30 of each).
+      // same rewards as the other game chapters (100 of each).
       {
         chapterId: 'final_nightride',
         chapterTitle: "Nehemiah's Night Ride",
         basedOn: 'Game — ride with Nehemiah by night around the broken walls and burned gates of Jerusalem (Neh 2:12–15), by the light of a single lantern. No questions, no star.',
         noStar: true,
-        chapterBonus: 20,
         clearedLabel: 'The Whole Wall Seen',
         clearedIcon: '🏮',
         nodes: [

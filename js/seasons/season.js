@@ -680,7 +680,8 @@ function ticketAmountFor(node) {
 // The Semifinal and Final comprehensive-exam capstone chapters award
 // no per-node tickets (see their nodes' missing ticketReward) — instead
 // they pay out a one-time bonus of every ticket type on full-chapter
-// completion, handled below via chapterJustCompleted.
+// completion, handled below via chapterJustCompleted. (final_ch11's
+// amount is no longer used: see FINAL_CHAPTER_TOTAL.)
 const CAPSTONE_BONUS = { semifinal_ch7: 2, final_ch11: 8 };
 
 // Jornie 2026-10-05: every task in EVERY chapter (the exam chapters too)
@@ -709,10 +710,26 @@ function nodeTicketRewards(node, chapter) {
 const TICKET_SHORT = { quiz_ticket: 'Sigil', task_ticket: 'Seal', journal_ticket: 'Scroll', recitation_ticket: 'Herald', scrap_ticket: 'Ember Shard' };
 const ticketSummary = (rewards) => ALL_TICKET_TYPES.filter((t) => rewards[t]).map((t) => `+${rewards[t]} ${TICKET_SHORT[t]}`).join(' · ');
 
+// Jornie 2026-10-12: every Final Season chapter is worth 100 of each
+// ticket in all. The tasks pay what they always did; finishing the
+// chapter pays whatever is left to reach 100, so a chapter totals the
+// same however many tasks it has (games and the exam chapter included).
+// The exam chapter still gives no Ember Shards beyond its tasks' own.
+const FINAL_CHAPTER_TOTAL = 100;
+
 /** The one-time bonus for finishing a whole chapter, by type. */
 function chapterBonusFor(chapter) {
   const rewards = {};
-  if (isNormalChapter(chapter)) {
+  if (seasonId === 'final') {
+    const fromTasks = {};
+    chapter.nodes.forEach((node) => {
+      Object.entries(nodeTicketRewards(node, chapter)).forEach(([type, n]) => { fromTasks[type] = (fromTasks[type] || 0) + n; });
+    });
+    ALL_TICKET_TYPES.filter((type) => isNormalChapter(chapter) || type !== 'scrap_ticket').forEach((type) => {
+      const left = FINAL_CHAPTER_TOTAL - (fromTasks[type] || 0);
+      if (left > 0) rewards[type] = left;
+    });
+  } else if (isNormalChapter(chapter)) {
     // A chapter can set its own bonus (the Semifinal boss pays 20, so the
     // battle totals 30 of every ticket with its task reward).
     const bonus = Number.isFinite(chapter.chapterBonus) ? chapter.chapterBonus : NORMAL_CHAPTER_BONUS;

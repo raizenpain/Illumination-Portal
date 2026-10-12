@@ -503,11 +503,11 @@ initDashboardMusic('musicToggleBtn');
 // first time a student opens the dashboard that day — not per refresh/
 // visit, otherwise a student could just mash F5 to farm unlimited Unlock
 // Tokens. Raised from 1 to 11 on 2026-10-05, alongside the Ember Shard
-// trade going from 45 to 135. Must use
+// trade going from 45 to 135, and from 11 to 100 on 2026-10-12. Must use
 // Asia/Manila, not raw UTC -- UTC's day boundary falls at 8am Philippine
 // time, which would wrongly deny an early-morning visit its shard if the
 // previous day's shard was already claimed the night before.
-const DAILY_VISIT_SHARDS = 11;
+const DAILY_VISIT_SHARDS = 100;
 
 async function awardDailyVisitShard(data) {
   const today = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Manila' });

@@ -144,7 +144,30 @@ const BANNED_WORDS = [
   'yawa ra', 'yawords', 'pesteng giatay', 'giah', 'kayata',
   'newb', 'trash', 'garbage', 'cry more', 'mad coz bad', 'mad cuz bad',
   'iyakin', 'pabuhat', 'palas-on', 'palason', 'kanser ka', 'kanser sa team',
-  'hilak lang', 'saba diha'
+  'hilak lang', 'saba diha',
+
+  // The ReEd 102 conduct dictionary (Jornie, 2026-10-16), shared by both
+  // portals: the entries the lists above did not already have. Jornie:
+  // every one of them locks the student out, like the rest of this list.
+  // English
+  'piss off', 'fuk u', 'f u', 'jerk', 'you suck', 'clown',
+  // Tagalog
+  'putangina', 'tanginamo', 'tngina', 'tngna', 'tangna', 'pakshit', 'pak yu', 'boba',
+  'bobong', 'tangang', 'unggoy', 'walang kwenta', 'walang silbi', 'ampaw', 'basura ka',
+  'bano', 'squammy', 'duwag', 'feeling magaling', 'ang hina mo', 'ang tanga mo',
+  'bobo ka',
+  // Cebuano / Bisaya
+  'pisting yawa', 'pisting yawa ka', 'buanga', 'gi atay', 'giahak', 'pakyu ka',
+  'bilat nimo', 'burikat', 'bogo ka', 'bogoa', 'bugoa', 'way utok', 'walay utok',
+  'way pulos', 'walay pulos', 'walay ayo', 'pahong', 'pahonga', 'hilas', 'hilasa',
+  'hambog', 'hambogero', 'hanggaw', 'unggoy ka', 'bati kag nawong', 'luod ka',
+  'inutil ka', 'hilom diha',
+  // Gaming trash talk
+  'ez win', 'easy win', 'git gud', 'get good', 'nub', 'bot ka', 'bot player', 'weak',
+  'weak ka', 'talo ka', 'iyak', 'iyak ka', 'crybaby', 'sarap umiyak', 'bobo gaming',
+  'delete the game', 'uninstall ka na', 'mag uninstall ka na', 'wala kang skill',
+  'wala kay skill', 'way skill', 'pildi ka', 'pildi naka', 'loser ka', 'trash player',
+  'tapon ka'
 ];
 
 function escapeRegExp(str) {
@@ -169,7 +192,10 @@ const COURSEWORK_EXEMPT = new Set([
   // the armor", "the scum of the world" (1 Cor 4:13).
   'ass', 'asses', 'cock', 'prick', 'dumb', 'shut up', 'loser', 'porn', 'chink', 'scum',
   // "care for creation: no trash, no garbage", "I was an iyakin child".
-  'trash', 'garbage', 'iyakin'
+  'trash', 'garbage', 'iyakin',
+  // From the ReEd 102 dictionary: trash talk in the chat, honest words in
+  // a reflection ("I felt weak", "I wanted to get good grades").
+  'weak', 'clown', 'iyak', 'get good', 'easy win', 'cry more'
 ]);
 
 // "Fr." before a name is Father (Fr. Pedro), not the slang "fr" (for real).
@@ -240,9 +266,31 @@ function findPlainWord(text, coursework) {
   return matchWholeWord(BANNED_WORDS, text.replace(FATHER_TITLE, ' ').toLowerCase(), coursework);
 }
 
+// Stars standing in for letters ("f*ck", "s**t", "p*ta", "g*go"): each
+// star may hide one letter. The word must start and end with a letter and
+// show at least two, and only listed single words of four letters or more
+// are tried, so a lone "*" or a footnote mark never matches. Shared with
+// ReEd 102 (2026-10-16).
+function findMaskedWord(lower, coursework) {
+  const masked = lower.match(/\b[a-z][a-z*]*\*[a-z*]*[a-z]\b/g) || [];
+  for (const token of masked) {
+    if ((token.match(/[a-z]/g) || []).length < 2) continue;
+    const pattern = new RegExp(`^${token.replace(/\*/g, '[a-z]')}$`);
+    const hit = HIDEABLE_WORDS.find((word) => allowed(word, coursework) && pattern.test(word));
+    if (hit) return hit;
+  }
+  return null;
+}
+
 /** A banned word hidden by one of the tricks described above. */
 function findDisguisedWord(text, coursework) {
-  const lower = text.toLowerCase();
+  // "!" between letters stands for i ("sh!t", "b!tch").
+  const lower = text.toLowerCase().replace(/(?<=[a-z])!(?=[a-z])/g, 'i');
+
+  const masked = findMaskedWord(lower, coursework);
+  if (masked) return masked;
+  const plain = matchWholeWord(BANNED_WORDS, lower, coursework);
+  if (plain) return plain;
 
   // Spelled out: three or more single characters in a row with only
   // separators between them.
@@ -289,12 +337,56 @@ export function containsBannedWord(text, options) {
 // real English — all near-certain signs of mashed keys. Requiring 70%
 // of words to clear that bar tolerates the occasional typo/abbreviation
 // /proper noun without tolerating a submission that's mostly noise.
+//
+// That alone let mashing through when it happened to contain vowels
+// (Jornie, 2026-10-16: "andjasnjcas skcnaknc asduiwd asnfiofio" passed,
+// alone and inside a reflection). So some words are now called MASHED
+// outright, on signs no real English, Tagalog or Cebuano word shows:
+//   - three keys side by side on a keyboard row ("asd", "jkl", "qwe")
+//   - a letter pair that no word in these languages has ("jc", "qx")
+//   - six or more consonants in a row, or no vowel at all in a word of
+//     five letters or more
+//   - the same few letters three times over ("asdasdasd", "kjkjkj")
+// A text is mashing if two such words appear anywhere in it, or one in a
+// short message. Laughs ("hahaha") and common texting shorthand ("pls",
+// "nmn", "kc") are never counted. Shared with ReEd 102; checked against
+// every quest text there without a false alarm.
+
+const KEYBOARD_RUNS = ['asd', 'sdf', 'dfg', 'fgh', 'ghj', 'hjk', 'jkl', 'lkj', 'kjh', 'qwe', 'ewq', 'qwd', 'zxc', 'xcv', 'cvb', 'vbn', 'bnm', 'mnb'];
+const IMPOSSIBLE_PAIRS = /jc|jf|jg|jl|jm|jp|jq|jt|jv|jw|jx|jz|qj|qk|qx|qz|qg|qf|qh|qp|qw|vq|vx|vj|vz|wq|wx|wj|xj|xq|xz|zx|zq|zj|cj|gj|kq|kx|kz|mq|pq|tq|bq|fq|gq|lq|rq/;
+const LAUGH = /^(?:ha|he|hi|ho|hu|ah|eh|ja|wa|xd)+h?$/;
+const SHORTHAND = new Set((
+  'pls plz thx tnx ty np brb btw ngl smh lmk ppl msg dm pm nvm sry srry ttyl hbu wbu tmrw rn ' +
+  'hrs mins yrs pcs sched cr hmm hmmm hm mm mhm shh psst brr grr tsk zzz ' +
+  'kc nmn lng sna kng ksi pwd mgnda nkk ntn dn sya tlga ung yng sbi bkt bkit cnu sn tpos tps'
+).split(' '));
+
+function isMashed(word) {
+  if (word.length < 3 || SHORTHAND.has(word) || LAUGH.test(word)) return false;
+  if (word.length > 20) return true;
+  if (KEYBOARD_RUNS.some((run) => word.includes(run))) return true;
+  if (IMPOSSIBLE_PAIRS.test(word)) return true;
+  if (/[^aeiouy']{6,}/.test(word)) return true;
+  if (word.length >= 5 && !/[aeiouy]/.test(word)) return true;
+  if (/(.{2,4})\1\1/.test(word)) return true;
+  return false;
+}
+
+/** The words in `text` that are plainly mashed keys, as described above. */
+export function mashedWords(text) {
+  const words = String(text ?? '').toLowerCase().match(/[a-z']+/g) || [];
+  return words.filter(isMashed);
+}
+
 export function looksLikeGibberish(text) {
   const words = text.toLowerCase().match(/[a-z']+/g) || [];
   if (words.length === 0) return true;
 
+  const mashed = words.filter(isMashed).length;
+  if (mashed >= 2 || (mashed >= 1 && words.length <= 6)) return true;
+
   const realLooking = words.filter((word) => {
-    if (word.length <= 2) return true;
+    if (word.length <= 2 || SHORTHAND.has(word) || LAUGH.test(word)) return true;
     if (word.length > 20) return false;
     const vowelRatio = (word.match(/[aeiou]/g) || []).length / word.length;
     if (vowelRatio < 0.2) return false;

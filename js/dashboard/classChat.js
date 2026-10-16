@@ -8,7 +8,8 @@
 //   - Admins (dashboard.html, admin preview): admins have no
 //     students/{email} doc of their own, so there's no single fixed
 //     room -- this module looks up which section(s) they actually
-//     teach (students whose teacherEmail == them) and either opens
+//     teach (their class offerings, plus any section of a student
+//     whose teacherEmail == them) and either opens
 //     straight into the one class they have, or shows a small picker
 //     if they teach more than one. Mirrors the same "teach multiple
 //     sections" reality teacher.html's roster already handles.
@@ -33,6 +34,7 @@ import { startCooldown } from '../core/cooldown.js';
 import { blockPasteInto } from '../core/noCopyPaste.js';
 import { maybePostDailyGreeting } from './dailyGreeting.js';
 import { ADMIN_EMAILS } from '../core/admins.js';
+import { getOfferingsForTeacher } from '../core/classOfferings.js';
 import { compressImage, createImageSlot, loadInto, deleteChatImage } from './chatImages.js';
 
 const MAX_MESSAGES = 50;
@@ -484,7 +486,13 @@ export function initClassChat({ email, name, teacherEmail, section, isAdmin }) {
 
   getDocs(query(collection(db, 'students'), where('teacherEmail', '==', email)))
     .then((snapshot) => {
-      const sections = [...new Set(snapshot.docs.map((d) => d.data().section).filter(Boolean))].sort();
+      // Every class the admin offers, even one with no students yet (so a
+      // new class's room can be opened before anyone enrolls), plus any
+      // other section their students are in.
+      const sections = [...new Set([
+        ...getOfferingsForTeacher(email),
+        ...snapshot.docs.map((d) => d.data().section).filter(Boolean)
+      ])].sort();
 
       if (sections.length === 0) {
         titleEl.textContent = 'Class Chat';

@@ -22,23 +22,53 @@ service cloud.firestore {
       return request.time >= timestamp.value(1791561600000);
     }
 
-    // One class was given a final extension (Jornie, 2026-10-10): its
-    // students may keep working until 2026-10-12 00:00 Philippine time
-    // (= 1791734400000 ms; shown to them as "October 11, 11:59 PM").
-    // Mirrored from PRELIM_EXTENSION in prelimDeadline.js. `data` is the
-    // student's record AS STORED, never the incoming write -- a locked-out
-    // student can't write their record at all, so they can't move
-    // themselves into this class to get the extension.
-    function inPrelimExtensionClass(data) {
+    // Classes with their own Prelim deadline, mirrored from
+    // PRELIM_EXTENSIONS in prelimDeadline.js. `data` is the student's
+    // record AS STORED, never the incoming write -- a locked-out student
+    // can't write their record at all, so they can't move themselves into
+    // one of these classes to get its time.
+    //  - 01555: a final extension (Jornie, 2026-10-10) until 2026-10-12
+    //    00:00 Philippine time (= 1791734400000 ms; "October 11, 11:59 PM").
+    //  - 00367: a class added after the lock (Jornie, 2026-10-16), open
+    //    until 2026-10-23 00:00 Philippine time (= 1792684800000 ms;
+    //    "October 22, 11:59 PM"). See newClassEnrollmentOpen() below.
+    function newClassSection() {
+      return '00367 | ReEd 203: The Catholic Church (MWF 1:00-2:00 PM)';
+    }
+
+    function newClassEnrollmentOpen() {
+      return request.time < timestamp.value(1792684800000);
+    }
+
+    function prelimExtensionOpen(data) {
       return data.get('teacherEmail', '') == 'jornie.hinay@hcdc.edu.ph' &&
-             data.get('section', '') == '01555 | ReEd 203: The Catholic Church (MWF 4:00-5:00 PM)';
+             ((data.get('section', '') == '01555 | ReEd 203: The Catholic Church (MWF 4:00-5:00 PM)' &&
+               request.time < timestamp.value(1791734400000)) ||
+              (data.get('section', '') == newClassSection() && newClassEnrollmentOpen()));
     }
 
     // Is the Prelim Season closed for the student whose stored record is
-    // `data`? After the extension runs out this is true for everyone.
+    // `data`? After every extension runs out this is true for everyone.
     function prelimLockedFor(data) {
-      return prelimLockPassed() &&
-             (request.time >= timestamp.value(1791734400000) || !inPrelimExtensionClass(data));
+      return prelimLockPassed() && !prelimExtensionOpen(data);
+    }
+
+    // A brand-new student signing up into the new class while it is open:
+    // their record has no studentId yet (only a teacher picked), and this
+    // write either just picks a teacher again or enrolls them into the new
+    // class under its teacher -- never any other class, and never any
+    // field beyond what teacher-select.js and enroll.js write (so a
+    // half-signed-up record can't, say, set midtermUnlocked).
+    function isNewClassSignup(before, after) {
+      return newClassEnrollmentOpen() &&
+             !('studentId' in before) &&
+             after.diff(before).affectedKeys().hasOnly([
+               'teacherName', 'teacherEmail', 'name', 'email', 'section', 'studentId',
+               'achievements', 'totalPieces', 'puzzle1', 'puzzle1Completed', 'createdAt'
+             ]) &&
+             (!('section' in after) ||
+              (after.get('section', '') == newClassSection() &&
+               after.get('teacherEmail', '') == 'jornie.hinay@hcdc.edu.ph'));
     }
 
     // May this student still use the portal: they unlocked Midterm, or
@@ -162,7 +192,11 @@ service cloud.firestore {
                        request.auth.token.email == studentId &&
                        request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                        request.resource.data.keys().hasOnly(studentSelfFields()) &&
-                       !prelimLockPassed();
+                       // After the lock, only the teacher pick that starts a
+                       // sign-up into the new class (see isNewClassSignup).
+                       (!prelimLockPassed() ||
+                        (newClassEnrollmentOpen() &&
+                         request.resource.data.keys().hasOnly(['teacherName', 'teacherEmail'])));
 
       // A student can freely update their OWN record's real fields
       // (progress, tickets, artifacts, etc.) — never anyone else's,
@@ -183,7 +217,8 @@ service cloud.firestore {
       allow update: if request.auth != null &&
                        ((request.auth.token.email == studentId &&
                          request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
-                         (isAdmin() || mayEnterPortal(resource.data)) &&
+                         (isAdmin() || mayEnterPortal(resource.data) ||
+                          isNewClassSignup(resource.data, request.resource.data)) &&
                          request.resource.data.diff(resource.data).affectedKeys()
                            .hasOnly(studentSelfFields().concat(['cooldown'])) &&
                          // On cooldown: the record is frozen until it

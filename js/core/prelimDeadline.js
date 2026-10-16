@@ -43,24 +43,54 @@ export function isPrelimLocked() {
   return Date.now() >= LOCK_MS;
 }
 
-// One class was given a final extension (Jornie, 2026-10-10). Its
+// Classes given their own Prelim deadline after the lock. Their
 // students who have not unlocked Midterm may keep working until
 // locksAt, see the countdown again on every dashboard visit, and are
 // then locked out like everyone else. Keep in sync with
-// inPrelimExtensionClass() / prelimLockedFor() in firestore.rules.
+// prelimExtensionOpen() / newClassEnrollmentOpen() in firestore.rules.
 // The lock falls at midnight; students are told "11:59 PM".
-export const PRELIM_EXTENSION = {
-  teacherEmail: 'jornie.hinay@hcdc.edu.ph',
-  section: '01555 | ReEd 203: The Catholic Church (MWF 4:00-5:00 PM)',
-  locksAt: '2026-10-12T00:00:00+08:00',
-  dateText: 'October 11, 2026',
-  timeText: '11:59 PM'
-};
-const EXT_MS = new Date(PRELIM_EXTENSION.locksAt).getTime();
+//
+// newClass: a class added after the lock (Jornie, 2026-10-16). Brand-new
+// students may sign up into it, and only it, until its locksAt.
+export const PRELIM_EXTENSIONS = [
+  {
+    teacherEmail: 'jornie.hinay@hcdc.edu.ph',
+    section: '01555 | ReEd 203: The Catholic Church (MWF 4:00-5:00 PM)',
+    locksAt: '2026-10-12T00:00:00+08:00',
+    dateText: 'October 11, 2026',
+    timeText: '11:59 PM'
+  },
+  {
+    teacherEmail: 'jornie.hinay@hcdc.edu.ph',
+    section: '00367 | ReEd 203: The Catholic Church (MWF 1:00-2:00 PM)',
+    locksAt: '2026-10-23T00:00:00+08:00',
+    dateText: 'October 22, 2026',
+    timeText: '11:59 PM',
+    newClass: true
+  }
+];
+const extMs = (ext) => new Date(ext.locksAt).getTime();
 
-export function inPrelimExtensionClass(data) {
-  return !!data && data.teacherEmail === PRELIM_EXTENSION.teacherEmail && data.section === PRELIM_EXTENSION.section;
+/** The extension of the class `data` (a student record) is in, or null. */
+export function prelimExtensionFor(data) {
+  return (data && PRELIM_EXTENSIONS.find((ext) => ext.teacherEmail === data.teacherEmail && ext.section === data.section)) || null;
 }
+
+/** The new classes a brand-new student may still sign up into. */
+export function openNewClasses(now = Date.now()) {
+  return PRELIM_EXTENSIONS.filter((ext) => ext.newClass && now < extMs(ext));
+}
+
+/** The class offerings enroll.html may list: every one before the lock,
+ *  only the open new classes after it. */
+export function enrollableOfferings(teacherEmail, offerings) {
+  if (!isPrelimLocked()) return offerings;
+  const open = openNewClasses().filter((ext) => ext.teacherEmail === teacherEmail).map((ext) => ext.section);
+  return offerings.filter((offering) => open.includes(offering));
+}
+
+// Not enrolled yet: no record, or one with only a teacher picked.
+const notEnrolled = (data) => !data || !data.studentId;
 
 // The device's clock can be set back, so the lockout asks the web host
 // what time it is (the Date header of a tiny same-site request) and
@@ -340,11 +370,16 @@ function embersHtml() {
  *  the tour and other reveals after it. */
 export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdmin, teacherEmail, section }) {
   return new Promise((resolve) => {
-    // The extension class: its students who are still behind, plus the
-    // class's own teacher so they can see what the students see.
-    const teacherPreview = !!isAdmin && email === PRELIM_EXTENSION.teacherEmail;
-    const extended = teacherPreview || (!isAdmin && !midtermUnlocked && inPrelimExtensionClass({ teacherEmail, section }));
-    const deadlineMs = extended ? EXT_MS : LOCK_MS;
+    // An extension class: its students who are still behind, plus the
+    // class's own teacher (shown the one that closes last) so they can
+    // see what the students see.
+    const previewExt = isAdmin
+      ? PRELIM_EXTENSIONS.filter((e) => e.teacherEmail === email && Date.now() < extMs(e)).sort((a, b) => extMs(b) - extMs(a))[0]
+      : null;
+    const teacherPreview = !!previewExt;
+    const ext = previewExt || (!isAdmin && !midtermUnlocked ? prelimExtensionFor({ teacherEmail, section }) : null);
+    const extended = !!ext;
+    const deadlineMs = extended ? extMs(ext) : LOCK_MS;
     if (Date.now() >= deadlineMs) { resolve(); return; }
 
     // Admins: every visit (Jornie asked to keep seeing it). Behind
@@ -354,15 +389,17 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
 
     injectStyles();
     const seal = teacherPreview
-      ? `<div class="prelim-reminder-seal safe">${SEAL_SAFE}<div><strong>Shown to you as the teacher</strong>Only students of ${PRELIM_EXTENSION.section} who have not unlocked the Midterm Season see this countdown.</div></div>`
+      ? `<div class="prelim-reminder-seal safe">${SEAL_SAFE}<div><strong>Shown to you as the teacher</strong>Only students of ${ext && ext.section} who have not unlocked the Midterm Season see this countdown.</div></div>`
       : midtermUnlocked
       ? `<div class="prelim-reminder-seal safe">${SEAL_SAFE}<div><strong>Your path is secured</strong>You've already unlocked the Midterm Season. You're all set. Keep going!</div></div>`
       : `<div class="prelim-reminder-seal warn">${SEAL_WARN}<div><strong>Your path is not yet secured</strong>You haven't unlocked the Midterm Season yet. Finish your puzzles now so you don't lose access.</div></div>`;
-    const kicker = extended ? '✦ A Final Extension ✦' : '✦ A Warning to All Seekers ✦';
-    const gift = extended
-      ? `🕯️ <strong>An extension for your class:</strong> the Prelim Season has been reopened for you until <strong>${PRELIM_EXTENSION.dateText} at ${PRELIM_EXTENSION.timeText}</strong>. Use this time well!`
-      : `🍎 <strong>A Teachers' Day gift:</strong> the deadline has been extended from October 5 to <strong>${LOCK_DATE_TEXT}</strong>. Use these extra days well!`;
-    const sealsAt = extended ? `${PRELIM_EXTENSION.dateText} · ${PRELIM_EXTENSION.timeText}` : `${LOCK_DATE_TEXT} · 12:00 AM`;
+    const kicker = !extended ? '✦ A Warning to All Seekers ✦' : ext.newClass ? '✦ Welcome, New Seekers ✦' : '✦ A Final Extension ✦';
+    const gift = !extended
+      ? `🍎 <strong>A Teachers' Day gift:</strong> the deadline has been extended from October 5 to <strong>${LOCK_DATE_TEXT}</strong>. Use these extra days well!`
+      : ext.newClass
+      ? `🕯️ <strong>Your class has its own Prelim Season:</strong> it is open for you until <strong>${ext.dateText} at ${ext.timeText}</strong>. Use this time well!`
+      : `🕯️ <strong>An extension for your class:</strong> the Prelim Season has been reopened for you until <strong>${ext.dateText} at ${ext.timeText}</strong>. Use this time well!`;
+    const sealsAt = extended ? `${ext.dateText} · ${ext.timeText}` : `${LOCK_DATE_TEXT} · 12:00 AM`;
     const afterText = extended
       ? `After that, the Prelim Season is locked again, and <strong>only students who have unlocked the Midterm Season will be able to open the portal.</strong>`
       : `After the Prelim Season is locked, <strong>only students who have unlocked the Midterm Season will be able to open the portal.</strong>`;
@@ -486,15 +523,18 @@ async function checkLockout(email) {
     const snap = await getDoc(doc(db, 'students', email));
     const data = snap.exists() ? snap.data() : null;
     allowed = !!data && data.midtermUnlocked === true;
-    // The extension class stays open until its own deadline, then this
-    // runs again so a page left open locks on the dot.
-    if (!allowed && inPrelimExtensionClass(data)) {
-      const left = EXT_MS - await trustedNow();
+    // An extension class stays open until its own deadline, then this
+    // runs again so a page left open locks on the dot. A student who has
+    // not enrolled yet is held to the open new class's deadline, so they
+    // can get through teacher-select and enroll.html into it.
+    const ext = allowed ? null : prelimExtensionFor(data) || (notEnrolled(data) ? openNewClasses(await trustedNow())[0] : null);
+    if (ext) {
+      const left = extMs(ext) - await trustedNow();
       if (left > 0) {
         allowed = true;
         if (left < 2147483647) setTimeout(() => checkLockout(email), left + 1000);
       } else {
-        sealedText = `${PRELIM_EXTENSION.dateText} at ${PRELIM_EXTENSION.timeText}`;
+        sealedText = `${ext.dateText} at ${ext.timeText}`;
       }
     }
   } catch (err) {

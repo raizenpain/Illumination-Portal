@@ -1,6 +1,7 @@
 import { db, doc, setDoc } from '../core/firebase.js';
 import { requireLogin } from '../core/auth.js';
 import { ADMINS, ADMIN_EMAILS } from '../core/admins.js';
+import { isPrelimLocked, openNewClasses } from '../core/prelimDeadline.js';
 
 const { email } = requireLogin();
 
@@ -16,7 +17,17 @@ let selecting = false;
 function renderTeacherCards() {
   grid.innerHTML = '';
 
-  ADMINS.forEach((teacher) => {
+  // After the Prelim lock, only a teacher with a class still taking new
+  // students (see PRELIM_EXTENSIONS) can be picked.
+  const teachers = isPrelimLocked()
+    ? ADMINS.filter((teacher) => openNewClasses().some((ext) => ext.teacherEmail === teacher.email))
+    : ADMINS;
+  if (!teachers.length) {
+    status.textContent = 'Enrollment has closed.';
+    return;
+  }
+
+  teachers.forEach((teacher) => {
     const card = document.createElement('div');
     card.className = 'teacher-select-card-btn';
     card.innerHTML = `

@@ -2,6 +2,7 @@ import { db, doc, getDoc, setDoc } from '../core/firebase.js';
 import { requireLogin } from '../core/auth.js';
 import { ADMIN_EMAILS } from '../core/admins.js';
 import { getOfferingsForTeacher } from '../core/classOfferings.js';
+import { enrollableOfferings } from '../core/prelimDeadline.js';
 
 const { email, name } = requireLogin();
 
@@ -37,7 +38,14 @@ let cachedStudentSnap = null;
       return;
     }
 
-    getOfferingsForTeacher(teacherEmail).forEach((offering) => {
+    // After the Prelim lock, only a class still taking new students
+    // (see PRELIM_EXTENSIONS) can be joined; firestore.rules refuses the rest.
+    const offerings = enrollableOfferings(teacherEmail, getOfferingsForTeacher(teacherEmail));
+    if (!offerings.length) {
+      sectionSelectEl.innerHTML = '<option value="">-- Enrollment is closed for this teacher\'s classes --</option>';
+      return;
+    }
+    offerings.forEach((offering) => {
       const opt = document.createElement('option');
       opt.value = offering;
       opt.textContent = offering;

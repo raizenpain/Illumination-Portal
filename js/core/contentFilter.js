@@ -96,7 +96,55 @@ const BANNED_WORDS = [
   // outright vulgar terms are blocked, not the bare word.
   'iyot', 'iyot ta', 'oten', 'bilat', 'kiss ko bilat', 'kiss ko oten',
   'chupa', 'sexual intercourse', 'phone sex', 'same sex intercourse',
-  'same-sex intercourse'
+  'same-sex intercourse',
+
+  // Jornie, 2026-10-16: "all English, Bisaya and Tagalog words that are
+  // not moral or ethical". Profanity, vulgar and sexual words, slurs and
+  // insults, with their common spellings. Left out on purpose, because
+  // students need them in their normal sense: "hayop"/"animal", "atay"
+  // alone in Tagalog, "ina mo" (your mother), "buto" (bone/seed),
+  // "libog" (Bisaya: confusing), "demonyo", "Pepe" (Rizal), "tae"
+  // alone (Korean names), and the
+  // academic words a Morality class uses (pornography, masturbation,
+  // adultery, prostitute). A few that do have a normal sense are
+  // allowed in coursework only (see COURSEWORK_EXEMPT below).
+  // English
+  'fck', 'fk', 'fuk', 'fuq', 'fvck', 'phuck', 'fucc', 'fucker', 'fuckers', 'fucked', 'fucks',
+  'motherfucking', 'mf', 'mofo', 'shitty', 'shits', 'shyt', 'dipshit', 'horseshit', 'shithead',
+  'bitches', 'bitchy', 'biatch', 'son of a bitch', 'ass', 'asses', 'assholes', 'dumbass',
+  'jackass', 'badass', 'smartass', 'kiss my ass', 'goddamn', 'goddamnit', 'goddammit',
+  'dickhead', 'dicks', 'cock', 'cocksucker', 'pussy', 'pussies', 'twat', 'wanker', 'wank',
+  'prick', 'bollocks', 'tits', 'titties', 'boobs', 'boobies', 'porn', 'horny', 'nudes',
+  'blowjob', 'handjob', 'jizz', 'dildo', 'jerk off', 'jack off', 'hoe', 'hoes', 'thot',
+  'skank', 'slutty', 'sluts', 'whores', 'bastards', 'retarded', 'retards', 'nigger',
+  'niggers', 'niggas', 'fag', 'fags', 'faggots', 'dyke', 'tranny', 'chink', 'spic',
+  'kys', 'kill yourself', 'go die', 'shut up', 'dumb', 'moron', 'morons', 'imbecile',
+  'loser', 'scum', 'scumbag', 'idiots', 'gtfo', 'omfg',
+  // Tagalog
+  'puta', 'puta ka', 'pota', 'potangina', 'potaena', 'tangina', 'tang ina', 'tangina mo',
+  'tang ina mo', 'kingina', 'kinginamo', 'pucha', 'punyeta', 'putragis', 'tarantado',
+  'tarantada', 'gagu', 'gago ka', 'tanga ka', 'ulul', 'olol', 'ulol ka', 'hinayupak',
+  'lecheng', 'buwisit', 'bwiset', 'pakshet', 'pakingshet', 'engot', 'inutil', 'abnoy',
+  'abno', 'mongoloid', 'kantot', 'kantutan', 'jakol', 'salsal', 'tamod', 'titi', 'tite',
+  'puke', 'puday', 'pekpek', 'bayag', 'burat', 'etits', 'kepyas', 'hindot', 'tsupa',
+  'chupain', 'pokpok', 'malandi', 'tae ka', 'kain tae',
+  // Cebuano / Bisaya
+  'yawaa', 'yawara', 'piste', 'pisteng yawa', 'atay ka', 'boang', 'boang ka', 'bugo', 'tonto', 'animala', 'otin', 'iyota', 'iyoti', 'iyotan', 'yati', 'lubot',
+  'lubotan', 'bigaon', 'kolera ka', 'mangtas',
+
+  // Jornie's second list, 2026-10-16: swear words, softened "disguise"
+  // words and trash talk. Not added, because they also mean something
+  // students must be free to write: "simba ko" (going to Mass), "kaluoy"
+  // (God's mercy), "kanser" alone (an illness), "ubos"/"pulbos"
+  // (everyday words) -- the insulting phrases are listed instead.
+  // "bogo" is added at Jornie's request even though it is also a city.
+  'piece of shit', 'bilat sa imong ina', 'bilat ibat', 'bogo',
+  'freaking', 'freakin', 'frickin', 'fricking', 'son of a gun', 'what the heck', 'what the fudge',
+  'putsa', 'putek', 'gunggong', 'anak ng puta', 'anak ng tinapa', 'anak ng pating',
+  'yawa ra', 'yawords', 'pesteng giatay', 'giah', 'kayata',
+  'newb', 'trash', 'garbage', 'cry more', 'mad coz bad', 'mad cuz bad',
+  'iyakin', 'pabuhat', 'palas-on', 'palason', 'kanser ka', 'kanser sa team',
+  'hilak lang', 'saba diha'
 ];
 
 function escapeRegExp(str) {
@@ -114,7 +162,14 @@ function escapeRegExp(str) {
 // what the filter is there to stop. Edit this set to tune it.
 const COURSEWORK_EXEMPT = new Set([
   'fire', 'carry', 'feed', 'feeding', 'ate', 'relate', 'based', 'valid',
-  'mid', 'pre', 'push', 'wipe', 'cook', 'cap', 'bet', 'buff', 'ratio', 'diff', 'op'
+  'mid', 'pre', 'push', 'wipe', 'cook', 'cap', 'bet', 'buff', 'ratio', 'diff', 'op',
+  // Bible and Morality-class senses: Balaam's ass, "the cock crowed",
+  // "kick against the pricks", "the dumb spoke", "shut up in prison",
+  // "a loser in this world", writing about the sin of porn, "a chink in
+  // the armor", "the scum of the world" (1 Cor 4:13).
+  'ass', 'asses', 'cock', 'prick', 'dumb', 'shut up', 'loser', 'porn', 'chink', 'scum',
+  // "care for creation: no trash, no garbage", "I was an iyakin child".
+  'trash', 'garbage', 'iyakin'
 ]);
 
 // "Fr." before a name is Father (Fr. Pedro), not the slang "fr" (for real).

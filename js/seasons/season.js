@@ -5,7 +5,7 @@ import { CHAPTER_LESSONS } from './chapterLessons.js';
 import { ADMIN_EMAILS } from '../core/admins.js';
 import { logActivity } from '../core/activity.js';
 import { taskBadgeId, chapterBadgeId, seasonBadgeId } from './seasonBadges.js';
-import { findBannedWord, looksLikeGibberish, isOffTopic, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE } from '../core/contentFilter.js';
+import { findBannedWord, looksLikeGibberish, isOffTopic, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE, findAIWritingSigns, aiWritingMessage, earlierWriting } from '../core/contentFilter.js';
 import { startCooldown } from '../core/cooldown.js';
 import { getRankProgress, getSeasonStars, RANK_TIERS, starIndexOfChapter } from '../core/rank.js';
 import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderChampionPopup, renderNoticePopup } from '../core/rankPopup.js';
@@ -501,6 +501,13 @@ function renderTextModal(node, { minWords }) {
     if (looksLikeAssistantPaste(text)) {
       hint.textContent = ASSISTANT_PASTE_MESSAGE;
       recordMistake();
+      return;
+    }
+
+    // Journals are personal writing; tasks and recitations may be impersonal.
+    const aiSigns = findAIWritingSigns(text, { personal: node.type === 'journal', previous: earlierWriting(studentData, earlierAnswer) });
+    if (aiSigns) {
+      hint.textContent = aiWritingMessage(aiSigns);
       return;
     }
 

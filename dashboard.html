@@ -460,7 +460,7 @@ import { initTicketTrader, refreshTicketWallet } from './js/dashboard/ticketTrad
 import { initCrafting, refreshCrafting } from './js/dashboard/crafting.js';
 import { initGifts, showPendingGifts } from './js/dashboard/gifts.js';
 import { initLeaderboard } from './js/dashboard/leaderboard.js';
-import { findBannedWord, looksLikeGibberish, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE } from './js/core/contentFilter.js';
+import { findBannedWord, looksLikeGibberish, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE, findAIWritingSigns, aiWritingMessage, earlierWriting } from './js/core/contentFilter.js';
 import { startCooldown, isOnCooldown } from './js/core/cooldown.js';
 import { getRankProgress, isPuzzleComplete, isPrelimSeasonDone } from './js/core/rank.js';
 import { initDashboardTour } from './js/dashboard/dashboardTour.js';
@@ -1620,6 +1620,11 @@ async function saveReflectionEdit() {
   }
   if (looksLikeAssistantPaste(text)) {
     reflectionModalHint.textContent = ASSISTANT_PASTE_MESSAGE;
+    return;
+  }
+  const aiSigns = findAIWritingSigns(text, { personal: true, previous: earlierWriting(studentData, studentData.puzzle3Reflection) });
+  if (aiSigns) {
+    reflectionModalHint.textContent = aiWritingMessage(aiSigns);
     return;
   }
 

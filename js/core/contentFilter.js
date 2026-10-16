@@ -332,6 +332,128 @@ export function looksLikeAssistantPaste(text) {
 
 export const ASSISTANT_PASTE_MESSAGE = 'This reads like text taken from an AI assistant (for example a list of options, or the assistant\'s own notes to you). Please write your answer yourself, in your own words.';
 
+// ---- AI-written answers (Jornie, 2026-10-16) ----
+// Blocks coursework that shows several signs of AI writing at once, from
+// Jornie's checklist: overly polished language, repetitive structure, no
+// personal voice, references, sudden improvement over the student's own
+// earlier answers. No single sign is enough: an answer is refused only
+// when its score reaches AI_BLOCK_SCORE.
+//
+// Tuned on 2026-10-16 against every answer already in the portal (237
+// long enough to judge): it would have refused none of them, and it
+// refused every textbook chatbot answer tried. It cannot catch a plain,
+// natural AI answer, which reads like a good student's; trying to would
+// mean refusing careful honest writers, so those stay the teacher's call
+// (revisionNotice.js). Answers under 60 words are never judged.
+const AI_PHRASES = [
+  'delve', 'delves', 'delving', 'tapestry', 'testament to', 'in conclusion', 'furthermore', 'moreover',
+  'additionally', 'it is important to note', 'it is worth noting', 'plays a crucial role', 'plays a vital role',
+  'pivotal', 'multifaceted', 'foster', 'fosters', 'fostering', 'underscore', 'underscores', 'underscoring',
+  'navigate', 'navigating', 'realm', 'embark', 'embarking', 'resonate', 'resonates', 'serves as a reminder',
+  'serves as a', "in today's world", "in today's society", 'nuanced', 'holistic', 'intricate', 'intricacies',
+  'unwavering', 'transformative', 'invaluable', 'profound', 'profoundly', 'paramount', 'encompasses',
+  'encompassing', 'a deeper understanding', 'deeper appreciation', 'ever-evolving', 'landscape', 'beacon',
+  'cornerstone', 'interplay', 'commendable', 'meticulous', 'showcasing', 'highlighting', 'underpins',
+  'in essence', 'ultimately', 'overall,', 'thus,', 'hence,', 'consequently', 'nevertheless', 'notably',
+  'a myriad of', 'myriad', 'vibrant', 'enduring', 'steadfast', 'inherent', 'inherently', 'embodies', 'embody',
+  'reflects the', 'this reflection', 'this highlights', 'this underscores', 'this demonstrates',
+  'not only', 'but also', 'whether it be', 'in a world where', 'journey of faith', 'deeply rooted'
+];
+const AI_PHRASE_RES = AI_PHRASES.map((p) => new RegExp(`(?<![a-z])${escapeRegExp(p)}(?![a-z])`, 'gi'));
+const FIRST_PERSON = /\b(?:i|i'm|i've|i'd|i'll|me|my|mine|myself|ako|ko|nako|akong|nakong|kanako|akoa)\b/gi;
+const CITATION = /\(\s*[A-Z][a-z]+(?: et al\.)?,?\s*\d{4}\s*\)|\bet al\.|\bdoi:|https?:\/\/|\bjournal of\b/i;
+const AI_BLOCK_SCORE = 4;
+const AI_MIN_WORDS = 60;
+
+const textWords = (t) => t.match(/[A-Za-z'’-]+/g) || [];
+
+function writingFeatures(text) {
+  const w = textWords(text);
+  const n = Math.max(1, w.length);
+  const phraseHits = AI_PHRASE_RES.reduce((sum, re) => sum + (text.match(re) || []).length, 0);
+  const lengths = text.split(/(?<=[.!?])\s+/).map((s) => textWords(s).length).filter((len) => len >= 3);
+  const mean = lengths.reduce((a, b) => a + b, 0) / Math.max(1, lengths.length);
+  const sd = Math.sqrt(lengths.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, lengths.length));
+  return {
+    words: w.length,
+    phraseHits,
+    phrasePer100: (phraseHits / n) * 100,
+    firstPerson: (text.match(FIRST_PERSON) || []).length,
+    longDashes: (text.match(/—|\s–\s/g) || []).length,
+    sentences: lengths.length,
+    sentenceSpread: lengths.length ? sd / mean : 1,
+    avgWordLength: w.reduce((a, x) => a + x.length, 0) / n,
+    citation: CITATION.test(text)
+  };
+}
+
+/** The student's other written answers on record (reflections and season
+ *  answers), for comparing a new answer against their usual writing.
+ *  `skip` leaves out the answer being replaced. */
+export function earlierWriting(studentData, skip) {
+  const data = studentData || {};
+  const all = [data.puzzle3Reflection, data.semifinalReflection, data.finalReflection, data.apostleReflection,
+    ...Object.values(data.nodeSubmissions || {})];
+  return all.filter((t) => typeof t === 'string' && t && t !== skip);
+}
+
+/** Why `text` reads as AI-written, as short reasons for the student, or
+ *  null when it may be submitted. `personal`: the answer should be in the
+ *  student's own voice (reflections, journals). `previous`: their earlier
+ *  answers (earlierWriting). */
+export function findAIWritingSigns(text, { personal = true, previous = [] } = {}) {
+  const value = String(text ?? '');
+  const f = writingFeatures(value);
+  if (f.words < AI_MIN_WORDS) return null;
+
+  let score = 0;
+  const reasons = [];
+  if (f.phraseHits >= 5 && f.phrasePer100 >= 3) {
+    score += 4;
+    reasons.push('it is full of phrases typical of AI writing, such as "furthermore", "in conclusion" or "plays a crucial role"');
+  } else if (f.phraseHits >= 3 && f.phrasePer100 >= 1.5) {
+    score += 3;
+    reasons.push('it uses several phrases typical of AI writing, such as "furthermore", "in conclusion" or "plays a crucial role"');
+  } else if (f.phraseHits >= 2 && f.phrasePer100 >= 0.8) {
+    score += 1;
+    reasons.push('it uses some phrases typical of AI writing');
+  }
+  if (personal && f.firstPerson === 0) {
+    score += 1.5;
+    reasons.push('it has no personal voice: say what you think and feel, with "I", "my" or "ako"');
+  }
+  if (f.longDashes >= 2) {
+    score += 1;
+    reasons.push('it uses long dashes (—) the way AI writing does');
+  }
+  if (f.sentences >= 6 && f.sentenceSpread < 0.25) {
+    score += 1;
+    reasons.push('its sentences all follow the same pattern and length');
+  }
+  if (f.avgWordLength >= 5.4) {
+    score += 1;
+    reasons.push('its wording is unusually formal');
+  }
+  if (f.citation) {
+    score += 1;
+    reasons.push('it cites sources or links instead of giving your own thoughts');
+  }
+  const earlier = previous.filter((p) => textWords(String(p)).length >= 40).map(writingFeatures);
+  if (earlier.length >= 2) {
+    const avg = (key) => earlier.reduce((a, x) => a + x[key], 0) / earlier.length;
+    if (f.avgWordLength - avg('avgWordLength') >= 0.6 && f.phrasePer100 - avg('phrasePer100') >= 1) {
+      score += 1.5;
+      reasons.push('it is very different from the way you wrote your earlier answers');
+    }
+  }
+  return score >= AI_BLOCK_SCORE ? reasons : null;
+}
+
+/** The message shown when findAIWritingSigns() refuses an answer. */
+export function aiWritingMessage(reasons) {
+  return `This answer reads like AI-generated writing, so it can't be submitted: ${reasons.join('; ')}. Please write it again yourself, in your own words, the way you would explain it to a classmate.`;
+}
+
 const STOPWORDS = new Set([
   'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
   'of', 'to', 'in', 'on', 'at', 'by', 'for', 'with', 'as', 'from',

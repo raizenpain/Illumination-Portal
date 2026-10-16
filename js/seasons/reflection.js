@@ -1,6 +1,6 @@
 import { db, doc, getDoc, updateDoc, increment } from '../core/firebase.js';
 import { requireLogin } from '../core/auth.js';
-import { findBannedWord, looksLikeGibberish, isOffTopic, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE } from '../core/contentFilter.js';
+import { findBannedWord, looksLikeGibberish, isOffTopic, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE, findAIWritingSigns, aiWritingMessage, earlierWriting } from '../core/contentFilter.js';
 import { startCooldown } from '../core/cooldown.js';
 import { blockPasteInto } from '../core/noCopyPaste.js';
 import { MIN_WORDS, wordCount, wordsToGo } from './revisionNotice.js';
@@ -156,6 +156,12 @@ async function handleSubmit() {
   if (looksLikeAssistantPaste(text)) {
     statusEl.textContent = ASSISTANT_PASTE_MESSAGE;
     recordMistake();
+    return;
+  }
+
+  const aiSigns = findAIWritingSigns(text, { personal: true, previous: earlierWriting(studentData, studentData[gate.textField]) });
+  if (aiSigns) {
+    statusEl.textContent = aiWritingMessage(aiSigns);
     return;
   }
 

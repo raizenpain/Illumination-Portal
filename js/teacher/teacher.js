@@ -364,7 +364,9 @@ if (user) {
 
     classListGrid.innerHTML = '';
 
-    const sections = Object.keys(group.bySection).sort();
+    // Every class the teacher offers gets a card, even one nobody has
+    // enrolled in yet (0 seekers), plus any other section a student is in.
+    const sections = [...new Set([...getOfferingsForTeacher(teacherEmail), ...Object.keys(group.bySection)])].sort();
 
     if (sections.length === 0) {
       classListGrid.innerHTML = '<p>No students yet.</p>';
@@ -372,7 +374,7 @@ if (user) {
     }
 
     sections.forEach((section) => {
-      const list = group.bySection[section];
+      const list = group.bySection[section] || [];
       const card = document.createElement('div');
       card.className = 'roster-nav-card';
       card.innerHTML = `

@@ -12,6 +12,37 @@
 
 export const PATCHES = [
   {
+    version: '2.3',
+    date: 'October 16, 2026',
+    sections: [
+      {
+        title: 'Written Work',
+        groups: [
+          {
+            title: 'Words That Are Not Allowed',
+            items: [
+              'More English, Tagalog and Bisaya words are now blocked everywhere you write: reflections, season answers, the class chat and gift notes',
+              ['This includes', [
+                'Swear words and insults',
+                'Softened versions of swear words',
+                'Trash talk, such as telling someone to cry more'
+              ]],
+              'Disguised spellings are caught too: spaces or dots between letters, numbers in place of letters, and stretched letters',
+              'Writing a blocked word starts the 30-day cooldown, the same as before'
+            ]
+          },
+          {
+            title: 'Your Own Words',
+            items: [
+              'Answers that read like AI-generated writing can\'t be submitted. Write in your own words and your own voice',
+              'If your answer is refused, the box tells you why, so you know what to change'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '2.2',
     date: 'October 8, 2026',
     sections: [

@@ -28,6 +28,7 @@ import { COOLDOWN_DAYS, isOnCooldown, cooldownEndsAt } from '../core/cooldown.js
 import { maybePostDailyGreeting } from '../dashboard/dailyGreeting.js';
 import { createImageSlot, loadInto, deleteChatImage } from '../dashboard/chatImages.js';
 import { publishMidtermHonorRoll } from '../dashboard/midtermHonorRoll.js';
+import { publishSemifinalHonorRoll } from '../dashboard/semifinalHonor.js';
 import { TICKET_INFO } from '../dashboard/ticketTrader.js';
 import { findArtifact } from '../dashboard/artifacts.js';
 import { SIDE_QUESTS } from '../sidequests/sideQuests.js';
@@ -296,6 +297,8 @@ if (user) {
       // Midterm Roll of Honor gets refreshed (see midtermHonorRoll.js) --
       // not awaited, the roster shouldn't wait on it.
       publishMidtermHonorRoll(snapshot.docs.map((student) => student.data()));
+      // ...and the Semifinal Roll of Honor (semifinalHonor.js), the same way.
+      publishSemifinalHonorRoll(snapshot.docs.map((student) => student.data()));
 
       renderTeacherListView();
 

@@ -207,7 +207,8 @@ const CSS = `
 }
 `;
 
-function injectStyles() {
+/** Also used by semifinalHonor.js, which shares the .honor-* look. */
+export function injectStyles() {
   if (document.getElementById('midtermHonorStyles')) return;
   if (![...document.querySelectorAll('link[href*="fonts.googleapis.com"]')].some((l) => l.href.includes('Cinzel'))) {
     const font = document.createElement('link');
@@ -221,7 +222,7 @@ function injectStyles() {
   document.head.appendChild(style);
 }
 
-const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+export const escapeHtml = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 
 // ---------- data ----------
 
@@ -289,8 +290,8 @@ function marqueeHtml(model, list, viewerName, reverse) {
   return `<div class="honor-marquee"><div class="honor-track${reverse ? ' rev' : ''}" style="--dur:${Math.max(30, list.length * 3.2)}s">${chips}${chips}</div></div>`;
 }
 
-const CORNER_SVG = `<svg viewBox="0 0 46 46" fill="none" aria-hidden="true"><path d="M2 30 V8 Q2 2 8 2 H30" stroke="#C9923A" stroke-width="1.6"/><path d="M7 22 V11 Q7 7 11 7 H22" stroke="#E9B85A" stroke-width="1" opacity=".7"/><path d="M2 8 Q14 10 16 16 Q10 14 8 2" fill="#C9923A" opacity=".85"/><circle cx="16" cy="16" r="2.4" fill="#FFD9A0"/></svg>`;
-const CREST_SVG = `<svg viewBox="0 0 96 96" aria-hidden="true">
+export const CORNER_SVG = `<svg viewBox="0 0 46 46" fill="none" aria-hidden="true"><path d="M2 30 V8 Q2 2 8 2 H30" stroke="#C9923A" stroke-width="1.6"/><path d="M7 22 V11 Q7 7 11 7 H22" stroke="#E9B85A" stroke-width="1" opacity=".7"/><path d="M2 8 Q14 10 16 16 Q10 14 8 2" fill="#C9923A" opacity=".85"/><circle cx="16" cy="16" r="2.4" fill="#FFD9A0"/></svg>`;
+export const CREST_SVG = `<svg viewBox="0 0 96 96" aria-hidden="true">
   <g fill="none" stroke="#E9B85A" stroke-width="2.2" stroke-linecap="round">
     <path d="M30 78 Q10 60 16 30"/><path d="M66 78 Q86 60 80 30"/>
   </g>
@@ -302,7 +303,7 @@ const CREST_SVG = `<svg viewBox="0 0 96 96" aria-hidden="true">
   <path d="M30 80 Q48 88 66 80" fill="none" stroke="#E9B85A" stroke-width="2.2" stroke-linecap="round"/>
 </svg>`;
 
-function sparksHtml() {
+export function sparksHtml() {
   let out = '';
   for (let i = 0; i < 26; i++) {
     out += `<span style="--x:${Math.random() * 100}%;--s:${3 + Math.random() * 5}px;--d:${6 + Math.random() * 7}s;--delay:${-Math.random() * 12}s;--drift:${(Math.random() - 0.5) * 140}px"></span>`;

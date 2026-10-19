@@ -473,6 +473,7 @@ import { TICKETS } from './js/vault/vaultTickets.js';
 import { showTreasureReveal } from './js/core/treasureReveal.js';
 import { maybeShowPrelimReminder } from './js/core/prelimDeadline.js';
 import { showHonorPopup, renderHonorStrip } from './js/dashboard/midtermHonorRoll.js';
+import { showSemifinalHonorPopup } from './js/dashboard/semifinalHonor.js';
 import { maybeShowFinale, awardFinalGift } from './js/dashboard/journeyFinale.js';
 import { renderCertificateShelf } from './js/core/certificates.js';
 import { maybeShowRefundNotice } from './js/dashboard/refundNotice.js';
@@ -796,6 +797,7 @@ async function loadStudentCard() {
       // reminder -- the order Jornie asked for.
       await step(() => maybeShowPatchNotes());
       await step(() => showHonorPopup({ viewerName: honorViewerName }));
+      await step(() => showSemifinalHonorPopup({ viewerName: honorViewerName }));
       await step(() => maybeShowPrelimReminder({
         email,
         midtermUnlocked: !!data.midtermUnlocked,

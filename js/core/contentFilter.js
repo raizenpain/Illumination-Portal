@@ -284,8 +284,11 @@ function findMaskedWord(lower, coursework) {
 
 /** A banned word hidden by one of the tricks described above. */
 function findDisguisedWord(text, coursework) {
-  // "!" between letters stands for i ("sh!t", "b!tch").
-  const lower = text.toLowerCase().replace(/(?<=[a-z])!(?=[a-z])/g, 'i');
+  // "!" between letters stands for i ("sh!t", "b!tch"). No regex
+  // lookbehind anywhere in this file: Safari before iOS 16.4 can't parse
+  // it, and one such pattern stops the whole module (and every page that
+  // imports it) from loading on those phones.
+  const lower = text.toLowerCase().replace(/([a-z])!(?=[a-z])/g, '$1i');
 
   const masked = findMaskedWord(lower, coursework);
   if (masked) return masked;
@@ -294,7 +297,7 @@ function findDisguisedWord(text, coursework) {
 
   // Spelled out: three or more single characters in a row with only
   // separators between them.
-  const runs = lower.match(/(?<![a-z0-9@$])(?:[a-z0-9@$][\s.\-_*]+){2,}[a-z0-9@$](?![a-z0-9@$])/g) || [];
+  const runs = [...lower.matchAll(/(?:^|[^a-z0-9@$])((?:[a-z0-9@$][\s.\-_*]+){2,}[a-z0-9@$])(?![a-z0-9@$])/g)].map((m) => m[1]);
   for (const run of runs) {
     const joined = unswap(run.replace(/[\s.\-_*]+/g, ''));
     const exact = matchWholeWord(BANNED_WORDS, joined, coursework);
@@ -451,7 +454,7 @@ const AI_PHRASES = [
   'reflects the', 'this reflection', 'this highlights', 'this underscores', 'this demonstrates',
   'not only', 'but also', 'whether it be', 'in a world where', 'journey of faith', 'deeply rooted'
 ];
-const AI_PHRASE_RES = AI_PHRASES.map((p) => new RegExp(`(?<![a-z])${escapeRegExp(p)}(?![a-z])`, 'gi'));
+const AI_PHRASE_RES = AI_PHRASES.map((p) => new RegExp(`(?:^|[^a-z])${escapeRegExp(p)}(?![a-z])`, 'gi'));
 const FIRST_PERSON = /\b(?:i|i'm|i've|i'd|i'll|me|my|mine|myself|ako|ko|nako|akong|nakong|kanako|akoa)\b/gi;
 const CITATION = /\(\s*[A-Z][a-z]+(?: et al\.)?,?\s*\d{4}\s*\)|\bet al\.|\bdoi:|https?:\/\/|\bjournal of\b/i;
 const AI_BLOCK_SCORE = 4;
@@ -463,7 +466,7 @@ function writingFeatures(text) {
   const w = textWords(text);
   const n = Math.max(1, w.length);
   const phraseHits = AI_PHRASE_RES.reduce((sum, re) => sum + (text.match(re) || []).length, 0);
-  const lengths = text.split(/(?<=[.!?])\s+/).map((s) => textWords(s).length).filter((len) => len >= 3);
+  const lengths = text.replace(/([.!?])\s+/g, '$1\u0000').split('\u0000').map((s) => textWords(s).length).filter((len) => len >= 3);
   const mean = lengths.reduce((a, b) => a + b, 0) / Math.max(1, lengths.length);
   const sd = Math.sqrt(lengths.reduce((a, b) => a + (b - mean) ** 2, 0) / Math.max(1, lengths.length));
   return {

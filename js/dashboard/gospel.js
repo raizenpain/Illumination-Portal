@@ -35,7 +35,9 @@ function pickShortExcerpt(fullText, maxLen = 150) {
   const sentences = fullText
     .split('\n')
     .join(' ')
-    .split(/(?<=[.!?])\s+/)
+    // Not a lookbehind split: Safari before iOS 16.4 can't parse one.
+    .replace(/([.!?])\s+/g, '$1\u0000')
+    .split('\u0000')
     .map((s) => s.trim())
     .filter(Boolean);
 

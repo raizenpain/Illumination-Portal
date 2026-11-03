@@ -67,13 +67,28 @@ export const PRELIM_EXTENSIONS = [
     dateText: 'October 22, 2026',
     timeText: '11:59 PM',
     newClass: true
+  },
+  // everyone: a one-day reopening for EVERY enrolled student who has not
+  // unlocked Midterm, whatever their class (Jornie, 2026-11-03). Not for
+  // records that never finished enrolling (no studentId).
+  {
+    everyone: true,
+    locksAt: '2026-11-04T00:00:00+08:00',
+    dateText: 'November 3, 2026',
+    timeText: '11:59 PM'
   }
 ];
 const extMs = (ext) => new Date(ext.locksAt).getTime();
 
-/** The extension of the class `data` (a student record) is in, or null. */
+const extensionApplies = (ext, data) => ext.everyone
+  ? !!data.studentId
+  : ext.teacherEmail === data.teacherEmail && ext.section === data.section;
+
+/** The extension that applies to `data` (a student record) and closes
+ *  last, or null. */
 export function prelimExtensionFor(data) {
-  return (data && PRELIM_EXTENSIONS.find((ext) => ext.teacherEmail === data.teacherEmail && ext.section === data.section)) || null;
+  if (!data) return null;
+  return PRELIM_EXTENSIONS.filter((ext) => extensionApplies(ext, data)).sort((a, b) => extMs(b) - extMs(a))[0] || null;
 }
 
 /** The new classes a brand-new student may still sign up into. */
@@ -374,10 +389,12 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
     // class's own teacher (shown the one that closes last) so they can
     // see what the students see.
     const previewExt = isAdmin
-      ? PRELIM_EXTENSIONS.filter((e) => e.teacherEmail === email && Date.now() < extMs(e)).sort((a, b) => extMs(b) - extMs(a))[0]
+      ? PRELIM_EXTENSIONS.filter((e) => (e.everyone || e.teacherEmail === email) && Date.now() < extMs(e)).sort((a, b) => extMs(b) - extMs(a))[0]
       : null;
     const teacherPreview = !!previewExt;
-    const ext = previewExt || (!isAdmin && !midtermUnlocked ? prelimExtensionFor({ teacherEmail, section }) : null);
+    // A student on the dashboard is enrolled (dashboard.html sends anyone
+    // without a studentId back to enroll.html), so an `everyone` reopening applies.
+    const ext = previewExt || (!isAdmin && !midtermUnlocked ? prelimExtensionFor({ teacherEmail, section, studentId: 'enrolled' }) : null);
     const extended = !!ext;
     const deadlineMs = extended ? extMs(ext) : LOCK_MS;
     if (Date.now() >= deadlineMs) { resolve(); return; }
@@ -389,13 +406,15 @@ export function maybeShowPrelimReminder({ email, midtermUnlocked, hasSeen, isAdm
 
     injectStyles();
     const seal = teacherPreview
-      ? `<div class="prelim-reminder-seal safe">${SEAL_SAFE}<div><strong>Shown to you as the teacher</strong>Only students of ${ext && ext.section} who have not unlocked the Midterm Season see this countdown.</div></div>`
+      ? `<div class="prelim-reminder-seal safe">${SEAL_SAFE}<div><strong>Shown to you as the teacher</strong>Only students ${ext && ext.everyone ? '' : `of ${ext && ext.section} `}who have not unlocked the Midterm Season see this countdown.</div></div>`
       : midtermUnlocked
       ? `<div class="prelim-reminder-seal safe">${SEAL_SAFE}<div><strong>Your path is secured</strong>You've already unlocked the Midterm Season. You're all set. Keep going!</div></div>`
       : `<div class="prelim-reminder-seal warn">${SEAL_WARN}<div><strong>Your path is not yet secured</strong>You haven't unlocked the Midterm Season yet. Finish your puzzles now so you don't lose access.</div></div>`;
-    const kicker = !extended ? '✦ A Warning to All Seekers ✦' : ext.newClass ? '✦ Welcome, New Seekers ✦' : '✦ A Final Extension ✦';
+    const kicker = !extended ? '✦ A Warning to All Seekers ✦' : ext.everyone ? '✦ The Gate Reopens ✦' : ext.newClass ? '✦ Welcome, New Seekers ✦' : '✦ A Final Extension ✦';
     const gift = !extended
       ? `🍎 <strong>A Teachers' Day gift:</strong> the deadline has been extended from October 5 to <strong>${LOCK_DATE_TEXT}</strong>. Use these extra days well!`
+      : ext.everyone
+      ? `🕯️ <strong>One more chance:</strong> the Prelim Season is open again for <strong>today only</strong>, until <strong>${ext.dateText} at ${ext.timeText}</strong>. Finish it now!`
       : ext.newClass
       ? `🕯️ <strong>Your class has its own Prelim Season:</strong> it is open for you until <strong>${ext.dateText} at ${ext.timeText}</strong>. Use this time well!`
       : `🕯️ <strong>An extension for your class:</strong> the Prelim Season has been reopened for you until <strong>${ext.dateText} at ${ext.timeText}</strong>. Use this time well!`;

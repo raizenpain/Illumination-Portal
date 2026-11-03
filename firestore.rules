@@ -40,11 +40,21 @@ service cloud.firestore {
       return request.time < timestamp.value(1792684800000);
     }
 
+    // A one-day reopening for EVERY enrolled student (Jornie, 2026-11-03):
+    // until 2026-11-04 00:00 Philippine time (= 1793721600000 ms; "November
+    // 3, 11:59 PM"). Only records that finished enrolling (have a
+    // studentId), so it opens no half-done sign-ups.
+    function prelimReopenOpen(data) {
+      return request.time < timestamp.value(1793721600000) &&
+             data.get('studentId', null) != null;
+    }
+
     function prelimExtensionOpen(data) {
-      return data.get('teacherEmail', '') == 'jornie.hinay@hcdc.edu.ph' &&
-             ((data.get('section', '') == '01555 | ReEd 203: The Catholic Church (MWF 4:00-5:00 PM)' &&
-               request.time < timestamp.value(1791734400000)) ||
-              (data.get('section', '') == newClassSection() && newClassEnrollmentOpen()));
+      return prelimReopenOpen(data) ||
+             (data.get('teacherEmail', '') == 'jornie.hinay@hcdc.edu.ph' &&
+              ((data.get('section', '') == '01555 | ReEd 203: The Catholic Church (MWF 4:00-5:00 PM)' &&
+                request.time < timestamp.value(1791734400000)) ||
+               (data.get('section', '') == newClassSection() && newClassEnrollmentOpen())));
     }
 
     // Is the Prelim Season closed for the student whose stored record is

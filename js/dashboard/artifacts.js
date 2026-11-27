@@ -111,6 +111,18 @@ export function tierOfArtifact(id) {
   return null;
 }
 
+/** The Legendary a student has forged (claimed), or null. A student
+ *  forges only one (legendaryForge.js), so once they have, their path is
+ *  that Legendary's chain for good, whatever chosenLegendaryChain says.
+ *  Also covers a Legendary granted by the old silent auto-unlock. */
+export function forgedLegendaryOf(data) {
+  if (!data) return null;
+  if (data.legendaryForgeSeen && chainForTier5(data.legendaryForgeChain)) return data.legendaryForgeChain;
+  const owned = data.ownedArtifacts || [];
+  const chain = CRAFTING_CHAINS.find((c) => owned.includes(c.tier5Id));
+  return chain ? chain.tier5Id : null;
+}
+
 export function chainForTier5(tier5Id) {
   return CRAFTING_CHAINS.find((c) => c.tier5Id === tier5Id) || null;
 }

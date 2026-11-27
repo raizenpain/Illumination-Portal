@@ -17,7 +17,7 @@
 import { db, doc, setDoc, runTransaction } from '../core/firebase.js';
 import {
   TIERS, ARTIFACTS, CRAFTING_CHAINS,
-  artifactIconPath, chainForTier5, tokenCostFor
+  artifactIconPath, chainForTier5, tokenCostFor, forgedLegendaryOf
 } from './artifacts.js';
 import { getRankProgress } from '../core/rank.js';
 import { runForgeGate, FORGE_DAYS } from './legendaryForge.js';
@@ -81,7 +81,9 @@ export function refreshCrafting() {
 
 function renderChainArea() {
   const area = document.getElementById('craftingChainArea');
-  const chosen = studentData.chosenLegendaryChain;
+  // Once a Legendary is forged, the path is locked to it (one per student).
+  const forged = forgedLegendaryOf(studentData);
+  const chosen = forged || studentData.chosenLegendaryChain;
 
   if (!chosen) {
     area.innerHTML = `<p class="section-subtitle">Choose the Legendary Artifact you want to forge — the tickets/tokens you already have carry over.</p>`;
@@ -108,7 +110,13 @@ function renderChainArea() {
   const chainInfo = chainForTier5(chosen);
   const fullChain = [...chainInfo.chain, chosen]; // 4 prerequisites + the legendary itself
 
-  area.innerHTML = `
+  area.innerHTML = forged
+    ? `
+    <div class="crafting-chain-header">
+      <span class="section-subtitle">⚒️ Legendary forged: <strong>${chainInfo.tier5Name}</strong></span>
+    </div>
+  `
+    : `
     <div class="crafting-chain-header">
       <span class="section-subtitle">Pursuing: <strong>${chainInfo.tier5Name}</strong></span>
       <button type="button" class="back-btn crafting-change-btn" id="craftingChangeBtn">Change Target</button>
@@ -139,10 +147,13 @@ function renderChainArea() {
 
   area.appendChild(row);
 
-  document.getElementById('craftingChangeBtn').onclick = () => {
-    if (!confirm(`Change your target Legendary Artifact away from ${chainInfo.tier5Name}? Any artifacts you already own are kept — chain order will just apply to your new target instead.`)) return;
-    chooseChain(null);
-  };
+  const changeBtn = document.getElementById('craftingChangeBtn');
+  if (changeBtn) {
+    changeBtn.onclick = () => {
+      if (!confirm(`Change your target Legendary Artifact away from ${chainInfo.tier5Name}? Any artifacts you already own are kept — chain order will just apply to your new target instead.`)) return;
+      chooseChain(null);
+    };
+  }
 }
 
 function findArtifactName(id) {
@@ -154,6 +165,7 @@ function findArtifactName(id) {
 }
 
 async function chooseChain(tier5Id) {
+  if (forgedLegendaryOf(studentData)) return; // the path is locked once a Legendary is forged
   await setDoc(doc(db, 'students', email), { chosenLegendaryChain: tier5Id }, { merge: true });
   studentData.chosenLegendaryChain = tier5Id;
   await checkTier5AutoUnlock();
@@ -168,7 +180,7 @@ function artifactState(id, tier) {
   if (isOwned(id)) return { kind: 'owned' };
 
   if (tier === 5) {
-    if (studentData.chosenLegendaryChain !== id) return { kind: 'tier5-other' };
+    if ((forgedLegendaryOf(studentData) || studentData.chosenLegendaryChain) !== id) return { kind: 'tier5-other' };
 
     const chainInfo = chainForTier5(id);
     const chainComplete = chainInfo.chain.every((cid) => isOwned(cid));
@@ -181,7 +193,7 @@ function artifactState(id, tier) {
     return { kind: 'tier5-pending' };
   }
 
-  const chosen = studentData.chosenLegendaryChain;
+  const chosen = forgedLegendaryOf(studentData) || studentData.chosenLegendaryChain;
   const chainInfo = chosen ? chainForTier5(chosen) : null;
   const chainIndex = chainInfo ? chainInfo.chain.indexOf(id) : -1;
 
@@ -373,6 +385,7 @@ async function purchaseArtifact(id, tier) {
 // after the 3-day forging. Still called on load and after each purchase,
 // so buying the 4th chain artifact opens the forge straight away.
 async function checkTier5AutoUnlock() {
+  if (forgedLegendaryOf(studentData)) return; // one Legendary per student
   const chosen = studentData.chosenLegendaryChain;
   if (!chosen || isOwned(chosen)) return;
   const chainInfo = chainForTier5(chosen);

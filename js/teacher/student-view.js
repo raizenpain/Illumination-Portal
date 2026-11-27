@@ -16,7 +16,7 @@ import { PUZZLE_CONFIG } from '../puzzles/puzzles.js';
 import { SEASON_CONTENT } from '../seasons/seasonContent.js';
 import { getRankProgress } from '../core/rank.js';
 import { TICKET_INFO } from '../dashboard/ticketTrader.js';
-import { findArtifact, tierOfArtifact, TIERS, artifactIconPath, chainForTier5 } from '../dashboard/artifacts.js';
+import { findArtifact, tierOfArtifact, TIERS, artifactIconPath, chainForTier5, forgedLegendaryOf } from '../dashboard/artifacts.js';
 import { PRELIM_BADGE_INFO } from '../dashboard/prelimBadges.js';
 import { resolveSeasonBadge } from '../seasons/seasonBadges.js';
 import { SIDE_QUESTS, resolveSideQuestBadge } from '../sidequests/sideQuests.js';
@@ -216,14 +216,18 @@ function renderArtifacts(data) {
   container.innerHTML = '';
 
   const owned = data.ownedArtifacts || [];
-  const chosen = data.chosenLegendaryChain;
+  // A forged Legendary is the student's path for good (one per student).
+  const forged = forgedLegendaryOf(data);
+  const chosen = forged || data.chosenLegendaryChain;
   const chainInfo = chosen ? chainForTier5(chosen) : null;
 
   const chainHeading = document.createElement('p');
   chainHeading.className = 'student-view-chain-heading';
-  chainHeading.innerHTML = chainInfo
-    ? `Pursuing: <strong>${chainInfo.tier5Name}</strong>`
-    : 'No Legendary chain chosen yet.';
+  chainHeading.innerHTML = !chainInfo
+    ? 'No Legendary chain chosen yet.'
+    : forged
+      ? `⚒️ Legendary forged: <strong>${chainInfo.tier5Name}</strong>`
+      : `Pursuing: <strong>${chainInfo.tier5Name}</strong>`;
   container.appendChild(chainHeading);
 
   if (chainInfo) {

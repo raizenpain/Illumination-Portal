@@ -16,6 +16,37 @@ export const PATCHES = [
     date: 'November 27, 2026',
     sections: [
       {
+        title: 'The Portal Is Closing',
+        important: true,
+        alert: 'The portal closes on December 20, 2026 at 11:59 PM (Philippine time). Finish your journey before then.',
+        groups: [
+          {
+            title: 'What Happens When It Closes',
+            items: [
+              'No quest can be finished and nothing more can be earned',
+              'Every page shows "The Portal Has Closed"',
+              'Your certificates stay yours: the closed screen lists every certificate you earned, and you can still open and download them'
+            ]
+          },
+          {
+            title: 'Only the Legendary May Pass',
+            items: [
+              'Students who finish the whole portal and claim their Legendary Artifact before the close keep full access after it',
+              'The Legendary takes time: a 7-day countdown before the Comprehensive Final Exam, then 3 days of forging. Start early'
+            ]
+          },
+          {
+            title: 'Before December 20',
+            items: [
+              'Finish your seasons and submit your reflections',
+              'Forge and claim your Legendary Artifact',
+              'Open and download every certificate you have earned',
+              'A countdown to the close now opens each time you visit the dashboard'
+            ]
+          }
+        ]
+      },
+      {
         title: 'The Legendary Path',
         groups: [
           {
@@ -608,6 +639,12 @@ const CSS = `
 .pn-group ul ul { margin: 2px 0 4px; padding-left: 20px; }
 .pn-group ul ul li { font-size: 13.5px; color: #A9B1BA; list-style: square; }
 .pn-foot { margin: 0; padding: 0 18px 20px; font-size: 12.5px; color: #6E7680; text-align: center; }
+@keyframes pnImportant { 0%, 100% { box-shadow: 0 0 0 1px #E9B85A, 0 0 18px rgba(255,190,80,.25); } 50% { box-shadow: 0 0 0 1px #FFE7A8, 0 0 34px rgba(255,190,80,.5); } }
+.pn-section--important { border-color: #E9B85A; animation: pnImportant 2.6s ease-in-out infinite; }
+.pn-section--important .pn-banner { color: #2A1A05; text-shadow: 0 1px 0 rgba(255,240,200,.6); background: linear-gradient(90deg, #F6D98A 0%, #E9B85A 35%, #C9923A 70%, #8A6626 100%); }
+.pn-section--important .pn-banner::after { background: linear-gradient(90deg, rgba(255,250,220,.9), transparent 70%); }
+.pn-badge { display: inline-block; margin: 0 12px 4px 0; padding: 3px 10px; border-radius: 3px; vertical-align: middle; font-family: 'Segoe UI', system-ui, sans-serif; font-size: 12px; font-weight: 800; letter-spacing: 2px; color: #FFF1E8; background: #B3261E; box-shadow: 0 0 12px rgba(179,38,30,.6); text-shadow: none; }
+.pn-alert { margin: 0; padding: 14px 18px; font-size: 17px; font-weight: 600; line-height: 1.5; color: #FFE2A8; background: linear-gradient(180deg, rgba(233,184,90,.18), rgba(120,70,10,.08)); border-bottom: 1px solid rgba(233,184,90,.35); }
 @media (max-width: 560px) {
   .pn-overlay { padding: 0; }
   .pn-page { min-height: 100%; border: none; }
@@ -616,12 +653,13 @@ const CSS = `
   .pn-version { font-size: 48px; }
   .pn-body { padding: 12px 8px 20px; }
   .pn-banner { font-size: 19px; padding: 11px 12px; }
+  .pn-alert { font-size: 15px; padding: 11px 12px; }
   .pn-group { padding: 10px 12px 4px; }
   .pn-group h4 { font-size: 13.5px; }
   .pn-group li { font-size: 13.5px; }
   .pn-group ul { padding-left: 18px; }
 }
-@media (prefers-reduced-motion: reduce) { .pn-overlay, .pn-page { animation: none; } }
+@media (prefers-reduced-motion: reduce) { .pn-overlay, .pn-page, .pn-section--important { animation: none; } }
 `;
 
 function injectStyles() {
@@ -646,10 +684,13 @@ function itemsHtml(items) {
     : `<li>${escapeHtml(item)}</li>`).join('')}</ul>`;
 }
 
+// A section with important: true is drawn in gold with an IMPORTANT
+// badge; its optional `alert` is a large callout line under the banner.
 function bodyHtml(patch) {
   return patch.sections.map((section) => `
-    <section class="pn-section">
-      <h3 class="pn-banner">${escapeHtml(section.title)}</h3>
+    <section class="pn-section${section.important ? ' pn-section--important' : ''}">
+      <h3 class="pn-banner">${section.important ? '<span class="pn-badge">⚠ Important</span>' : ''}${escapeHtml(section.title)}</h3>
+      ${section.alert ? `<p class="pn-alert">${escapeHtml(section.alert)}</p>` : ''}
       ${section.groups.map((g) => `
         <div class="pn-group">
           <h4>${escapeHtml(g.title)}</h4>
@@ -712,11 +753,12 @@ export function showPatchNotes(version = PATCHES[0].version) {
   });
 }
 
-// Until this moment the newest notes open on EVERY dashboard visit
-// (Jornie: "show it within this week" — through Sunday, Oct 11, PH time);
+// Until this moment the newest notes open on EVERY dashboard visit;
 // after it, once per new version per device. Move it forward for a
 // future update that should also be pushed every visit for a while.
-const SHOW_EVERY_VISIT_UNTIL = Date.parse('2026-10-11T23:59:59+08:00');
+// Now: 2.4's portal-closing announcement (Jornie, 2026-11-27: "very
+// important"), a week, so students who saw 2.4 before it was added see it.
+const SHOW_EVERY_VISIT_UNTIL = Date.parse('2026-12-04T23:59:59+08:00');
 
 /** Shows the newest patch notes (every visit until SHOW_EVERY_VISIT_UNTIL,
  *  then once per device per version); resolves when closed. */

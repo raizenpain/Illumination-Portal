@@ -12,6 +12,25 @@
 
 export const PATCHES = [
   {
+    version: '2.4',
+    date: 'November 27, 2026',
+    sections: [
+      {
+        title: 'The Legendary Path',
+        groups: [
+          {
+            title: 'Shorter Waits',
+            items: [
+              'The countdown before the Comprehensive Final Exam is now 7 days (was 15)',
+              'Forging your Legendary Artifact now takes 3 days (was 5)',
+              'If you are already counting down or forging, your wait is shorter right away'
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  {
     version: '2.3',
     date: 'October 16, 2026',
     sections: [

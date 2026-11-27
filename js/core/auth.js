@@ -1,5 +1,6 @@
 import { enforcePrelimLockout } from './prelimDeadline.js';
 import { enforceCooldown } from './cooldown.js';
+import { enforcePortalClosure } from './portalClosure.js';
 
 export function requireLogin() {
   const email = localStorage.getItem('studentEmail');
@@ -15,6 +16,9 @@ export function requireLogin() {
   enforcePrelimLockout(email);
   // Same for the 30-day cooldown after a banned word (cooldown.js).
   enforceCooldown(email);
+  // And the portal's closing on December 20 (portalClosure.js). The
+  // certificate pages don't come through here, so they stay open.
+  enforcePortalClosure(email);
 
   return { email, name };
 }

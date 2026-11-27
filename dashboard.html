@@ -474,6 +474,7 @@ import { showTreasureReveal } from './js/core/treasureReveal.js';
 import { maybeShowPrelimReminder } from './js/core/prelimDeadline.js';
 import { showHonorPopup, renderHonorStrip } from './js/dashboard/midtermHonorRoll.js';
 import { showSemifinalHonorPopup } from './js/dashboard/semifinalHonor.js';
+import { maybeShowClosurePoster } from './js/core/portalClosure.js';
 import { maybeShowFinale, awardFinalGift } from './js/dashboard/journeyFinale.js';
 import { renderCertificateShelf } from './js/core/certificates.js';
 import { maybeShowRefundNotice } from './js/dashboard/refundNotice.js';
@@ -792,9 +793,11 @@ async function loadStudentCard() {
       const step = async (show) => {
         try { await show(); } catch (err) { console.error('A dashboard popup failed:', err); }
       };
-      // The patch notes come first (every visit this week -- see
-      // patchNotes.js), then Congratulations, then the Prelim deadline
-      // reminder -- the order Jornie asked for.
+      // The portal-closing poster comes first (every visit until
+      // December 20 -- see portalClosure.js), then the patch notes, then
+      // Congratulations, then the Prelim deadline reminder -- the order
+      // Jornie asked for.
+      await step(() => maybeShowClosurePoster());
       await step(() => maybeShowPatchNotes());
       await step(() => showHonorPopup({ viewerName: honorViewerName }));
       await step(() => showSemifinalHonorPopup({ viewerName: honorViewerName }));

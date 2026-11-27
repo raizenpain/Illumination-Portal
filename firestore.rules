@@ -81,10 +81,37 @@ service cloud.firestore {
                after.get('teacherEmail', '') == 'jornie.hinay@hcdc.edu.ph'));
     }
 
+    // The whole portal closes for students at 2026-12-21 00:00 Philippine
+    // time (= 1797782400000 ms; "December 20, 11:59 PM") -- Jornie,
+    // 2026-11-27. Mirrored from PORTAL_CLOSES_AT in portalClosure.js.
+    // Students who finished the portal and claimed their Legendary
+    // (legendaryForgeSeen) keep full access; everyone else may only
+    // issue the certificates they earned (isCertificateIssue below).
+    function portalClosed() {
+      return request.time >= timestamp.value(1797782400000);
+    }
+
+    function keepsPortalAfterClose(data) {
+      return data.get('legendaryForgeSeen', false) == true;
+    }
+
+    // Opening a certificate for the first time saves its verification
+    // code and issue date (season-completion.js, completion.js) -- the
+    // one write still allowed after the close.
+    function isCertificateIssue() {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'verificationCode', 'puzzle2VerificationCode', 'puzzle3VerificationCode',
+        'prelimVerificationCode', 'vaultVerificationCode', 'midtermVerificationCode',
+        'semifinalVerificationCode', 'finalVerificationCode', 'certificateDates'
+      ]);
+    }
+
     // May this student still use the portal: they unlocked Midterm, or
-    // the Prelim Season is still open for them.
+    // the Prelim Season is still open for them -- and the portal hasn't
+    // closed, unless they hold a Legendary.
     function mayEnterPortal(data) {
-      return !prelimLockedFor(data) || data.get('midtermUnlocked', false) == true;
+      return (!portalClosed() || keepsPortalAfterClose(data)) &&
+             (!prelimLockedFor(data) || data.get('midtermUnlocked', false) == true);
     }
 
     // A student's teacherEmail/section aren't in their auth token, so
@@ -228,7 +255,8 @@ service cloud.firestore {
                        ((request.auth.token.email == studentId &&
                          request.auth.token.email.matches('.*@hcdc[.]edu[.]ph$') &&
                          (isAdmin() || mayEnterPortal(resource.data) ||
-                          isNewClassSignup(resource.data, request.resource.data)) &&
+                          isNewClassSignup(resource.data, request.resource.data) ||
+                          isCertificateIssue()) &&
                          request.resource.data.diff(resource.data).affectedKeys()
                            .hasOnly(studentSelfFields().concat(['cooldown'])) &&
                          // On cooldown: the record is frozen until it

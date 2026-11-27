@@ -1,11 +1,13 @@
 import { db, doc, getDoc, setDoc } from '../core/firebase.js';
 import { enforcePrelimLockout } from '../core/prelimDeadline.js';
 import { enforceCooldown } from '../core/cooldown.js';
+import { enforcePortalClosure } from '../core/portalClosure.js';
 
 const email = localStorage.getItem('studentEmail');
 const name = localStorage.getItem('studentName');
 enforcePrelimLockout(email);
 enforceCooldown(email);
+enforcePortalClosure(email);
 
 if (!email) {
 window.location.href = 'login.html';

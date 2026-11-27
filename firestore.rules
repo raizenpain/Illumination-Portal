@@ -95,6 +95,46 @@ service cloud.firestore {
       return data.get('legendaryForgeSeen', false) == true;
     }
 
+    // One Legendary Artifact per student (Jornie, 2026-11-27). Whenever a
+    // write touches ownedArtifacts, it may hold at most one of the six
+    // Legendaries (keep in sync with CRAFTING_CHAINS in artifacts.js).
+    function atMostOneLegendary() {
+      return !('ownedArtifacts' in request.resource.data.diff(resource.data).affectedKeys()) ||
+             request.resource.data.ownedArtifacts.toSet().intersection([
+               'helm_of_the_undying', 'stygian_desolator', 'divine_regalia',
+               'fallen_sky', 'unrelenting_eye', 'book_of_the_dead'
+             ].toSet()).size() <= 1;
+    }
+
+    // Once a Legendary forge has started, its start time and its
+    // Legendary are fixed: it can't be restarted or switched to another.
+    function forgeNeverRestarted() {
+      return !('legendaryForgeStartedAt' in resource.data) ||
+             !request.resource.data.diff(resource.data).affectedKeys()
+               .hasAny(['legendaryForgeStartedAt', 'legendaryForgeChain']);
+    }
+
+    // Finished the whole portal (apostleUnlocked): their season work is
+    // sealed (Jornie, 2026-11-27) -- progress, answers, reflections,
+    // puzzles and season unlocks can't change any more. Mirrors
+    // seasonsSealed() in revisionNotice.js, including its exception: while
+    // the teacher has work sent back (any revisionRequests entry true),
+    // the seal steps aside so it can be rewritten.
+    function finishedWorkSealed() {
+      return resource.data.get('apostleUnlocked', false) != true ||
+             resource.data.get('revisionRequests', {}).values().hasAny([true]) ||
+             !request.resource.data.diff(resource.data).affectedKeys().hasAny([
+               'completedNodes', 'nodeSubmissions',
+               'puzzle1', 'puzzle2', 'puzzle3', 'puzzle1Completed', 'puzzle2Completed', 'puzzle3Completed',
+               'puzzle2Unlocked', 'puzzle3Unlocked',
+               'puzzle3Reflection', 'puzzle3ReflectionSubmittedAt',
+               'semifinalReflection', 'semifinalReflectionSubmittedAt',
+               'finalReflection', 'finalReflectionSubmittedAt',
+               'apostleReflection', 'apostleReflectionSubmittedAt',
+               'midtermUnlocked', 'semifinalUnlocked', 'finalUnlocked', 'apostleUnlocked'
+             ]);
+    }
+
     // Opening a certificate for the first time saves its verification
     // code and issue date (season-completion.js, completion.js) -- the
     // one write still allowed after the close.
@@ -259,6 +299,9 @@ service cloud.firestore {
                           isCertificateIssue()) &&
                          request.resource.data.diff(resource.data).affectedKeys()
                            .hasOnly(studentSelfFields().concat(['cooldown'])) &&
+                         atMostOneLegendary() &&
+                         forgeNeverRestarted() &&
+                         finishedWorkSealed() &&
                          // On cooldown: the record is frozen until it
                          // runs out or a teacher lifts it.
                          !onCooldown(resource.data) &&

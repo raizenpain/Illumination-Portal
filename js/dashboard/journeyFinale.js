@@ -8,7 +8,7 @@
 //      stats, a farewell letter from their teacher and 2 Timothy 4:7.
 //      Saves journeyCompleteSeen when closed.
 //   2. Then the Legendary Forge (legendaryForge.js): the 7-strike ritual,
-//      the 5-day forging and the reveal, if the student qualifies.
+//      the 3-day forging and the reveal, if the student qualifies.
 //
 // dashboard.html calls maybeShowFinale(); the pilgrimage always comes
 // before the forge (legendaryForge.js waits for journeyCompleteSeen).

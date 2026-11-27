@@ -11,7 +11,7 @@
 // "extra items... contribute if the student switches" note. Tier 5
 // is never purchased directly: once all 4 chain prerequisites are owned
 // (and the student has every star), it is made in the Legendary Forge
-// (legendaryForge.js) -- 7 strikes, then 5 days of forging, then claim.
+// (legendaryForge.js) -- 7 strikes, then FORGE_DAYS (3) of forging, then claim.
 // ============================================
 
 import { db, doc, setDoc, runTransaction } from '../core/firebase.js';
@@ -370,7 +370,7 @@ async function purchaseArtifact(id, tier) {
 
 // Used to grant the Legendary silently. Now it only hands over to the
 // Legendary Forge (2026-10-03), which grants it when the student claims it
-// after the 5-day forging. Still called on load and after each purchase,
+// after the 3-day forging. Still called on load and after each purchase,
 // so buying the 4th chain artifact opens the forge straight away.
 async function checkTier5AutoUnlock() {
   const chosen = studentData.chosenLegendaryChain;

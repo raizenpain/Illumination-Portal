@@ -1,5 +1,5 @@
 // ============================================
-// LEGENDARY COUNTDOWN — a mandatory 15-day wait a student hits right
+// LEGENDARY COUNTDOWN — a mandatory 7-day wait a student hits right
 // BEFORE the Comprehensive Final Exam (final_ch11, the last chapter of
 // Final Season) -- not after finishing it. One <script> include per
 // student-facing page (same "nothing else needs to change" pattern as
@@ -18,11 +18,13 @@
 // countdown -- it keeps running in Firestore regardless of whether
 // anyone is looking at it.
 //
-// When the 15 days are up, the same overlay turns into the KEY screen
+// When the 7 days are up, the same overlay turns into the KEY screen
 // (Jornie's design, 2026-10-03): the Legendary Key appears, and the
 // student taps it to open the Comprehensive Final Exam. Turning the key
 // saves legendaryKeyUsedAt, after which this overlay never shows again
-// on any device. (Was 25 days with the overlay simply vanishing at zero.)
+// on any device. (Was 25 days with the overlay simply vanishing at zero,
+// then 15; 7 from 2026-11-27. The end is always startedAt + COUNTDOWN_MS,
+// so a change applies at once to students already counting down.)
 // If that save fails (e.g. the free-tier quota), a per-device
 // localStorage flag still lets the student through on this device, and
 // the save is retried quietly on their next page load.
@@ -38,7 +40,7 @@
 // no student doc and must never be blocked from previewing the site.
 //
 // Previews (no Firestore reads/writes): ?previewCountdown=1 shows the
-// 15-day countdown, ?previewCountdown=10 a 10-SECOND countdown that
+// 7-day countdown, ?previewCountdown=10 a 10-SECOND countdown that
 // turns into the key, ?previewKey=1 the key screen directly.
 // ============================================
 
@@ -47,7 +49,7 @@ import { ADMIN_EMAILS } from '../core/admins.js';
 import { SEASON_CONTENT } from '../seasons/seasonContent.js';
 import { runForgeGate, maybePreviewForge } from './legendaryForge.js';
 
-const COUNTDOWN_DAYS = 15;
+const COUNTDOWN_DAYS = 7;
 const COUNTDOWN_MS = COUNTDOWN_DAYS * 24 * 60 * 60 * 1000;
 const EXAM_URL = 'season.html?season=final'; // opens at the first unfinished chapter = the exam
 const KEY_IMAGE = 'assets/legendary-key.webp'; // transparent cut-out of the key
@@ -269,7 +271,7 @@ async function init() {
   }
 
   // Not at the exam gate: this same record also tells us whether the
-  // student is in the Legendary Forge (ritual / 5-day forging / reveal),
+  // student is in the Legendary Forge (ritual / 3-day forging / reveal),
   // which blocks every page the same way -- see legendaryForge.js.
   if (!isReadyForFinalExam(data)) {
     runForgeGate({ email, name: localStorage.getItem('studentName') || data.name, data });

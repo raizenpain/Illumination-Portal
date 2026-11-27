@@ -12,7 +12,9 @@
 //              sink into the fire; after the 7th, all four rise again,
 //              circle, spiral in and fuse. Then legendaryForgeStartedAt
 //              (+ legendaryForgeChain) is saved.
-//   forging -- for FORGE_DAYS (5) after that: the whole portal shows only
+//   forging -- for FORGE_DAYS (3; was 5 until 2026-11-27) after that, counted
+//              from legendaryForgeStartedAt, so a change applies at once to
+//              students already forging: the whole portal shows only
 //              the forge at work (the four artifacts orbiting and melting
 //              into the molten core) with a countdown. Unskippable, no
 //              close; Sign Out only, which doesn't pause it.
@@ -27,7 +29,7 @@
 //
 // Previews (no Firestore writes) on any student page:
 //   ?previewForge=1      the 7-strike ritual, then a 20-second forge
-//   ?previewForging=1    the 5-day forging screen
+//   ?previewForging=1    the 3-day forging screen
 //   ?previewForgeDone=1  the reveal
 // ============================================
 
@@ -37,7 +39,7 @@ import { getRankProgress } from '../core/rank.js';
 import { logActivity } from '../core/activity.js';
 import { drawLegendaryCard, saveCanvas, legendaryCardFilename, forgedDateFor, legendaryArtPath } from './legendaryCard.js';
 
-export const FORGE_DAYS = 5;
+export const FORGE_DAYS = 3;
 const FORGE_MS = FORGE_DAYS * 24 * 60 * 60 * 1000;
 const STRIKES = 7;
 const OFFER_AFTER = { 2: 0, 4: 1, 5: 2, 7: 3 }; // strike number -> chain index (Tier I..IV)

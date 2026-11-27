@@ -109,14 +109,42 @@ const CSS = `
 .lh-relic-slot span { display: block; margin-top: 6px; font-size: 11px; line-height: 1.3; color: #A89272; }
 .lh-call { margin: 16px auto 0; max-width: 520px; padding: 11px 14px; border-radius: 6px; font-size: 13.5px; line-height: 1.55; color: #FFE9C2; background: linear-gradient(135deg, rgba(233,184,90,.2), rgba(120,70,10,.14)); border: 1px solid rgba(233,184,90,.5); }
 .lh-call strong { color: #FFD27A; }
+/* ---- effects (behind the content): forge fire, smoke, embers, lightning ---- */
+@keyframes lhFlicker { 0%, 100% { opacity: .75; transform: scaleY(1); } 25% { opacity: .95; transform: scaleY(1.08); } 50% { opacity: .65; transform: scaleY(.94); } 75% { opacity: .9; transform: scaleY(1.04); } }
+@keyframes lhSmoke { 0% { transform: translate(0, 30%) scale(.8); opacity: 0; } 20% { opacity: .55; } 100% { transform: translate(var(--sx), -90%) scale(1.6); opacity: 0; } }
+@keyframes lhEmber { 0% { transform: translate(0, 0) scale(1); opacity: 0; } 8% { opacity: 1; } 100% { transform: translate(var(--drift), calc(-1 * var(--rise))) scale(.3); opacity: 0; } }
+.lh-hall > :not(.lh-fx):not(.lh-corner) { position: relative; z-index: 1; }
+.lh-fx { position: absolute; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; border-radius: inherit; }
+.lh-fire { position: absolute; left: -10%; right: -10%; bottom: -40px; height: 210px; transform-origin: 50% 100%;
+  background: radial-gradient(ellipse 40% 75% at 22% 100%, rgba(255,110,25,.85), transparent 70%), radial-gradient(ellipse 38% 70% at 78% 100%, rgba(255,75,15,.8), transparent 70%), radial-gradient(ellipse 55% 60% at 50% 100%, rgba(255,200,90,.6), transparent 70%);
+  filter: blur(8px); mix-blend-mode: screen; animation: lhFlicker 1.6s ease-in-out infinite; }
+.lh-fire.two { height: 150px; opacity: .8; animation-duration: 2.3s; animation-direction: reverse;
+  background: radial-gradient(ellipse 30% 70% at 40% 100%, rgba(255,150,40,.8), transparent 70%), radial-gradient(ellipse 30% 65% at 62% 100%, rgba(255,90,20,.75), transparent 70%); }
+.lh-smoke { position: absolute; bottom: -20px; left: var(--x); width: 340px; height: 280px; border-radius: 50%;
+  background: radial-gradient(circle, rgba(200,180,160,.38) 0%, rgba(140,120,105,.18) 45%, transparent 70%);
+  filter: blur(16px); animation: lhSmoke var(--d) linear var(--delay) infinite; opacity: 0; }
+.lh-ember { position: absolute; bottom: -8px; left: var(--x); width: var(--s); height: var(--s); border-radius: 50%;
+  background: radial-gradient(circle, #FFF6D0 0%, #FFAA33 45%, rgba(255,90,0,0) 72%); box-shadow: 0 0 8px rgba(255,150,50,.95), 0 0 16px rgba(255,110,30,.5);
+  animation: lhEmber var(--d) linear var(--delay) infinite; opacity: 0; }
+/* Lightning is drawn by startLightning(): a new bolt for every strike. */
+.lh-flash { position: absolute; inset: 0; opacity: 0; background: radial-gradient(ellipse 60% 90% at var(--fx) 0%, rgba(215,232,255,.7), rgba(160,190,255,.12) 55%, transparent 80%); }
+.lh-bolt { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; overflow: visible; }
+.lh-bolt .glow { stroke: rgba(150,185,255,.55); filter: blur(5px); }
+.lh-bolt .core { stroke: #F6F9FF; }
+.lh-bolt path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+
 @media (max-width: 560px) {
   .lh-hall { padding: 18px 12px; }
+  .lh-smoke { width: 180px; height: 160px; }
   .lh-title { font-size: 23px; }
   .lh-card { width: calc(50% - 8px); min-width: 140px; }
   .lh-art { width: 100px; height: 100px; }
   .lh-relic-slot { width: 84px; } .lh-relic-slot img { width: 64px; height: 64px; }
 }
-@media (prefers-reduced-motion: reduce) { .lh-title, .lh-card, .lh-art::before, .lh-art img { animation: none; } }
+@media (prefers-reduced-motion: reduce) {
+  .lh-title, .lh-card, .lh-art::before, .lh-art img, .lh-fire { animation: none; }
+  .lh-smoke, .lh-ember, .lh-flash, .lh-bolt { display: none; }
+}
 `;
 
 function injectStyles() {
@@ -133,6 +161,102 @@ const dateText = (iso) => {
   const t = Date.parse(iso || '');
   return Number.isFinite(t) ? new Date(t).toLocaleDateString('en-US', { timeZone: 'Asia/Manila', month: 'long', day: 'numeric', year: 'numeric' }) : '';
 };
+
+// ---- lightning: a fresh bolt each strike, at random moments ----
+
+const rand = (a, b) => a + Math.random() * (b - a);
+
+// A jagged line from (x1,y1) to (x2,y2) by midpoint displacement: each
+// pass halves every segment and nudges the new point sideways, less each
+// time, which gives lightning's large zigzags with fine jitter on top.
+function jagged(x1, y1, x2, y2, spread) {
+  let pts = [[x1, y1], [x2, y2]];
+  let offset = spread;
+  for (let pass = 0; pass < 6; pass++) {
+    const next = [pts[0]];
+    for (let i = 1; i < pts.length; i++) {
+      const [ax, ay] = pts[i - 1];
+      const [bx, by] = pts[i];
+      next.push([(ax + bx) / 2 + rand(-offset, offset), (ay + by) / 2 + rand(-offset, offset) * 0.25], pts[i]);
+    }
+    pts = next;
+    offset *= 0.55;
+  }
+  return pts;
+}
+
+const pathOf = (pts) => 'M' + pts.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L');
+
+/** One bolt as SVG markup sized to w x h: a trunk from the top edge
+ *  down most of the hall, and a few thinner forks off it. */
+function boltSvg(w, h) {
+  const x0 = rand(w * 0.06, w * 0.94);
+  const trunk = jagged(x0, -4, x0 + rand(-w * 0.12, w * 0.12), h * rand(0.62, 0.95), Math.min(90, w * 0.08));
+  const forks = [];
+  const count = Math.floor(rand(1, 4));
+  for (let f = 0; f < count; f++) {
+    const [sx, sy] = trunk[Math.floor(rand(0.15, 0.7) * trunk.length)];
+    const len = h * rand(0.18, 0.4);
+    const ang = rand(0.35, 1.1) * (Math.random() < 0.5 ? -1 : 1);
+    forks.push(jagged(sx, sy, sx + Math.sin(ang) * len, sy + Math.cos(ang) * len, 26));
+  }
+  const draw = (pts, core, glow) => `<path class="glow" d="${pathOf(pts)}" stroke-width="${glow}"/><path class="core" d="${pathOf(pts)}" stroke-width="${core}"/>`;
+  return {
+    x: (x0 / w) * 100,
+    svg: `<svg class="lh-bolt" viewBox="0 0 ${w} ${h}" preserveAspectRatio="none">${draw(trunk, 2.6, 9)}${forks.map((p) => draw(p, 1.2, 5)).join('')}</svg>`
+  };
+}
+
+/** Strikes at random intervals while `fx` is on the page. Each strike is
+ *  either a bolt (a bright return stroke, a dip, a second stroke, then a
+ *  fading afterglow) or, now and then, sheet lightning: only the glow. */
+function startLightning(fx) {
+  if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  if (typeof Element.prototype.animate !== 'function') return;
+  const strike = () => {
+    if (!fx.isConnected) return; // the hall was replaced or removed
+    const w = fx.clientWidth || 800;
+    const h = fx.clientHeight || 300;
+    const sheet = Math.random() < 0.3;
+    const { x, svg } = boltSvg(w, h);
+    const flash = document.createElement('span');
+    flash.className = 'lh-flash';
+    flash.style.setProperty('--fx', `${x.toFixed(0)}%`);
+    fx.appendChild(flash);
+    const duration = rand(420, 620);
+    flash.animate(sheet
+      ? [{ opacity: 0 }, { opacity: 0.35, offset: 0.15 }, { opacity: 0.1, offset: 0.3 }, { opacity: 0.28, offset: 0.45 }, { opacity: 0 }]
+      : [{ opacity: 0 }, { opacity: 0.6, offset: 0.06 }, { opacity: 0.12, offset: 0.16 }, { opacity: 0.5, offset: 0.26 }, { opacity: 0.08 }],
+    { duration, easing: 'ease-out' }).onfinish = () => flash.remove();
+    if (!sheet) {
+      fx.insertAdjacentHTML('beforeend', svg);
+      const bolt = fx.lastElementChild;
+      bolt.animate(
+        [{ opacity: 0 }, { opacity: 1, offset: 0.04 }, { opacity: 0.15, offset: 0.12 }, { opacity: 1, offset: 0.2 }, { opacity: 0.5, offset: 0.45 }, { opacity: 0 }],
+        { duration, easing: 'ease-out' }
+      ).onfinish = () => bolt.remove();
+    }
+    setTimeout(strike, rand(2500, 9000));
+  };
+  setTimeout(strike, rand(1200, 4000));
+}
+
+/** The effects layer: fire glow, smoke and rising embers. Lightning is
+ *  added by startLightning(). Decorative only (aria-hidden). */
+function effectsHtml() {
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  let embers = '';
+  for (let i = 0; i < 40; i++) {
+    embers += `<span class="lh-ember" style="--x:${rnd(2, 98).toFixed(1)}%;--s:${rnd(3, 8).toFixed(1)}px;--d:${rnd(3.5, 8).toFixed(1)}s;--delay:${(-rnd(0, 8)).toFixed(1)}s;--drift:${rnd(-90, 90).toFixed(0)}px;--rise:${rnd(180, 380).toFixed(0)}px"></span>`;
+  }
+  let smoke = '';
+  for (let i = 0; i < 6; i++) {
+    smoke += `<span class="lh-smoke" style="--x:${(i * 18 - 10 + rnd(-5, 5)).toFixed(0)}%;--d:${rnd(9, 14).toFixed(1)}s;--delay:${(-rnd(0, 13)).toFixed(1)}s;--sx:${rnd(-70, 70).toFixed(0)}px"></span>`;
+  }
+  return `<div class="lh-fx" aria-hidden="true">
+    ${smoke}<div class="lh-fire"></div><div class="lh-fire two"></div>${embers}
+  </div>`;
+}
 
 /** Exported so a preview page can drive the exact same markup. */
 export function fillLegendHall(mount, legends, viewerName) {
@@ -158,11 +282,13 @@ export function fillLegendHall(mount, legends, viewerName) {
        <p class="lh-call">⚒️ Finish the whole portal and forge your Legendary, and <strong>your name will be the first written in this hall.</strong></p>`;
   mount.innerHTML = `
     <section class="lh-hall" aria-labelledby="lhTitle">
+      ${effectsHtml()}
       ${corners}
       <p class="lh-kicker">✦ Tier V · The Legendary ✦</p>
       <h2 class="lh-title" id="lhTitle">Hall of Legends</h2>
       ${body}
     </section>`;
+  startLightning(mount.querySelector('.lh-fx'));
 }
 
 /** Fills `mount` with the Hall of Legends. */

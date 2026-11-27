@@ -21,6 +21,11 @@ import { legendaryArtPath, forgedDateFor } from './legendaryCard.js';
 import { FORGE_DAYS } from './legendaryForge.js';
 
 const HALL_DOC = ['announcements', 'legendHall'];
+// How many Legend cards show before "See all": 8 on tablets and
+// computers, 4 on phones (keep in sync with the :nth-child(n+9) and
+// :nth-child(n+5) rules in the CSS below).
+const SHOWN_AT_FIRST = 8;
+const SHOWN_ON_PHONES = 4;
 const FORGE_MS = FORGE_DAYS * 24 * 60 * 60 * 1000;
 const LEGENDARY = Object.fromEntries(CRAFTING_CHAINS.map((c) => [c.tier5Id, c.tier5Name]));
 
@@ -65,7 +70,7 @@ const CSS = `
 @keyframes lhFloat { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
 
 .lh-hall {
-  position: relative; margin: 18px 0 0; padding: 22px 20px 22px; border-radius: 10px; overflow: hidden; text-align: center; color: #E8DCC4;
+  position: relative; margin: 18px 0 34px; padding: 22px 20px 22px; border-radius: 10px; overflow: hidden; text-align: center; color: #E8DCC4;
   background: radial-gradient(ellipse at 50% 0%, rgba(233,184,90,.22), transparent 60%), radial-gradient(ellipse at 50% 110%, rgba(150,45,10,.35), transparent 60%), linear-gradient(170deg, #1B1512 0%, #0E0A09 55%, #070505 100%);
   border: 1px solid #8A6626;
   box-shadow: inset 0 0 0 4px #0E0A09, inset 0 0 0 5px rgba(233,184,90,.55), inset 0 0 60px rgba(0,0,0,.6), 0 14px 40px rgba(0,0,0,.45);
@@ -100,6 +105,23 @@ const CSS = `
 .lh-name { margin: 0; font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 16px; line-height: 1.3; color: #FFF6D8; text-shadow: 0 0 12px rgba(255,200,90,.45); }
 .lh-date { margin: 6px 0 0; font-size: 11.5px; color: #A89272; }
 .lh-card.you { border-color: #FFF1C9; }
+/* Many Legends: only the first SHOWN_AT_FIRST show until "See all" is
+   pressed, so the hall never pushes the rest of the dashboard far down.
+   The viewer's own card always shows. */
+.lh-grid.collapsed .lh-card:nth-child(n+9):not(.you) { display: none; }
+.lh-more.phone-only { display: none; }
+@media (max-width: 560px) {
+  /* Phones: 4 cards (two rows) before "See all". */
+  .lh-grid.collapsed .lh-card:nth-child(n+5):not(.you) { display: none; }
+  .lh-more.phone-only, .lh-more.phone-only:hover { display: inline-block; }
+}
+.lh-more, .lh-more:hover {
+  display: inline-block; margin: 16px auto 0; padding: 9px 20px; border-radius: 999px; cursor: pointer;
+  font-family: 'Cinzel', Georgia, serif; font-weight: 700; font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: #FFE2A8; background: rgba(0,0,0,.35); border: 1px solid #C9923A;
+}
+.lh-more:hover { color: #2A1A05; background: linear-gradient(180deg, #F6D98A, #D9A441); }
+.lh-more:focus-visible { outline: 2px solid #FFE7A8; outline-offset: 3px; }
 .lh-you { position: absolute; top: -10px; left: 50%; transform: translateX(-50%); padding: 2px 10px; border-radius: 999px; font-size: 10.5px; font-weight: 800; letter-spacing: 1.5px; color: #2A1A05; background: linear-gradient(180deg, #F6D98A, #D9A441); white-space: nowrap; }
 
 /* Before anyone has claimed one: the six Legendaries, dimmed. */
@@ -134,7 +156,7 @@ const CSS = `
 .lh-bolt path { fill: none; stroke-linecap: round; stroke-linejoin: round; }
 
 @media (max-width: 560px) {
-  .lh-hall { padding: 18px 12px; }
+  .lh-hall { padding: 18px 12px; margin-bottom: 26px; }
   .lh-smoke { width: 180px; height: 160px; }
   .lh-title { font-size: 23px; }
   .lh-card { width: calc(50% - 8px); min-width: 140px; }
@@ -265,7 +287,7 @@ export function fillLegendHall(mount, legends, viewerName) {
   const body = legends.length
     ? `<p class="lh-sub">${legends.length === 1 ? 'One pilgrim has' : `${legends.length} pilgrims have`} walked the whole portal and forged a <strong>Legendary Artifact</strong>. ${legends.length === 1 ? 'Their name is' : 'Their names are'} written here for good.</p>
        <div class="lh-divider"><i></i></div>
-       <div class="lh-grid">${legends.map((l) => {
+       <div class="lh-grid${legends.length > SHOWN_ON_PHONES ? ' collapsed' : ''}" id="lhGrid">${legends.map((l) => {
          const you = !!viewerName && l.name === viewerName;
          return `<div class="lh-card${you ? ' you' : ''}">
            ${you ? '<span class="lh-you">✦ That\'s you ✦</span>' : ''}
@@ -275,7 +297,8 @@ export function fillLegendHall(mount, legends, viewerName) {
            <p class="lh-name">${escapeHtml(l.name)}</p>
            ${dateText(l.at) ? `<p class="lh-date">Forged ${dateText(l.at)}</p>` : ''}
          </div>`;
-       }).join('')}</div>`
+       }).join('')}</div>
+       ${legends.length > SHOWN_ON_PHONES ? `<button type="button" class="lh-more${legends.length <= SHOWN_AT_FIRST ? ' phone-only' : ''}" aria-controls="lhGrid" aria-expanded="false">See all ${legends.length} Legends</button>` : ''}`
     : `<p class="lh-sub">Six Legendary Artifacts wait in the forge. <strong>No pilgrim has claimed one yet.</strong></p>
        <div class="lh-divider"><i></i></div>
        <div class="lh-relics">${CRAFTING_CHAINS.map((c) => `<div class="lh-relic-slot"><img src="${legendaryArtPath(c.tier5Id)}" alt="" loading="lazy"><span>${escapeHtml(c.tier5Name)}</span></div>`).join('')}</div>
@@ -289,6 +312,16 @@ export function fillLegendHall(mount, legends, viewerName) {
       ${body}
     </section>`;
   startLightning(mount.querySelector('.lh-fx'));
+
+  const more = mount.querySelector('.lh-more');
+  if (more) {
+    more.addEventListener('click', () => {
+      const grid = mount.querySelector('.lh-grid');
+      const open = grid.classList.toggle('collapsed') === false;
+      more.setAttribute('aria-expanded', String(open));
+      more.textContent = open ? 'Show fewer' : `See all ${legends.length} Legends`;
+    });
+  }
 }
 
 /** Fills `mount` with the Hall of Legends. */

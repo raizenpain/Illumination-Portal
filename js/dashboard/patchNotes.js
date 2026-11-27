@@ -56,6 +56,14 @@ export const PATCHES = [
               'Forging your Legendary Artifact now takes 3 days (was 5)',
               'If you are already counting down or forging, your wait is shorter right away'
             ]
+          },
+          {
+            title: 'Hall of Legends',
+            items: [
+              'A new Hall of Legends on the dashboard honors every student who forges a Legendary Artifact',
+              'Each Legend gets a card with their artifact, their name and the day it was forged, for every student to see',
+              'No one has claimed a Legendary yet. Be the first name written in the hall'
+            ]
           }
         ]
       }

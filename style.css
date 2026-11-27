@@ -5970,6 +5970,39 @@ body.season-page {
   background: rgba(86,178,187,0.08);
 }
 
+/* A retry after a wrong submit (season.js): the score, and each question
+   marked kept (✓) or to fix (✗). */
+.season-node-box .quiz-retry-note {
+  margin: 0 0 14px;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 14px;
+  line-height: 1.5;
+  color: #FFE9C2;
+  background: rgba(233,184,90,0.12);
+  border: 1px solid rgba(233,184,90,0.45);
+}
+.season-node-box .quiz-retry-note strong { color: #FFD27A; }
+.season-node-box .quiz-question--wrong {
+  border-left: 3px solid #E0553C;
+  padding-left: 10px;
+}
+.season-node-box .quiz-question--right {
+  border-left: 3px solid #4FB477;
+  padding-left: 10px;
+}
+.season-node-box .quiz-mark {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+.season-node-box .quiz-question--wrong .quiz-mark { color: #FFC2B2; background: rgba(224,85,60,0.25); border: 1px solid rgba(224,85,60,0.7); }
+.season-node-box .quiz-question--right .quiz-mark { color: #BDF2CF; background: rgba(79,180,119,0.2); border: 1px solid rgba(79,180,119,0.6); }
+
 @media (max-width: 700px) {
   .season-shell {
     padding: 22px 18px 28px;

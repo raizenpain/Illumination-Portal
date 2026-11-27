@@ -281,6 +281,39 @@ function isQuizOnCooldown(node) {
   return end > Date.now();
 }
 
+// A quiz still needs every answer right, but after a wrong submit the
+// student is shown which questions to fix (Jornie, 2026-11-27: students
+// were stuck, since one wrong answer out of ten looked exactly like ten
+// and the retry came back reshuffled). The attempt is kept on this
+// device -- the order it was shown in, the answers given, the positions
+// that were wrong -- so the retry comes back in the same order with the
+// right answers still ticked and the wrong ones marked. Cleared on a pass.
+function quizRetryKey(node) {
+  return `season_quiz_retry_${node.nodeId}_${email}`;
+}
+
+/** The saved attempt for this quiz, or null if there is none or it no
+ *  longer fits the quiz (e.g. its questions were edited since). */
+function loadQuizRetry(node) {
+  let saved = null;
+  try { saved = JSON.parse(localStorage.getItem(quizRetryKey(node)) || 'null'); } catch (e) { return null; }
+  const qs = node.questions || [];
+  const isPerm = (arr, n) => Array.isArray(arr) && arr.length === n && new Set(arr).size === n && arr.every((i) => Number.isInteger(i) && i >= 0 && i < n);
+  if (!saved || !isPerm(saved.qOrder, qs.length) || !Array.isArray(saved.choiceOrders) || !Array.isArray(saved.wrong)) return null;
+  const choicesFit = saved.qOrder.every((qi, pos) => isPerm(saved.choiceOrders[pos], qs[qi].choices.length));
+  return choicesFit ? saved : null;
+}
+
+function saveQuizRetry(node, attempt) {
+  try { localStorage.setItem(quizRetryKey(node), JSON.stringify(attempt)); } catch (e) { /* storage blocked: the retry just reshuffles */ }
+}
+
+function clearQuizRetry(node) {
+  try { localStorage.removeItem(quizRetryKey(node)); } catch (e) { /* nothing to clear */ }
+}
+
+const listNumbers = (nums) => nums.length <= 1 ? `${nums[0]}` : `${nums.slice(0, -1).join(', ')} and ${nums[nums.length - 1]}`;
+
 // Fisher-Yates — used to reshuffle question order on every render, so
 // two students (or the same student retrying after a cooldown) don't
 // see item 1 land on the same question, discouraging "the answer to
@@ -320,15 +353,33 @@ function renderQuizModal(node) {
   // originally-correct choice landed, so handleQuizSubmit's grading
   // (which just compares against q.correctIndex) keeps working
   // unchanged against the new positions.
-  const shuffleChoices = (q) => {
-    const order = shuffleArray(q.choices.map((_, i) => i));
-    return { ...q, choices: order.map((i) => q.choices[i]), correctIndex: order.indexOf(q.correctIndex) };
+  //
+  // A retry after a wrong submit reuses the saved layout instead (see
+  // quizRetryKey), so the student can fix just the marked questions.
+  const source = node.source || node;
+  const retry = loadQuizRetry(source);
+  const qOrder = retry ? retry.qOrder : shuffleArray(source.questions.map((_, i) => i));
+  const choiceOrders = retry ? retry.choiceOrders : qOrder.map((qi) => shuffleArray(source.questions[qi].choices.map((_, i) => i)));
+  const displayNode = {
+    ...source,
+    source,
+    layout: { qOrder, choiceOrders },
+    questions: qOrder.map((qi, pos) => {
+      const q = source.questions[qi];
+      const order = choiceOrders[pos];
+      return { ...q, choices: order.map((i) => q.choices[i]), correctIndex: order.indexOf(q.correctIndex) };
+    })
   };
-  const displayNode = { ...node, questions: shuffleArray(node.questions).map(shuffleChoices) };
+  const wrongSet = new Set(retry ? retry.wrong : []);
+  const keptAnswers = (retry && retry.answers) || {};
+  const retryNote = retry
+    ? `<p class="quiz-retry-note">✏️ <strong>${source.questions.length - wrongSet.size} of ${source.questions.length} correct.</strong> Your correct answers are kept. Fix the ${wrongSet.size === 1 ? 'question' : `${wrongSet.size} questions`} marked ✗, then submit again.</p>`
+    : '';
 
   nodeModalBox.innerHTML = `
     <h2>${NODE_TYPE_HEADING_ICON[node.type]} ${node.title}</h2>
     <p class="reflection-hint">${node.prompt}</p>
+    ${retryNote}
     <div id="seasonQuizContainer"></div>
     <p id="seasonQuizStatus" class="puzzle-status"></p>
     <div class="reflection-modal-actions">
@@ -342,11 +393,19 @@ function renderQuizModal(node) {
 
   displayNode.questions.forEach((q, index) => {
     const qDiv = document.createElement('div');
-    qDiv.className = 'quiz-question';
+    const isWrong = wrongSet.has(index);
+    const isKept = !!retry && !isWrong && Number.isInteger(keptAnswers[index]);
+    qDiv.className = `quiz-question${isWrong ? ' quiz-question--wrong' : isKept ? ' quiz-question--right' : ''}`;
 
     const qText = document.createElement('div');
     qText.className = 'quiz-question-text';
     qText.textContent = `${index + 1}. ${q.text}`;
+    if (isWrong || isKept) {
+      const mark = document.createElement('span');
+      mark.className = 'quiz-mark';
+      mark.textContent = isWrong ? '✗ Fix this' : '✓';
+      qText.appendChild(mark);
+    }
     qDiv.appendChild(qText);
 
     const optionsDiv = document.createElement('div');
@@ -360,6 +419,7 @@ function renderQuizModal(node) {
       radio.type = 'radio';
       radio.name = `season-question-${index}`;
       radio.value = choiceIndex;
+      if (isKept && keptAnswers[index] === choiceIndex) radio.checked = true;
 
       label.appendChild(radio);
       label.append(choice);
@@ -386,13 +446,17 @@ async function handleQuizSubmit(node, statusEl, submitBtn) {
   }
 
   let allAnswered = true;
-  let allCorrect = true;
+  const answers = {};
+  const wrong = [];
 
   node.questions.forEach((q, index) => {
     const selected = document.querySelector(`input[name="season-question-${index}"]:checked`);
     if (!selected) { allAnswered = false; return; }
-    if (parseInt(selected.value) !== q.correctIndex) allCorrect = false;
+    const choice = parseInt(selected.value);
+    answers[index] = choice;
+    if (choice !== q.correctIndex) wrong.push(index);
   });
+  const allCorrect = wrong.length === 0;
 
   if (!allAnswered) {
     statusEl.textContent = 'Please answer every question before submitting.';
@@ -403,19 +467,29 @@ async function handleQuizSubmit(node, statusEl, submitBtn) {
 
   if (allCorrect) {
     statusEl.textContent = '🎉 Correct! Ticket awarded.';
-    await awardNode(node);
+    clearQuizRetry(node.source || node);
+    await awardNode(node.source || node);
     setTimeout(closeNodeModal, 1200);
   } else {
     recordMistake();
+    // Only the right answers are kept; the wrong ones come back blank.
+    const kept = Object.fromEntries(Object.entries(answers).filter(([i]) => !wrong.includes(Number(i))));
+    saveQuizRetry(node.source || node, { ...node.layout, answers: kept, wrong });
     const cooldownEnd = Date.now() + 30 * 1000;
     localStorage.setItem(quizCooldownKey(node), cooldownEnd);
-    renderQuizCooldown(node);
+    renderQuizCooldown(node.source || node);
   }
 }
 
 function renderQuizCooldown(node) {
+  const retry = loadQuizRetry(node.source || node);
+  const total = (node.questions || []).length;
+  const scoreHtml = retry && retry.wrong.length
+    ? `<p class="quiz-retry-note"><strong>${total - retry.wrong.length} of ${total} correct.</strong> Fix question${retry.wrong.length === 1 ? '' : 's'} ${listNumbers(retry.wrong.map((i) => i + 1))}. Your correct answers will be kept, and the questions will stay in the same order.</p>`
+    : '';
   nodeModalBox.innerHTML = `
     <h2>${NODE_TYPE_HEADING_ICON[node.type]} ${node.title}</h2>
+    ${scoreHtml}
     <p class="puzzle-status" id="seasonQuizCooldownText"></p>
     <div class="reflection-modal-actions">
       ${modalCloseButtonHtml()}

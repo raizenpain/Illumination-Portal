@@ -11,7 +11,7 @@ import { getRankProgress, getSeasonStars, RANK_TIERS, starIndexOfChapter } from 
 import { ensureRankPopup, openRankPopup, renderStarPopup, renderRankPopup, renderChampionPopup, renderNoticePopup } from '../core/rankPopup.js';
 import { TICKET_INFO } from '../dashboard/ticketTrader.js';
 import { blockPasteInto } from '../core/noCopyPaste.js';
-import { pendingRevisions, isRevisionPending, isSameAnswer, pendingReflectionRevisions, revisionReason, reasonsText, wordCount, wordsToGo, minWordsText, MIN_WORDS } from './revisionNotice.js';
+import { pendingRevisions, isRevisionPending, isSameAnswer, pendingReflectionRevisions, revisionReason, reasonsText, wordCount, wordsToGo, minWordsText, MIN_WORDS, seasonsSealed } from './revisionNotice.js';
 
 const { email, name } = requireLogin();
 const isSeasonPreviewAdmin = ADMIN_EMAILS.includes(email);
@@ -57,6 +57,12 @@ async function init() {
   // doc. Fine while overrides are rare/empty (M4 hasn't shipped yet);
   // if an admin later removes/adds nodes in a prior season, revisit this.
   if (!isSeasonUnlocked(seasonId, studentData)) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  // Finished the whole portal: the seasons are sealed (revisionNotice.js).
+  if (!isSeasonPreviewAdmin && seasonsSealed(studentData)) {
     window.location.href = 'dashboard.html';
     return;
   }

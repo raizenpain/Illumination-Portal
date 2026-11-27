@@ -481,7 +481,7 @@ import { renderLegendHall } from './js/dashboard/legendHall.js';
 import { maybeShowFinale, awardFinalGift } from './js/dashboard/journeyFinale.js';
 import { renderCertificateShelf } from './js/core/certificates.js';
 import { maybeShowRefundNotice } from './js/dashboard/refundNotice.js';
-import { maybeShowRevisionNotice, pendingReflectionRevisions, revisionReason, isSameAnswer, wordCount, wordsToGo, MIN_WORDS } from './js/seasons/revisionNotice.js';
+import { maybeShowRevisionNotice, pendingReflectionRevisions, revisionReason, isSameAnswer, wordCount, wordsToGo, MIN_WORDS, seasonsSealed, SEALED_MESSAGE } from './js/seasons/revisionNotice.js';
 import { maybeShowPatchNotes, showPatchNotes } from './js/dashboard/patchNotes.js';
 import { maybeShowFiesta75Announcement } from './js/dashboard/fiesta75Announcement.js';
 
@@ -1287,6 +1287,20 @@ function setupSeasonCards(data) {
     });
     return;
   }
+  // Finished the whole portal: every season card is sealed.
+  if (!isSeasonPreviewAdmin && seasonsSealed(data)) {
+    Object.keys(SEASON_OF_CARD).forEach((cardId) => {
+      const card = document.getElementById(cardId);
+      if (!card) return;
+      card.className = 'puzzle-card state-completed';
+      card.querySelector('.status-badge').className = 'status-badge status-completed';
+      setSeasonIcon(card, cardId, '✅');
+      card.querySelector('p').textContent = SEASON_CONTENT[SEASON_OF_CARD[cardId]].subtitle;
+      card.querySelector('.status-badge').textContent = 'Completed · Sealed';
+      card.onclick = () => alert(SEALED_MESSAGE);
+    });
+    return;
+  }
   setupMidtermCard(data);
   setupSemifinalAndFinalCards(data);
 }
@@ -1582,7 +1596,10 @@ function openReflectionModal() {
     ? `Last revised ${new Date(studentData.puzzle3ReflectionSubmittedAt).toLocaleDateString()}`
     : '';
   reflectionModalHint.textContent = '';
-  reflectionModalEdit.classList.remove('hidden');
+  // Sealed once the whole portal is finished: read-only.
+  const sealed = !isSeasonPreviewAdmin && seasonsSealed(studentData);
+  reflectionModalEdit.classList.toggle('hidden', sealed);
+  if (sealed) reflectionModalHint.textContent = '🔒 Sealed: you have finished the portal.';
   reflectionModalSave.classList.add('hidden');
   reflectionModal.classList.remove('hidden');
 

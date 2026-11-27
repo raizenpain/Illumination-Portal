@@ -3,7 +3,8 @@ import { requireLogin } from '../core/auth.js';
 import { findBannedWord, looksLikeGibberish, isOffTopic, looksLikeAssistantPaste, ASSISTANT_PASTE_MESSAGE, findAIWritingSigns, aiWritingMessage, earlierWriting } from '../core/contentFilter.js';
 import { startCooldown } from '../core/cooldown.js';
 import { blockPasteInto } from '../core/noCopyPaste.js';
-import { MIN_WORDS, wordCount, wordsToGo } from './revisionNotice.js';
+import { MIN_WORDS, wordCount, wordsToGo, seasonsSealed } from './revisionNotice.js';
+import { ADMIN_EMAILS } from '../core/admins.js';
 import { logActivity } from '../core/activity.js';
 import { getRankProgress, getSeasonStars, isSeasonChaptersComplete, isPrelimSeasonDone, RANK_TIERS } from '../core/rank.js';
 import { ensureRankPopup, renderStarPopup, renderRankPopup } from '../core/rankPopup.js';
@@ -105,6 +106,12 @@ async function init() {
   studentData = snap.exists() ? snap.data() : {};
 
   if (!gate.prerequisite(studentData)) {
+    window.location.href = 'dashboard.html';
+    return;
+  }
+
+  // Finished the whole portal: the reflections are sealed with the seasons.
+  if (!ADMIN_EMAILS.includes(email) && seasonsSealed(studentData)) {
     window.location.href = 'dashboard.html';
     return;
   }

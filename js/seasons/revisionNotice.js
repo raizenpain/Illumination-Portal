@@ -59,6 +59,14 @@ export const isRevisionPending = (data, nodeId) => pendingRevisions(data).includ
 /** Reflection keys this student has been asked to rewrite. While any is open, every season is closed. */
 export const pendingReflectionRevisions = (data) => pendingRevisions(data).filter((id) => REFLECTION_REVISIONS[id]);
 
+/** Finished the whole portal (the Final Season reflection is in): every
+ *  season is sealed, so nothing can be redone or changed, while the rest
+ *  of the portal stays open (Jornie, 2026-11-27). Work the teacher sends
+ *  back reopens the seasons until it is rewritten. */
+export const seasonsSealed = (data) => !!data && data.apostleUnlocked === true && pendingRevisions(data).length === 0;
+
+export const SEALED_MESSAGE = 'You have finished the portal, so every season is now sealed. Your work is kept safe, and you can still visit your dashboard, certificates and the Hall of Legends.';
+
 /** Why the teacher sent this one back, or '' if no reason was recorded. */
 export function revisionReason(data, id) {
   const reason = ((data && data.revisionReasons) || {})[id];
